@@ -1,0 +1,8 @@
+[build]
+target = "aarch64-unknown-linux-gnu"
+
+[target.aarch64-unknown-linux-gnu]
+linker = "/home/developer/.toolchains/cross-pi-gcc-12.2.0-64/bin/aarch64-linux-gnu-gcc"
+rustflags = [
+    "-C", "link-args=--sysroot=/home/developer/.toolchains/cross-pi-gcc-12.2.0-64/aarch64-linux-gnu/libc"
+]
