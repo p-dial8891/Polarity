@@ -18,7 +18,7 @@ use color_eyre::Result;
 use crossterm::event::{self, KeyCode};
 use ratatui::layout::{Constraint, Layout, Rect};
 use ratatui::style::{Color, Modifier, Style, Stylize};
-use ratatui::text::{Line, Span};
+use ratatui::text::{Line, Span, Text};
 use ratatui::widgets::{List, ListDirection, ListState};
 use ratatui::{DefaultTerminal, Frame};
 
@@ -26,6 +26,8 @@ use std::thread;
 use std::time::Duration;
 
 use rppal::gpio::Gpio;
+
+use std::process::Command;
 
 fn main() -> Result<()> {
     color_eyre::install()?;
@@ -61,7 +63,16 @@ fn run(mut terminal: DefaultTerminal) -> Result<()> {
         { list_state.select_next(); }
 
         if quit.read() == 0.into()
-        { return Ok(()); }
+        { 
+          let _ = Command::new("sudo")
+                      .arg("shutdown")
+                      .arg("-h")
+                      .arg("0")
+                      .output()
+                      .expect("Unable to shutdown.");
+          // should not reach here
+          return Ok(()); 
+        }
 
         thread::sleep(Duration::from_millis(250));
     }
@@ -84,11 +95,14 @@ fn render(frame: &mut Frame, list_state: &mut ListState) {
 
 /// Render a list.
 pub fn render_list(frame: &mut Frame, area: Rect, list_state: &mut ListState) {
-    let items = ["Item 1: Long title ", "Item 2: Very long title", "Item 3: title", "Item 4",
-                 "Item 5: title",       "Item 6 : Very long title", "Item 7: Long title", 
-                 "Item 8: Incredibly long title", "Item 9: Another title", "Item 10: Guess what?",
-                 "Item 11: Incy wincy title", "Item 12: The last title?" ];
-    let list = List::new(items)
+//    let items = ["Item 1: Long title ", "Item 2: Very long title", "Item 3: title", "Item 4",
+//                 "Item 5: title",       "Item 6 : Very long title", "Item 7: Long title", 
+//                 "Item 8: Incredibly long title", "Item 9: Another title", "Item 10: Guess what?",
+//                 "Item 11: Incy wincy title", "Item 12: The last title?" ];
+    let items_v = vec!["Item 1", "Item 2", "Item 3\n+---> a)"];
+    let items_i = items_v.into_iter(); 
+    let items_c = items_i.map(|x| { Text::styled(x, Style::new().green()) } );
+    let list = List::new(items_c)
         .style(Color::White)
         .highlight_style(Modifier::REVERSED)
         .highlight_symbol("> ");
