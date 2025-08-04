@@ -29,6 +29,8 @@ use rppal::gpio::Gpio;
 
 use std::process::Command;
 
+mod polaris;
+
 fn main() -> Result<()> {
     color_eyre::install()?;
     let terminal = ratatui::init();
@@ -43,6 +45,14 @@ fn run(mut terminal: DefaultTerminal) -> Result<()> {
     let up = gpio.get(17).unwrap().into_input();
     let down = gpio.get(22).unwrap().into_input();
     let quit = gpio.get(5).unwrap().into_input();
+
+/*
+    let mut data = polaris::getData(polaris::getBody().await.unwrap());
+    let t1 = data.next().unwrap();
+    let artist = t1.1;
+    let title = t1.2;
+*/
+    polaris::polaris();
 
     let mut list_state = ListState::default().with_selected(Some(0));
     loop {
