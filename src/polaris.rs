@@ -87,7 +87,7 @@ pub fn getData(data: serde_json::Value) -> impl Iterator<Item = (String, String,
         let id_iter = tracks.map(|x| {
             if x.is_object() {
                 (
-                    String::from(x["album"].as_str().unwrap()),
+                    String::from("-"),
                     String::from(x["artist"].as_str().unwrap()),
                     String::from(x["title"].as_str().unwrap()),
                 )
@@ -103,13 +103,11 @@ pub fn getData(data: serde_json::Value) -> impl Iterator<Item = (String, String,
 
 
 #[actix_rt::main]
-pub async fn polaris() -> Result<(), ()> {
+pub async fn polaris() -> impl Iterator<Item=String> {
     let mut data = getData(getBody().await.unwrap());
-    let t1 = data.next().unwrap();
-    let album = t1.0;
-    let artist = t1.1;
-    let title = t1.2;
-    println!("{album},{artist},{title}");
-    Ok(())
+    let result = data.into_iter().map(|x| 
+        { let mut s = String::new(); s.extend([x.1,r"/".to_string(),x.2]);
+          s } );
+    result
 }
 

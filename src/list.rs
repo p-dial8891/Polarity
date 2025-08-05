@@ -52,11 +52,11 @@ fn run(mut terminal: DefaultTerminal) -> Result<()> {
     let artist = t1.1;
     let title = t1.2;
 */
-    polaris::polaris();
+    let list_model = polaris::polaris().collect::<Vec<String>>();
 
     let mut list_state = ListState::default().with_selected(Some(0));
     loop {
-        terminal.draw(|frame| render(frame, &mut list_state))?;
+        terminal.draw(|frame| render(frame, &mut list_state, &list_model))?;
 //        if let Some(key) = event::read()?.as_key_press_event() {
 //            match key.code {
 //                KeyCode::Char('j') | KeyCode::Down => list_state.select_next(),
@@ -89,7 +89,8 @@ fn run(mut terminal: DefaultTerminal) -> Result<()> {
 }
 
 /// Render the UI with various lists.
-fn render(frame: &mut Frame, list_state: &mut ListState) {
+fn render(frame: &mut Frame, list_state: &mut ListState, 
+list_model: &Vec<String> ) {
     let vertical = Layout::default();
     //let [top] = vertical.areas(frame.area());
 
@@ -99,20 +100,21 @@ fn render(frame: &mut Frame, list_state: &mut ListState) {
     //]);
     //frame.render_widget(title.centered(), top);
 
-    render_list(frame, frame.area(), list_state);
+    render_list(frame, frame.area(), list_state, list_model);
     //render_bottom_list(frame, second);
 }
 
 /// Render a list.
-pub fn render_list(frame: &mut Frame, area: Rect, list_state: &mut ListState) {
+pub fn render_list(frame: &mut Frame, area: Rect, list_state: &mut ListState,
+list_model: &Vec<String> ) {
 //    let items = ["Item 1: Long title ", "Item 2: Very long title", "Item 3: title", "Item 4",
 //                 "Item 5: title",       "Item 6 : Very long title", "Item 7: Long title", 
 //                 "Item 8: Incredibly long title", "Item 9: Another title", "Item 10: Guess what?",
 //                 "Item 11: Incy wincy title", "Item 12: The last title?" ];
-    let items_v = vec!["Item 1", "Item 2", "Item 3\n+---> a)"];
-    let items_i = items_v.into_iter(); 
-    let items_c = items_i.map(|x| { Text::styled(x, Style::new().green()) } );
-    let list = List::new(items_c)
+//    let items_v = vec!["Item 1", "Item 2", "Item 3\n+---> a)"];
+//    let items_i = items_v.into_iter(); 
+//    let items_c = items_i.map(|x| { Text::styled(x, Style::new().green()) } );
+    let list = List::new(list_model.into_iter().map(|x| x.as_str()))
         .style(Color::White)
         .highlight_style(Modifier::REVERSED)
         .highlight_symbol("> ");
