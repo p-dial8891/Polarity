@@ -106,7 +106,8 @@ pub fn getData(data: serde_json::Value) -> impl Iterator<Item = (String, String,
 pub async fn polaris() -> impl Iterator<Item=String> {
     let mut data = getData(getBody().await.unwrap());
     let result = data.into_iter().map(|x| 
-        { let mut s = String::new(); s.extend([x.1,r"/".to_string(),x.2]);
+        { let mut s = String::new(); s.extend([
+              "* ".to_string(),x.1," /".to_string(),"\n  ".to_string(),x.2]);
           s } );
     result
 }

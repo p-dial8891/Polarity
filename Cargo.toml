@@ -4,16 +4,8 @@ version = "0.1.0"
 edition = "2024"
 
 [[bin]]
-name = "list"
-path = "src/list.rs"
-
-[[bin]]
-name = "input"
-path = "src/input.rs"
-
-#[[bin]]
-#name = "scrollbar"
-#path = "src/scrollbar.rs"
+name = "app"
+path = "src/app.rs"
 
 [dependencies]
 color-eyre = "0.6.5"

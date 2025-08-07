@@ -104,6 +104,8 @@ list_model: &Vec<String> ) {
     //render_bottom_list(frame, second);
 }
 
+const SELECTED_STYLE: Style = Style::new().add_modifier(Modifier::BOLD);
+
 /// Render a list.
 pub fn render_list(frame: &mut Frame, area: Rect, list_state: &mut ListState,
 list_model: &Vec<String> ) {
@@ -115,9 +117,9 @@ list_model: &Vec<String> ) {
 //    let items_i = items_v.into_iter(); 
 //    let items_c = items_i.map(|x| { Text::styled(x, Style::new().green()) } );
     let list = List::new(list_model.into_iter().map(|x| x.as_str()))
-        .style(Color::White)
-        .highlight_style(Modifier::REVERSED)
-        .highlight_symbol("> ");
+//        .style(Color::White)
+        .highlight_style(SELECTED_STYLE);
+//        .highlight_symbol("> ");
 
     frame.render_stateful_widget(list, area, list_state);
 }
