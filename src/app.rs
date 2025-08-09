@@ -23,13 +23,37 @@ use ratatui::widgets::{List, ListDirection, ListState};
 use ratatui::{DefaultTerminal, Frame};
 
 use std::thread;
-use std::time::Duration;
-
 use rppal::gpio::Gpio;
 
 use std::process::Command;
 
+use tokio::time::sleep;
+use service::{PlayerClient, init_tracing};
+use std::net::{Ipv4Addr, SocketAddrV4};
+use std::{net::SocketAddr, time::Duration};
+use tarpc::{client, context, tokio_serde::formats::Json};
+
 mod polaris;
+
+#[tokio::main]
+async fn sendRequestToPlayer()
+{
+    init_tracing("Polarity example.");
+    println!("Polarity example");
+
+    let mut transport = tarpc::serde_transport::tcp::connect(
+        SocketAddrV4::new(Ipv4Addr::new(169, 254, 108, 7), 50051),
+        Json::default,
+    );
+    transport.config_mut().max_frame_length(usize::MAX);
+    let client = PlayerClient::new(client::Config::default(), transport.await.unwrap()).spawn();
+
+    let result = client.play(context::current(), String::from("Cannons-Desire.m4a")).await
+        .unwrap();
+    //println!("{result}");
+    
+    sleep(Duration::from_millis(10)).await;
+}
 
 fn main() -> Result<()> {
     color_eyre::install()?;
@@ -45,7 +69,7 @@ fn run(mut terminal: DefaultTerminal) -> Result<()> {
     let up = gpio.get(17).unwrap().into_input();
     let down = gpio.get(22).unwrap().into_input();
     let quit = gpio.get(5).unwrap().into_input();
-
+    let req  = gpio.get(6).unwrap().into_input();
 /*
     let mut data = polaris::getData(polaris::getBody().await.unwrap());
     let t1 = data.next().unwrap();
@@ -71,6 +95,10 @@ fn run(mut terminal: DefaultTerminal) -> Result<()> {
         
         if down.read() == 0.into()
         { list_state.select_next(); }
+
+        if req.read() == 0.into()
+        { println!("Button pressed.");
+          sendRequestToPlayer(); }
 
         if quit.read() == 0.into()
         { 

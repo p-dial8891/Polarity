@@ -1,3 +1,4 @@
+
 [package]
 name = "player"
 version = "0.1.0"
@@ -22,12 +23,12 @@ rand = "0.8"
 #simple_crypt = "*"
 
 env_logger = "0.11"
-tls-rustls-0_23 = { package = "rustls", version = "0.23", features = ["aws-lc-rs"] }
+tls-rustls-0_23 = { package = "rustls", version = "0.23", features = ["aws-lc-rs"], optional = true }
 #tls-openssl = { package = "openssl", version = "0.10.55", optional = false }
 tokio = { version = "1.45.1", features = ["rt-multi-thread", "macros", "net", "fs"] }
 serde_json = "1.0.141"
-rustls-pki-types = "1.12.0"
-reqwest = { version = "0.12.22", features = ["rustls-tls"] }
+rustls-pki-types =  { version = "1.12.0", optional = true }
+reqwest = { version = "0.12.22", features = ["rustls-tls"], optional = true }
 webpki-roots = "1.0.2"
 bytes = "1.10.1"
 
