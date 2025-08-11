@@ -35,6 +35,9 @@ bytes = "1.10.1"
 [target.x86_64-pc-windows-msvc]
 rustflags = ["-C", "target-feature=+crt-static"]
 
+[features]
+build-player = [ "tls-rustls-0_23", "rustls-pki-types", "reqwest" ]
+
 [lib]
 name = "service"
 path = "src/lib.rs"
@@ -42,3 +45,4 @@ path = "src/lib.rs"
 [[bin]]
 name="player"
 path="src/player.rs"
+required-features = [ "build-player" ]
