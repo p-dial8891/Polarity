@@ -36,10 +36,10 @@ use tarpc::{client, context, tokio_serde::formats::Json};
 mod polaris;
 
 #[tokio::main]
-async fn sendRequestToPlayer()
+async fn sendRequestToPlayer(path: String)
 {
-    init_tracing("Polarity example.");
-    println!("Polarity example");
+    //init_tracing("Polarity example.");
+    //println!("Polarity example");
 
     let mut transport = tarpc::serde_transport::tcp::connect(
         SocketAddrV4::new(Ipv4Addr::new(169, 254, 108, 7), 50051),
@@ -48,7 +48,7 @@ async fn sendRequestToPlayer()
     transport.config_mut().max_frame_length(usize::MAX);
     let client = PlayerClient::new(client::Config::default(), transport.await.unwrap()).spawn();
 
-    let result = client.play(context::current(), String::from("Cannons-Desire.m4a")).await
+    let result = client.play(context::current(), path).await
         .unwrap();
     //println!("{result}");
     
@@ -76,7 +76,7 @@ fn run(mut terminal: DefaultTerminal) -> Result<()> {
     let artist = t1.1;
     let title = t1.2;
 */
-    let list_model = polaris::polaris().collect::<Vec<String>>();
+    let list_model = polaris::polaris().map(|x| { x.0 }).collect::<Vec<String>>();
 
     let mut list_state = ListState::default().with_selected(Some(0));
     loop {
@@ -97,8 +97,9 @@ fn run(mut terminal: DefaultTerminal) -> Result<()> {
         { list_state.select_next(); }
 
         if req.read() == 0.into()
-        { println!("Button pressed.");
-          sendRequestToPlayer(); }
+        { //println!("Button pressed.");
+          let mut list_polaris = polaris::polaris();
+          sendRequestToPlayer(list_polaris.nth(list_state.selected().unwrap()).unwrap().1); }
 
         if quit.read() == 0.into()
         { 

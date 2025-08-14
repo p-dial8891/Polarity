@@ -16,17 +16,17 @@ use serde_json::Value;
 mod auth;
 
 pub async fn getBody() -> Result<serde_json::Value, ()> {
-    env_logger::init_from_env(env_logger::Env::new().default_filter_or("info"));
+    //env_logger::init_from_env(env_logger::Env::new().default_filter_or("info"));
 
     let mut cert_file2 = fs::File::open(r"4267304690.der").unwrap();
     let mut data_buf2 = Vec::<u8>::new();
     let cert_byte_count2 = cert_file2.read_to_end(&mut data_buf2).unwrap();
-    println!("Certificate 2 bytes read :{}", cert_byte_count2);
+    //println!("Certificate 2 bytes read :{}", cert_byte_count2);
 
     let mut cert_file3 = fs::File::open(r"4256644734.der").unwrap();
     let mut data_buf3 = Vec::<u8>::new();
     let cert_byte_count3 = cert_file3.read_to_end(&mut data_buf3).unwrap();
-    println!("Certificate 3 bytes read :{}", cert_byte_count3);
+    //println!("Certificate 3 bytes read :{}", cert_byte_count3);
 
     let mut root_store = webpki_roots_cert_store();
     root_store
@@ -61,12 +61,12 @@ pub async fn getBody() -> Result<serde_json::Value, ()> {
         .get("https://www.emstreamer.online/api/flatten")
         .bearer_auth(auth::token);
 
-    println!("Request: {request:?}");
+    //println!("Request: {request:?}");
 
     let mut response = request.send().await.unwrap();
 
     // server response head
-    println!("Response: {response:?}");
+    //println!("Response: {response:?}");
 
     // read response body
     let body = response
@@ -74,7 +74,7 @@ pub async fn getBody() -> Result<serde_json::Value, ()> {
         .limit(7000000)
         .await
         .unwrap();
-    println!("Downloaded: {}", body.to_string());
+    //println!("Downloaded: {}", body.to_string());
 
     //    assert!(body.is_object());
 
@@ -87,7 +87,7 @@ pub fn getData(data: serde_json::Value) -> impl Iterator<Item = (String, String,
         let id_iter = tracks.map(|x| {
             if x.is_object() {
                 (
-                    String::from("-"),
+                    String::from(x["path"].as_str().unwrap()),
                     String::from(x["artist"].as_str().unwrap()),
                     String::from(x["title"].as_str().unwrap()),
                 )
@@ -103,12 +103,12 @@ pub fn getData(data: serde_json::Value) -> impl Iterator<Item = (String, String,
 
 
 #[actix_rt::main]
-pub async fn polaris() -> impl Iterator<Item=String> {
+pub async fn polaris() -> impl Iterator<Item=(String,String)> {
     let mut data = getData(getBody().await.unwrap());
     let result = data.into_iter().map(|x| 
         { let mut s = String::new(); s.extend([
               "* ".to_string(),x.1," /".to_string(),"\n  ".to_string(),x.2]);
-          s } );
+          (s, x.0) } );
     result
 }
 
