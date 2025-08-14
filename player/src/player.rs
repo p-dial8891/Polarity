@@ -38,7 +38,6 @@ use tokio::task::spawn_blocking;
  
  
 mod auth;
-use bytes::Bytes;
 
 /*
 #[derive(Parser)]
@@ -56,8 +55,8 @@ struct Flags {
 #[derive(Clone)]
 struct PlayerServer(SocketAddr);
 
-async fn getBody() {
-    env_logger::init_from_env(env_logger::Env::new().default_filter_or("info"));
+async fn getBody(path: String) {
+    //env_logger::init_from_env(env_logger::Env::new().default_filter_or("info"));
 
     // Read certificate 2
     let mut cert_file2 = tokio::fs::File::open("4267304690.der")
@@ -92,8 +91,12 @@ async fn getBody() {
         .expect("Failed to build reqwest client");
 
     // Target URL
+	let mut base_url = String::from("https://www.emstreamer.online/api/audio/");
+	base_url.extend([path.as_str()]);
+	println!("Url : {}", &base_url);
     let url = Url::parse(
-        "https://www.emstreamer.online/api/audio/AwsMusic/Music/Cannons/Desire - Single/01 Desire.m4a"
+//        "https://www.emstreamer.online/api/audio/AwsMusic/Music/Cannons/Desire - Single/01 Desire.m4a"
+        &base_url
     )
     .expect("Invalid URL");
 
@@ -104,6 +107,9 @@ async fn getBody() {
         .send()
         .await
         .expect("HTTP request failed");
+
+    // Read the body
+    println!("Status: {}", response.status());
 
     // Read the body
     let body = response.bytes().await.expect("Error downloading.");
@@ -130,7 +136,7 @@ async fn getBody() {
 
 impl Player for PlayerServer {
     async fn play(self, _: context::Context, path: String) -> Result<(),()> {
-		getBody().await;
+		getBody(path).await;
 		Ok(())
     }
 }
