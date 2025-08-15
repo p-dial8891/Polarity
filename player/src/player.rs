@@ -15,7 +15,7 @@ use std::{
 };
 
 use tokio::fs;
-use tokio::fs::File;
+use tokio::fs::{File, write};
 use tokio::io::AsyncWriteExt;
 use tokio::io::AsyncReadExt;
 use tokio::runtime::Runtime;
@@ -36,8 +36,10 @@ use rustls_pki_types::CertificateDer;
 use webpki_roots::TLS_SERVER_ROOTS;
 use tokio::task::spawn_blocking;
  
+use bytes::Bytes;
  
 mod auth;
+mod audio;
 
 /*
 #[derive(Parser)]
@@ -55,7 +57,7 @@ struct Flags {
 #[derive(Clone)]
 struct PlayerServer(SocketAddr);
 
-async fn getBody(path: String) {
+async fn getBody(path: String) -> Bytes {
     //env_logger::init_from_env(env_logger::Env::new().default_filter_or("info"));
 
     // Read certificate 2
@@ -132,11 +134,16 @@ async fn getBody(path: String) {
 
     println!("Download complete. Total size: {} bytes", downloaded);
 */
+    body
 }
 
 impl Player for PlayerServer {
     async fn play(self, _: context::Context, path: String) -> Result<(),()> {
-		getBody(path).await;
+		let data = getBody(path).await;
+		write("music/example.mxx", data).await.unwrap();
+		tokio::task::spawn_blocking(|| {
+		    audio::play("music/example.mxx"); 
+			} );
 		Ok(())
     }
 }
