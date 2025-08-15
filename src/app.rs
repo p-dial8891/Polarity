@@ -25,6 +25,7 @@ use ratatui::{DefaultTerminal, Frame};
 use std::thread;
 use rppal::gpio::Gpio;
 
+use std::time::Instant;
 use std::process::Command;
 
 use tokio::time::sleep;
@@ -32,6 +33,7 @@ use service::{PlayerClient, init_tracing};
 use std::net::{Ipv4Addr, SocketAddrV4};
 use std::{net::SocketAddr, time::Duration};
 use tarpc::{client, context, tokio_serde::formats::Json};
+
 
 mod polaris;
 
@@ -48,7 +50,9 @@ async fn sendRequestToPlayer(path: String)
     transport.config_mut().max_frame_length(usize::MAX);
     let client = PlayerClient::new(client::Config::default(), transport.await.unwrap()).spawn();
 
-    let result = client.play(context::current(), path).await
+    let mut cxt = context::current();
+    cxt.deadline = Instant::now().checked_add(Duration::from_secs(60*5)).unwrap();
+    let result = client.play(cxt, path).await
         .unwrap();
     //println!("{result}");
     
