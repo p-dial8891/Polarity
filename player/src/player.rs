@@ -20,12 +20,10 @@ use tokio::io::AsyncWriteExt;
 use tokio::io::AsyncReadExt;
 use tokio::runtime::Runtime;
 
-use std::path::Path;
-
 use std::error::Error as OtherError;
 use std::io::BufReader;
 use std::pin::Pin;
-
+use std::path::Path;
 use tls_rustls_0_23 as rustls;
 
 use std::sync::Arc;
@@ -139,10 +137,19 @@ async fn getBody(path: String) -> Bytes {
 
 impl Player for PlayerServer {
     async fn play(self, _: context::Context, path: String) -> Result<(),()> {
-		let data = getBody(path).await;
-		write("music/example.mxx", data).await.unwrap();
-		tokio::task::spawn_blocking(|| {
-		    audio::play("music/example.mxx"); 
+		println!("Path recvd: {}", path);
+		let root_path = Path::new("music");
+		let temp_path = root_path.join(&path);
+		let final_path = &temp_path;
+		println!("Final path: {}", final_path.display());
+		if !final_path.try_exists().unwrap()
+		{
+    	  let data = getBody(path).await;
+		  tokio::fs::create_dir_all(final_path.parent().unwrap()).await.unwrap();
+		  write(final_path, data).await.unwrap();
+		}
+		tokio::task::spawn_blocking(move || {
+		    audio::play(temp_path.as_path().to_str().unwrap()); 
 			} );
 		Ok(())
     }
