@@ -9,4 +9,4 @@ The software is split into two executables - one that acts as the terminal and t
 
 ## Resources
 [Video](https://www.youtube.com/watch?v=HmmpZukn4Zg)  
-[Hacksterio](https://www.hackster.io/hardcoder/polarity-a-music-player-for-polaris-8cd4eb)
+[Hackster.io](https://www.hackster.io/hardcoder/polarity-a-music-player-for-polaris-8cd4eb)
