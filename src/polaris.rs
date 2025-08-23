@@ -81,7 +81,7 @@ pub async fn getBody() -> Result<serde_json::Value, ()> {
     Ok::<_, _>(body)
 }
 
-pub fn getData(data: serde_json::Value) -> impl Iterator<Item = (String, String, String)> {
+pub async fn getData(data: serde_json::Value) -> impl Iterator<Item = (String, String, String)> {
     if let Value::Array(vec) = data {
         let tracks = vec.into_iter();
         let id_iter = tracks.map(|x| {
@@ -102,9 +102,8 @@ pub fn getData(data: serde_json::Value) -> impl Iterator<Item = (String, String,
 }
 
 
-#[actix_rt::main]
 pub async fn polaris() -> impl Iterator<Item=(String,String)> {
-    let mut data = getData(getBody().await.unwrap());
+    let mut data = getData(getBody().await.unwrap()).await;
     let result = data.into_iter().map(|x| 
         { let mut s = String::new(); s.extend([
               "* ".to_string(),x.1," /".to_string(),"\n  ".to_string(),x.2]);

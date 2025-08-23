@@ -37,7 +37,6 @@ use tarpc::{client, context, tokio_serde::formats::Json};
 
 mod polaris;
 
-#[tokio::main]
 async fn sendRequestToPlayer(path: String)
 {
     //init_tracing("Polarity example.");
@@ -59,16 +58,18 @@ async fn sendRequestToPlayer(path: String)
     sleep(Duration::from_millis(10)).await;
 }
 
-fn main() -> Result<()> {
-    color_eyre::install()?;
+#[tokio::main]
+async fn main() -> Result<()> {
+    color_eyre::install().unwrap();
     let terminal = ratatui::init();
-    let result = run(terminal);
+    let result = run(terminal).await;
     ratatui::restore();
-    result
+    //result
+    Ok(())
 }
 
 /// Run the application.
-fn run(mut terminal: DefaultTerminal) -> Result<()> {
+async fn run(mut terminal: DefaultTerminal) -> Result<()> {
     let gpio = Gpio::new().unwrap();
     let up = gpio.get(17).unwrap().into_input();
     let down = gpio.get(22).unwrap().into_input();
@@ -80,7 +81,7 @@ fn run(mut terminal: DefaultTerminal) -> Result<()> {
     let artist = t1.1;
     let title = t1.2;
 */
-    let list_model = polaris::polaris().map(|x| { x.0 }).collect::<Vec<String>>();
+    let list_model = polaris::polaris().await.map(|x| { x.0 }).collect::<Vec<String>>();
 
     let mut list_state = ListState::default().with_selected(Some(0));
     loop {
@@ -102,8 +103,9 @@ fn run(mut terminal: DefaultTerminal) -> Result<()> {
 
         if req.read() == 0.into()
         { //println!("Button pressed.");
-          let mut list_polaris = polaris::polaris();
-          sendRequestToPlayer(list_polaris.nth(list_state.selected().unwrap()).unwrap().1); }
+          let mut list_polaris = polaris::polaris().await;
+          sendRequestToPlayer(list_polaris.nth(list_state.selected().unwrap()).unwrap().1)
+             .await; }
 
         if quit.read() == 0.into()
         { 
