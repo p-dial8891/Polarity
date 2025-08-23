@@ -15,17 +15,15 @@ use std::{
 };
 
 use tokio::fs;
-use tokio::fs::File;
+use tokio::fs::{File, write};
 use tokio::io::AsyncWriteExt;
 use tokio::io::AsyncReadExt;
 use tokio::runtime::Runtime;
 
-use std::path::Path;
-
 use std::error::Error as OtherError;
 use std::io::BufReader;
 use std::pin::Pin;
-
+use std::path::Path;
 use tls_rustls_0_23 as rustls;
 
 use std::sync::Arc;
@@ -36,8 +34,10 @@ use rustls_pki_types::CertificateDer;
 use webpki_roots::TLS_SERVER_ROOTS;
 use tokio::task::spawn_blocking;
  
+use bytes::Bytes;
  
 mod auth;
+mod audio;
 
 /*
 #[derive(Parser)]
@@ -55,7 +55,7 @@ struct Flags {
 #[derive(Clone)]
 struct PlayerServer(SocketAddr);
 
-async fn getBody(path: String) {
+async fn getBody(path: String) -> Bytes {
     //env_logger::init_from_env(env_logger::Env::new().default_filter_or("info"));
 
     // Read certificate 2
@@ -132,11 +132,25 @@ async fn getBody(path: String) {
 
     println!("Download complete. Total size: {} bytes", downloaded);
 */
+    body
 }
 
 impl Player for PlayerServer {
     async fn play(self, _: context::Context, path: String) -> Result<(),()> {
-		getBody(path).await;
+		println!("Path recvd: {}", path);
+		let root_path = Path::new("music");
+		let temp_path = root_path.join(&path);
+		let final_path = &temp_path;
+		println!("Final path: {}", final_path.display());
+		if !final_path.try_exists().unwrap()
+		{
+    	  let data = getBody(path).await;
+		  tokio::fs::create_dir_all(final_path.parent().unwrap()).await.unwrap();
+		  write(final_path, data).await.unwrap();
+		}
+		tokio::task::spawn_blocking(move || {
+		    audio::play(temp_path.as_path().to_str().unwrap()); 
+			} );
 		Ok(())
     }
 }
