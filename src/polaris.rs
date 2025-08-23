@@ -5,7 +5,6 @@ use tls_rustls_0_23 as rustls;
 use std::{error::Error as StdError, sync::Arc};
 use std::{fs, io::Read};
 
-use std::sync::Arc;
 use reqwest::Client;
 use reqwest::Url;
 use rustls::{ClientConfig, RootCertStore};
@@ -13,6 +12,7 @@ use rustls_pki_types::CertificateDer;
 use webpki_roots::TLS_SERVER_ROOTS;
 use tokio::task::spawn_blocking;
 use serde_json::Value;
+use tokio::io::AsyncReadExt;
 
 mod auth;
 
@@ -41,7 +41,7 @@ pub async fn getBody() -> Result<serde_json::Value, ()> {
         .expect("Failed to read cert 3 file");
     //println!("Certificate 3 bytes read: {}", cert_byte_count3);
 
-    rustls::crypto::aws_lc_rs::default_provider().install_default();
+    //rustls::crypto::aws_lc_rs::default_provider().install_default();
 
     // Build reqwest client
     let client = Client::builder()
