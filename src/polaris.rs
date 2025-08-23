@@ -5,12 +5,13 @@ use tls_rustls_0_23 as rustls;
 use std::{error::Error as StdError, sync::Arc};
 use std::{fs, io::Read};
 
-use actix_tls::connect::rustls_0_23::webpki_roots_cert_store;
+use std::sync::Arc;
+use reqwest::Client;
+use reqwest::Url;
 use rustls::{ClientConfig, RootCertStore};
 use rustls_pki_types::CertificateDer;
-
-use awc::JsonBody;
-use awc::http::Uri;
+use webpki_roots::TLS_SERVER_ROOTS;
+use tokio::task::spawn_blocking;
 use serde_json::Value;
 
 mod auth;
@@ -18,66 +19,63 @@ mod auth;
 pub async fn getBody() -> Result<serde_json::Value, ()> {
     //env_logger::init_from_env(env_logger::Env::new().default_filter_or("info"));
 
-    let mut cert_file2 = fs::File::open(r"4267304690.der").unwrap();
-    let mut data_buf2 = Vec::<u8>::new();
-    let cert_byte_count2 = cert_file2.read_to_end(&mut data_buf2).unwrap();
-    //println!("Certificate 2 bytes read :{}", cert_byte_count2);
-
-    let mut cert_file3 = fs::File::open(r"4256644734.der").unwrap();
-    let mut data_buf3 = Vec::<u8>::new();
-    let cert_byte_count3 = cert_file3.read_to_end(&mut data_buf3).unwrap();
-    //println!("Certificate 3 bytes read :{}", cert_byte_count3);
-
-    let mut root_store = webpki_roots_cert_store();
-    root_store
-        .add(CertificateDer::from_slice(data_buf2.as_slice()))
-        .expect("Adding cert 2 failed.");
-    root_store
-        .add(CertificateDer::from_slice(data_buf3.as_slice()))
-        .expect("Adding cert 3 failed.");
-
-    let mut config = ClientConfig::builder()
-        .with_root_certificates(root_store)
-        .with_no_client_auth();
-
-    let protos = vec![b"h2".to_vec(), b"http/1.1".to_vec()];
-    config.alpn_protocols = protos;
-
-    // construct request builder with TLS support
-    let client = awc::Client::builder()
-        .connector(awc::Connector::new().rustls_0_23(Arc::new(config)))
-        .finish();
-    /*
-        let uri = Uri::builder()
-            .scheme("https")
-            .authority("www.emstreamer.online")
-            .path_and_query("/api/audio/AwsMusic/Music/Cannons/Desire%020-%020Single/01%020Desire.m4a")
-            .build()
-            .unwrap();
-    */
-    // configure request
-    let request = client
-        //	    .get(uri)
-        .get("https://www.emstreamer.online/api/flatten")
-        .bearer_auth(auth::token);
-
-    //println!("Request: {request:?}");
-
-    let mut response = request.send().await.unwrap();
-
-    // server response head
-    //println!("Response: {response:?}");
-
-    // read response body
-    let body = response
-        .json::<serde_json::Value>()
-        .limit(7000000)
+    // Read certificate 2
+    let mut cert_file2 = tokio::fs::File::open("4267304690.der")
         .await
-        .unwrap();
-    //println!("Downloaded: {}", body.to_string());
+        .expect("Failed to open cert 2 file");
+    let mut data_buf2 = Vec::new();
+    let cert_byte_count2 = cert_file2
+        .read_to_end(&mut data_buf2)
+        .await
+        .expect("Failed to read cert 2 file");
+    //println!("Certificate 2 bytes read: {}", cert_byte_count2);
 
-    //    assert!(body.is_object());
+    // Read certificate 3
+    let mut cert_file3 = tokio::fs::File::open("4256644734.der")
+        .await
+        .expect("Failed to open cert 3 file");
+    let mut data_buf3 = Vec::new();
+    let cert_byte_count3 = cert_file3
+        .read_to_end(&mut data_buf3)
+        .await
+        .expect("Failed to read cert 3 file");
+    //println!("Certificate 3 bytes read: {}", cert_byte_count3);
 
+    rustls::crypto::aws_lc_rs::default_provider().install_default();
+
+    // Build reqwest client
+    let client = Client::builder()
+		.use_rustls_tls()
+        .add_root_certificate(reqwest::tls::Certificate::from_der(&data_buf2).unwrap())
+        .add_root_certificate(reqwest::tls::Certificate::from_der(&data_buf3).unwrap())
+        .build()
+        .expect("Failed to build reqwest client");
+
+    // Target URL
+	//let mut base_url = String::from("https://www.emstreamer.online/api/audio/");
+	//base_url.extend([path.as_str()]);
+	//println!("Url : {}", &base_url);
+    let url = Url::parse(
+        "https://www.emstreamer.online/api/flatten/"
+//        &base_url
+    )
+    .expect("Invalid URL");
+
+    // Send request with Bearer token
+    let mut response = client
+        .get(url)
+        .bearer_auth(auth::token) // your token variable here
+        .send()
+        .await
+        .expect("HTTP request failed");
+
+    // Read the body
+    //println!("Status: {}", response.status());
+
+    // Read the body
+    let body = response.json::<serde_json::Value>().await
+	    .expect("Error downloading.");
+    //println!("Downloaded: {}", body.len());
     Ok::<_, _>(body)
 }
 
