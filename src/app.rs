@@ -19,7 +19,7 @@ use crossterm::event::{self, KeyCode};
 use ratatui::layout::{Constraint, Layout, Rect};
 use ratatui::style::{Color, Modifier, Style, Stylize};
 use ratatui::text::{Line, Span, Text};
-use ratatui::widgets::{List, ListDirection, ListState};
+use ratatui::widgets::{List, ListDirection, ListState, Paragraph};
 use ratatui::{DefaultTerminal, Frame};
 
 use std::thread;
@@ -70,7 +70,8 @@ async fn listenerTask()
 #[tokio::main]
 async fn main() -> Result<()> {
     color_eyre::install().unwrap();
-    let terminal = ratatui::init();
+    let mut terminal = ratatui::init();
+    terminal.clear().unwrap();
     let result = run(terminal).await;
     ratatui::restore();
     //result
@@ -94,7 +95,7 @@ async fn run(mut terminal: DefaultTerminal) -> Result<()> {
     let mut index = 0;
     let mut toggle_play = false;
     loop {
-        terminal.draw(|frame| render(frame, &mut list_state, &list_model))?;
+        terminal.draw(|frame| render(frame, &mut list_state, &list_model, toggle_play))?;
 //        if let Some(key) = event::read()?.as_key_press_event() {
 //            match key.code {
 //                KeyCode::Char('j') | KeyCode::Down => list_state.select_next(),
@@ -154,9 +155,11 @@ async fn run(mut terminal: DefaultTerminal) -> Result<()> {
 
 /// Render the UI with various lists.
 fn render(frame: &mut Frame, list_state: &mut ListState, 
-list_model: &Vec<String> ) {
-    let vertical = Layout::default();
-    //let [top] = vertical.areas(frame.area());
+list_model: &Vec<String>, toggle_play: bool ) {
+    use Constraint::{Fill, Length, Min};
+
+    let vertical = Layout::vertical([Length(8), Length(2)]);
+    let [top, bottom] = vertical.areas(frame.area());
 
     //let title = Line::from_iter([
     //    Span::from("List Widget").bold(),
@@ -164,8 +167,8 @@ list_model: &Vec<String> ) {
     //]);
     //frame.render_widget(title.centered(), top);
 
-    render_list(frame, frame.area(), list_state, list_model);
-    //render_bottom_list(frame, second);
+    render_list(frame, top, list_state, list_model);
+    render_bottom(frame, bottom, toggle_play);
 }
 
 const SELECTED_STYLE: Style = Style::new().add_modifier(Modifier::BOLD);
@@ -173,39 +176,21 @@ const SELECTED_STYLE: Style = Style::new().add_modifier(Modifier::BOLD);
 /// Render a list.
 pub fn render_list(frame: &mut Frame, area: Rect, list_state: &mut ListState,
 list_model: &Vec<String> ) {
-//    let items = ["Item 1: Long title ", "Item 2: Very long title", "Item 3: title", "Item 4",
-//                 "Item 5: title",       "Item 6 : Very long title", "Item 7: Long title", 
-//                 "Item 8: Incredibly long title", "Item 9: Another title", "Item 10: Guess what?",
-//                 "Item 11: Incy wincy title", "Item 12: The last title?" ];
-//    let items_v = vec!["Item 1", "Item 2", "Item 3\n+---> a)"];
-//    let items_i = items_v.into_iter(); 
-//    let items_c = items_i.map(|x| { Text::styled(x, Style::new().green()) } );
     let list = List::new(list_model.into_iter().map(|x| x.as_str()))
-//        .style(Color::White)
         .highlight_style(SELECTED_STYLE);
-//        .highlight_symbol("> ");
-
     frame.render_stateful_widget(list, area, list_state);
 }
 
 /// Render a bottom-to-top list.
-pub fn render_bottom_list(frame: &mut Frame, area: Rect) {
-    let items = [
-        "[Remy]: I'm building one now.\nIt even supports multiline text!",
-        "[Gusteau]: With enough passion, yes.",
-        "[Remy]: But can anyone build a TUI in Rust?",
-        "[Gusteau]: Anyone can cook!",
-    ];
-    let list = List::new(items)
-        .style(Color::White)
-        .highlight_style(Style::new().yellow().italic())
-        .highlight_symbol("> ")
-        .scroll_padding(1)
-        .direction(ListDirection::BottomToTop)
-        .repeat_highlight_symbol(true);
-
-    let mut state = ListState::default();
-    state.select_first();
-
-    frame.render_stateful_widget(list, area, &mut state);
+pub fn render_bottom(frame: &mut Frame, area: Rect, auto_play: bool) {
+    let final_text;
+    match auto_play
+    {
+        false => final_text = String::from("\n             "),
+        true  => {    let mut temp_text = String::from("\n             ");
+                      temp_text.extend(["A"]);
+                      final_text = temp_text; }
+    }
+    let text = Paragraph::new(final_text);
+    frame.render_widget(text, area);
 }
