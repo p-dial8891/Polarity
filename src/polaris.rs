@@ -16,7 +16,7 @@ use tokio::io::AsyncReadExt;
 
 mod auth;
 
-type polarisHandle = serde_json::Value;
+pub type polarisHandle = serde_json::Value;
 
 pub async fn getBody() -> Result<serde_json::Value, ()> {
     //env_logger::init_from_env(env_logger::Env::new().default_filter_or("info"));

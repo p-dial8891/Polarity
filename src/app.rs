@@ -35,8 +35,16 @@ use std::net::{Ipv4Addr, SocketAddrV4};
 use std::{net::SocketAddr, time::Duration};
 use tarpc::{client, context, tokio_serde::formats::Json};
 
+use std::collections::HashSet;
 
 mod polaris;
+
+async fn getNextTrack(h: polaris::polarisHandle, s: &mut HashSet<usize>) -> String
+{
+    let mut list_polaris = polaris::getIterator(h).await;
+    let index = s.iter().nth(0).unwrap();
+    list_polaris.nth(*index).unwrap().1 
+}
 
 async fn sendRequestToPlayer(path: String)
 {
@@ -83,6 +91,8 @@ async fn run(mut terminal: DefaultTerminal) -> Result<()> {
     let gpio = Gpio::new().unwrap();
     let up = gpio.get(17).unwrap().into_input();
     let down = gpio.get(22).unwrap().into_input();
+    let left = gpio.get(27).unwrap().into_input();
+    let right = gpio.get(23).unwrap().into_input();
     let quit = gpio.get(5).unwrap().into_input();
     let req  = gpio.get(6).unwrap().into_input();
 
@@ -94,8 +104,10 @@ async fn run(mut terminal: DefaultTerminal) -> Result<()> {
     let mut list_state = ListState::default().with_selected(Some(0));
     let mut index = 0;
     let mut toggle_play = false;
+    let mut playlist: HashSet<usize> = HashSet::new();
     loop {
-        terminal.draw(|frame| render(frame, &mut list_state, &list_model, toggle_play))?;
+        terminal.draw(|frame| render(frame, &mut list_state, &list_model, toggle_play, 
+                                        &mut playlist))?;
 //        if let Some(key) = event::read()?.as_key_press_event() {
 //            match key.code {
 //                KeyCode::Char('j') | KeyCode::Down => list_state.select_next(),
@@ -109,20 +121,24 @@ async fn run(mut terminal: DefaultTerminal) -> Result<()> {
         {
             None   => { if toggle_play 
                       {  taskHandle = Some(task::spawn( listenerTask() ));
-                         let mut list_polaris = polaris::getIterator(track_data.clone()).await;
-                         index = list_state.selected().unwrap();
-                         sendRequestToPlayer(list_polaris.nth(index).unwrap().1).await; 
+                         sendRequestToPlayer(getNextTrack(track_data.clone(), &mut playlist).await)
+                         .await; 
                       } }
 
            Some(ref h) => { if h.is_finished() && toggle_play
                           { taskHandle = Some(task::spawn( listenerTask() ));
-                            let mut list_polaris = polaris::getIterator(track_data.clone()).await;
-                            index = index + 1;
-                            list_state.select(Some(index));
-                            sendRequestToPlayer(list_polaris.nth(index).unwrap().1).await;
+                            let curr_playlist = playlist.clone();
+                            let index = curr_playlist.iter().nth(0).unwrap();
+                            playlist.remove(index);
+                            sendRequestToPlayer(getNextTrack(track_data.clone(), 
+                                &mut playlist).await)
+                            .await;
                           }
                           else if h.is_finished() && !toggle_play
                           {
+                            let curr_playlist = playlist.clone();
+                            let index = curr_playlist.iter().nth(0).unwrap();
+                            playlist.remove(index);
                             taskHandle = None;
                           } }
         }               
@@ -132,6 +148,12 @@ async fn run(mut terminal: DefaultTerminal) -> Result<()> {
         
         if down.read() == 0.into()
         { list_state.select_next(); }
+
+        if left.read() == 0.into()
+        {  playlist.remove(&list_state.selected().unwrap()); }
+
+        if right.read() == 0.into()
+        {  playlist.insert(list_state.selected().unwrap()); }
 
         if req.read() == 0.into()
         {  toggle_play = !toggle_play;
@@ -155,7 +177,7 @@ async fn run(mut terminal: DefaultTerminal) -> Result<()> {
 
 /// Render the UI with various lists.
 fn render(frame: &mut Frame, list_state: &mut ListState, 
-list_model: &Vec<String>, toggle_play: bool ) {
+list_model: &Vec<String>, toggle_play: bool, playlist: &mut HashSet<usize> ) {
     use Constraint::{Fill, Length, Min};
 
     let vertical = Layout::vertical([Length(8), Length(2)]);
@@ -167,7 +189,7 @@ list_model: &Vec<String>, toggle_play: bool ) {
     //]);
     //frame.render_widget(title.centered(), top);
 
-    render_list(frame, top, list_state, list_model);
+    render_list(frame, top, list_state, list_model, playlist);
     render_bottom(frame, bottom, toggle_play);
 }
 
@@ -175,9 +197,15 @@ const SELECTED_STYLE: Style = Style::new().add_modifier(Modifier::BOLD);
 
 /// Render a list.
 pub fn render_list(frame: &mut Frame, area: Rect, list_state: &mut ListState,
-list_model: &Vec<String> ) {
-    let list = List::new(list_model.into_iter().map(|x| x.as_str()))
-        .highlight_style(SELECTED_STYLE);
+list_model: &Vec<String>, playlist: &mut HashSet<usize> ) {
+    let list = List::new(list_model.into_iter().map(|x| x.as_str())
+        .enumerate()
+        .map(|(i,x)| { if playlist.contains(&i)
+                       { Span::styled(x, Style::default().fg(Color::Yellow)) }
+                       else
+                       { Span::styled(x, Style::default().fg(Color::White))  } 
+                     } ) )
+    .highlight_style(SELECTED_STYLE);
     frame.render_stateful_widget(list, area, list_state);
 }
 
