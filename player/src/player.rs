@@ -161,7 +161,7 @@ async fn spawn(fut: impl Future<Output = ()> + Send + 'static) {
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    let server_addr = (IpAddr::V4(Ipv4Addr::new(169, 254, 108, 7)), 50051);
+    let server_addr = (IpAddr::V4(Ipv4Addr::new(192, 168, 1, 102)), 50051);
 
     // JSON transport is provided by the json_transport tarpc module. 
     let mut listener = tarpc::serde_transport::tcp::listen(&server_addr, Json::default).await?;

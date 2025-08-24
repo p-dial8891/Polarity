@@ -28,7 +28,8 @@ use rppal::gpio::Gpio;
 use std::time::Instant;
 use std::process::Command;
 
-use tokio::time::sleep;
+use tokio::{time::sleep, task, net::TcpListener};
+use tokio::io::AsyncReadExt;
 use service::{PlayerClient, init_tracing};
 use std::net::{Ipv4Addr, SocketAddrV4};
 use std::{net::SocketAddr, time::Duration};
@@ -43,7 +44,7 @@ async fn sendRequestToPlayer(path: String)
     //println!("Polarity example");
 
     let mut transport = tarpc::serde_transport::tcp::connect(
-        SocketAddrV4::new(Ipv4Addr::new(169, 254, 108, 7), 50051),
+        SocketAddrV4::new(Ipv4Addr::new(192, 168, 1, 102), 50051),
         Json::default,
     );
     transport.config_mut().max_frame_length(usize::MAX);
@@ -56,6 +57,14 @@ async fn sendRequestToPlayer(path: String)
     //println!("{result}");
     
     sleep(Duration::from_millis(10)).await;
+}
+
+async fn listenerTask()
+{
+    let listener = TcpListener::bind("192.168.1.104:9000").await.unwrap();
+    let (mut socket,_) = listener.accept().await.unwrap();
+    let mut buf = [0; 1];
+    socket.read(&mut buf).await.unwrap();
 }
 
 #[tokio::main]
@@ -75,15 +84,12 @@ async fn run(mut terminal: DefaultTerminal) -> Result<()> {
     let down = gpio.get(22).unwrap().into_input();
     let quit = gpio.get(5).unwrap().into_input();
     let req  = gpio.get(6).unwrap().into_input();
-/*
-    let mut data = polaris::getData(polaris::getBody().await.unwrap());
-    let t1 = data.next().unwrap();
-    let artist = t1.1;
-    let title = t1.2;
-*/
-    let list_model = polaris::polaris().await.map(|x| { x.0 }).collect::<Vec<String>>();
 
+    let mut taskHandle: Option<task::JoinHandle<()>> = None;
+    let list_model = polaris::polaris().await.map(|x| { x.0 }).collect::<Vec<String>>();
     let mut list_state = ListState::default().with_selected(Some(0));
+    let mut index = 0;
+    let mut list_polaris = polaris::polaris().await;
     loop {
         terminal.draw(|frame| render(frame, &mut list_state, &list_model))?;
 //        if let Some(key) = event::read()?.as_key_press_event() {
@@ -95,17 +101,26 @@ async fn run(mut terminal: DefaultTerminal) -> Result<()> {
 //            }
 //        }
 
+        match taskHandle
+        {
+            None   => { if req.read() == 0.into() 
+                      {  taskHandle = Some(task::spawn( listenerTask() ));
+                         index = list_state.selected().unwrap();
+                         sendRequestToPlayer(list_polaris.nth(index).unwrap().1).await; 
+                      } }
+
+           Some(ref h) => { if h.is_finished()
+                          { taskHandle = Some(task::spawn( listenerTask() ));
+                            index = index + 1;
+                            sendRequestToPlayer(list_polaris.nth(index).unwrap().1).await;
+                          } }
+        }               
+
         if up.read() == 0.into() 
         { list_state.select_previous(); }
         
         if down.read() == 0.into()
         { list_state.select_next(); }
-
-        if req.read() == 0.into()
-        { //println!("Button pressed.");
-          let mut list_polaris = polaris::polaris().await;
-          sendRequestToPlayer(list_polaris.nth(list_state.selected().unwrap()).unwrap().1)
-             .await; }
 
         if quit.read() == 0.into()
         { 
