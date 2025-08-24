@@ -1,8 +1,12 @@
 use std::fs::File;
 use rodio::{Decoder, OutputStream, source::Source};
+use std::net::TcpStream;
+use std::io::prelude::*;
 
 pub fn play(path: &str)
 {
+	let mut stream = TcpStream::connect("192.168.1.104:9000").unwrap();
+
 	// Get an output stream handle to the default physical sound device.
 	// Note that the playback stops when the stream_handle is dropped.//!
 	let stream_handle = rodio::OutputStreamBuilder::open_default_stream()
@@ -18,4 +22,6 @@ pub fn play(path: &str)
 
 	sink.sleep_until_end();
 	//std::thread::sleep(std::time::Duration::from_secs(60*5));
+
+	stream.write(&[1]).unwrap();
 }	
