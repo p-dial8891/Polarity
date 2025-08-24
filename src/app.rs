@@ -85,11 +85,14 @@ async fn run(mut terminal: DefaultTerminal) -> Result<()> {
     let quit = gpio.get(5).unwrap().into_input();
     let req  = gpio.get(6).unwrap().into_input();
 
+    let track_data = polaris::getBody().await.unwrap();
     let mut taskHandle: Option<task::JoinHandle<()>> = None;
-    let list_model = polaris::polaris().await.map(|x| { x.0 }).collect::<Vec<String>>();
+//    let list_model = polaris::polaris().await.map(|x| { x.0 }).collect::<Vec<String>>();
+    let list_model = polaris::getIterator(track_data.clone()).await
+        .map(|x| { x.0 }).collect::<Vec<String>>();
     let mut list_state = ListState::default().with_selected(Some(0));
     let mut index = 0;
-    let mut list_polaris = polaris::polaris().await;
+    let mut toggle_play = false;
     loop {
         terminal.draw(|frame| render(frame, &mut list_state, &list_model))?;
 //        if let Some(key) = event::read()?.as_key_press_event() {
@@ -103,16 +106,23 @@ async fn run(mut terminal: DefaultTerminal) -> Result<()> {
 
         match taskHandle
         {
-            None   => { if req.read() == 0.into() 
+            None   => { if toggle_play 
                       {  taskHandle = Some(task::spawn( listenerTask() ));
+                         let mut list_polaris = polaris::getIterator(track_data.clone()).await;
                          index = list_state.selected().unwrap();
                          sendRequestToPlayer(list_polaris.nth(index).unwrap().1).await; 
                       } }
 
-           Some(ref h) => { if h.is_finished()
+           Some(ref h) => { if h.is_finished() && toggle_play
                           { taskHandle = Some(task::spawn( listenerTask() ));
+                            let mut list_polaris = polaris::getIterator(track_data.clone()).await;
                             index = index + 1;
+                            list_state.select(Some(index));
                             sendRequestToPlayer(list_polaris.nth(index).unwrap().1).await;
+                          }
+                          else if h.is_finished() && !toggle_play
+                          {
+                            taskHandle = None;
                           } }
         }               
 
@@ -121,6 +131,10 @@ async fn run(mut terminal: DefaultTerminal) -> Result<()> {
         
         if down.read() == 0.into()
         { list_state.select_next(); }
+
+        if req.read() == 0.into()
+        {  toggle_play = !toggle_play;
+        }
 
         if quit.read() == 0.into()
         { 

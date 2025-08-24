@@ -16,6 +16,8 @@ use tokio::io::AsyncReadExt;
 
 mod auth;
 
+type polarisHandle = serde_json::Value;
+
 pub async fn getBody() -> Result<serde_json::Value, ()> {
     //env_logger::init_from_env(env_logger::Env::new().default_filter_or("info"));
 
@@ -109,3 +111,11 @@ pub async fn polaris() -> impl Iterator<Item=(String,String)> {
     result
 }
 
+pub async fn getIterator(h: polarisHandle) -> impl Iterator<Item=(String,String)> {
+    let mut data = getData(h).await;
+    let result = data.into_iter().map(|x| 
+        { let mut s = String::new(); s.extend([
+              "* ".to_string(),x.1," /".to_string(),"\n  ".to_string(),x.2]);
+          (s, x.0) } );
+    result
+}
