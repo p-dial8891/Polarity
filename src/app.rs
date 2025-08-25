@@ -39,10 +39,10 @@ use std::collections::HashSet;
 
 mod polaris;
 
-async fn getNextTrack(h: polaris::polarisHandle, s: &mut HashSet<usize>) -> String
+async fn getNextTrack(h: polaris::polarisHandle, s: &HashSet<usize>) -> String
 {
     let mut list_polaris = polaris::getIterator(h).await;
-    let index = s.iter().nth(0).unwrap();
+    let index = s.iter().next().unwrap();
     list_polaris.nth(*index).unwrap().1 
 }
 
@@ -107,7 +107,7 @@ async fn run(mut terminal: DefaultTerminal) -> Result<()> {
     let mut playlist: HashSet<usize> = HashSet::new();
     loop {
         terminal.draw(|frame| render(frame, &mut list_state, &list_model, toggle_play, 
-                                        &mut playlist))?;
+                                        &playlist))?;
 //        if let Some(key) = event::read()?.as_key_press_event() {
 //            match key.code {
 //                KeyCode::Char('j') | KeyCode::Down => list_state.select_next(),
@@ -120,24 +120,38 @@ async fn run(mut terminal: DefaultTerminal) -> Result<()> {
         match taskHandle
         {
             None   => { if toggle_play 
-                      {  taskHandle = Some(task::spawn( listenerTask() ));
-                         sendRequestToPlayer(getNextTrack(track_data.clone(), &mut playlist).await)
-                         .await; 
+                      {  if !playlist.is_empty()
+                         {   taskHandle = Some(task::spawn( listenerTask() ));
+                             sendRequestToPlayer(getNextTrack(track_data.clone(), 
+                                 &playlist).await)
+                             .await;
+                          } 
                       } }
 
            Some(ref h) => { if h.is_finished() && toggle_play
-                          { taskHandle = Some(task::spawn( listenerTask() ));
-                            let curr_playlist = playlist.clone();
-                            let index = curr_playlist.iter().nth(0).unwrap();
+                          { let curr_playlist = playlist.clone();
+                            eprintln!("Curr Playlist len {}", curr_playlist.len());
+                            let mut curr_iter = curr_playlist.iter();
+                            eprintln!("Remaining iter length {}", curr_iter.len());
+                            let index = curr_iter.next().unwrap();
                             playlist.remove(index);
-                            sendRequestToPlayer(getNextTrack(track_data.clone(), 
-                                &mut playlist).await)
-                            .await;
+                            if !playlist.is_empty()
+                            {
+                                taskHandle = Some(task::spawn( listenerTask() ));
+                                sendRequestToPlayer(getNextTrack(track_data.clone(), 
+                                    &playlist).await)
+                                .await;
+                            }
+                            else
+                            {
+                                taskHandle = None;
+                                toggle_play = false;
+                            }
                           }
                           else if h.is_finished() && !toggle_play
                           {
                             let curr_playlist = playlist.clone();
-                            let index = curr_playlist.iter().nth(0).unwrap();
+                            let index = curr_playlist.iter().next().unwrap();
                             playlist.remove(index);
                             taskHandle = None;
                           } }
@@ -156,8 +170,7 @@ async fn run(mut terminal: DefaultTerminal) -> Result<()> {
         {  playlist.insert(list_state.selected().unwrap()); }
 
         if req.read() == 0.into()
-        {  toggle_play = !toggle_play;
-        }
+        {  toggle_play = !toggle_play; }
 
         if quit.read() == 0.into()
         { 
@@ -177,7 +190,7 @@ async fn run(mut terminal: DefaultTerminal) -> Result<()> {
 
 /// Render the UI with various lists.
 fn render(frame: &mut Frame, list_state: &mut ListState, 
-list_model: &Vec<String>, toggle_play: bool, playlist: &mut HashSet<usize> ) {
+list_model: &Vec<String>, toggle_play: bool, l_playlist: &HashSet<usize> ) {
     use Constraint::{Fill, Length, Min};
 
     let vertical = Layout::vertical([Length(8), Length(2)]);
@@ -189,7 +202,7 @@ list_model: &Vec<String>, toggle_play: bool, playlist: &mut HashSet<usize> ) {
     //]);
     //frame.render_widget(title.centered(), top);
 
-    render_list(frame, top, list_state, list_model, playlist);
+    render_list(frame, top, list_state, list_model, l_playlist);
     render_bottom(frame, bottom, toggle_play);
 }
 
@@ -197,15 +210,16 @@ const SELECTED_STYLE: Style = Style::new().add_modifier(Modifier::BOLD);
 
 /// Render a list.
 pub fn render_list(frame: &mut Frame, area: Rect, list_state: &mut ListState,
-list_model: &Vec<String>, playlist: &mut HashSet<usize> ) {
+list_model: &Vec<String>, l_playlist: &HashSet<usize> ) {
     let list = List::new(list_model.into_iter().map(|x| x.as_str())
         .enumerate()
-        .map(|(i,x)| { if playlist.contains(&i)
+        .map(|(i,x)| { if l_playlist.contains(&i)
                        { Span::styled(x, Style::default().fg(Color::Yellow)) }
                        else
                        { Span::styled(x, Style::default().fg(Color::White))  } 
                      } ) )
-    .highlight_style(SELECTED_STYLE);
+//    .highlight_style(SELECTED_STYLE);
+    .highlight_style(Modifier::UNDERLINED);
     frame.render_stateful_widget(list, area, list_state);
 }
 
