@@ -19,7 +19,7 @@ use crossterm::event::{self, KeyCode};
 use ratatui::layout::{Constraint, Layout, Rect};
 use ratatui::style::{Color, Modifier, Style, Stylize};
 use ratatui::text::{Line, Span, Text};
-use ratatui::widgets::{List, ListDirection, ListState, Paragraph};
+use ratatui::widgets::{List, ListDirection, ListState, Paragraph, ListItem};
 use ratatui::{DefaultTerminal, Frame};
 
 use std::thread;
@@ -214,9 +214,9 @@ list_model: &Vec<String>, l_playlist: &HashSet<usize> ) {
     let list = List::new(list_model.into_iter().map(|x| x.as_str())
         .enumerate()
         .map(|(i,x)| { if l_playlist.contains(&i)
-                       { Span::styled(x, Style::default().fg(Color::Yellow)) }
+                       { ListItem::new(x).yellow() }
                        else
-                       { Span::styled(x, Style::default().fg(Color::White))  } 
+                       { ListItem::new(x).white()  } 
                      } ) )
 //    .highlight_style(SELECTED_STYLE);
     .highlight_style(Modifier::UNDERLINED);
