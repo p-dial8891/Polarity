@@ -80,7 +80,7 @@ async fn getBody(path: String) -> Bytes {
         .expect("Failed to read cert 3 file");
     println!("Certificate 3 bytes read: {}", cert_byte_count3);
 
-    rustls::crypto::aws_lc_rs::default_provider().install_default();
+    //rustls::crypto::aws_lc_rs::default_provider().install_default();
 
     // Build reqwest client
     let client = Client::builder()
