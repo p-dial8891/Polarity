@@ -128,7 +128,8 @@ async fn run(mut terminal: DefaultTerminal) -> Result<()> {
                           } 
                       } }
 
-           Some(ref h) => { if h.is_finished() && toggle_play
+            Some(ref h) => 
+                          { if h.is_finished() && toggle_play
                           { let curr_playlist = playlist.clone();
                             eprintln!("Curr Playlist len {}", curr_playlist.len());
                             let mut curr_iter = curr_playlist.iter();
