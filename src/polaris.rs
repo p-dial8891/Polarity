@@ -9,10 +9,10 @@ use reqwest::Client;
 use reqwest::Url;
 use rustls::{ClientConfig, RootCertStore};
 use rustls_pki_types::CertificateDer;
-use webpki_roots::TLS_SERVER_ROOTS;
-use tokio::task::spawn_blocking;
 use serde_json::Value;
 use tokio::io::AsyncReadExt;
+use tokio::task::spawn_blocking;
+use webpki_roots::TLS_SERVER_ROOTS;
 
 mod auth;
 
@@ -47,19 +47,22 @@ pub async fn getBody() -> Result<serde_json::Value, ()> {
 
     // Build reqwest client
     let client = Client::builder()
-		.use_rustls_tls()
-        .add_root_certificate(reqwest::tls::Certificate::from_der(&data_buf2).unwrap())
-        .add_root_certificate(reqwest::tls::Certificate::from_der(&data_buf3).unwrap())
+        .use_rustls_tls()
+        .add_root_certificate(
+            reqwest::tls::Certificate::from_der(&data_buf2).unwrap(),
+        )
+        .add_root_certificate(
+            reqwest::tls::Certificate::from_der(&data_buf3).unwrap(),
+        )
         .build()
         .expect("Failed to build reqwest client");
 
     // Target URL
-	//let mut base_url = String::from("https://www.emstreamer.online/api/audio/");
-	//base_url.extend([path.as_str()]);
-	//println!("Url : {}", &base_url);
+    //let mut base_url = String::from("https://www.emstreamer.online/api/audio/");
+    //base_url.extend([path.as_str()]);
+    //println!("Url : {}", &base_url);
     let url = Url::parse(
-        "https://www.emstreamer.online/api/flatten/"
-//        &base_url
+        "https://www.emstreamer.online/api/flatten/", //        &base_url
     )
     .expect("Invalid URL");
 
@@ -75,13 +78,17 @@ pub async fn getBody() -> Result<serde_json::Value, ()> {
     //println!("Status: {}", response.status());
 
     // Read the body
-    let body = response.json::<serde_json::Value>().await
-	    .expect("Error downloading.");
+    let body = response
+        .json::<serde_json::Value>()
+        .await
+        .expect("Error downloading.");
     //println!("Downloaded: {}", body.len());
     Ok::<_, _>(body)
 }
 
-pub async fn getData(data: serde_json::Value) -> impl Iterator<Item = (String, String, String)> {
+pub async fn getData(
+    data: serde_json::Value,
+) -> impl Iterator<Item = (String, String, String)> {
     if let Value::Array(vec) = data {
         let tracks = vec.into_iter();
         let id_iter = tracks.map(|x| {
@@ -101,21 +108,36 @@ pub async fn getData(data: serde_json::Value) -> impl Iterator<Item = (String, S
     }
 }
 
-
-pub async fn polaris() -> impl Iterator<Item=(String,String)> {
+pub async fn polaris() -> impl Iterator<Item = (String, String)> {
     let mut data = getData(getBody().await.unwrap()).await;
-    let result = data.into_iter().map(|x| 
-        { let mut s = String::new(); s.extend([
-              "* ".to_string(),x.1," /".to_string(),"\n  ".to_string(),x.2]);
-          (s, x.0) } );
+    let result = data.into_iter().map(|x| {
+        let mut s = String::new();
+        s.extend([
+            "* ".to_string(),
+            x.1,
+            " /".to_string(),
+            "\n  ".to_string(),
+            x.2,
+        ]);
+        (s, x.0)
+    });
     result
 }
 
-pub async fn getIterator(h: polarisHandle) -> impl Iterator<Item=(String,String)> {
+pub async fn getIterator(
+    h: polarisHandle,
+) -> impl Iterator<Item = (String, String)> {
     let mut data = getData(h).await;
-    let result = data.into_iter().map(|x| 
-        { let mut s = String::new(); s.extend([
-              "* ".to_string(),x.1," /".to_string(),"\n  ".to_string(),x.2]);
-          (s, x.0) } );
+    let result = data.into_iter().map(|x| {
+        let mut s = String::new();
+        s.extend([
+            "* ".to_string(),
+            x.1,
+            " /".to_string(),
+            "\n  ".to_string(),
+            x.2,
+        ]);
+        (s, x.0)
+    });
     result
 }
