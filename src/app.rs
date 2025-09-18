@@ -38,6 +38,7 @@ use tokio::{net::TcpListener, task, time::sleep};
 use std::collections::HashSet;
 
 mod polaris;
+use crate::playbackStateType::{Ready, Running, Finished};
 
 async fn getNextTrack(h: polaris::polarisHandle, s: &HashSet<usize>) -> String {
     let mut list_polaris = polaris::getIterator(h).await;
@@ -75,6 +76,27 @@ async fn listenerTask() {
     socket.read(&mut buf).await.unwrap();
 }
 
+enum playbackStateType {
+    Ready,
+    Running,
+    Finished,
+}
+
+fn getPlaybackState(
+    t: &Option<task::JoinHandle<()>>,
+) -> playbackStateType {
+    match t {
+        None => Ready,
+        Some(h) => {
+            if h.is_finished() {
+                Finished
+            } else {
+                Running
+            }
+        }
+    }
+}
+
 #[tokio::main]
 async fn main() -> Result<()> {
     color_eyre::install().unwrap();
@@ -110,16 +132,47 @@ async fn run(mut terminal: DefaultTerminal) -> Result<()> {
         terminal.draw(|frame| {
             render(frame, &mut list_state, &list_model, toggle_play, &playlist)
         })?;
-//        if let Some(key) = event::read()?.as_key_press_event() {
-//            match key.code {
-//                KeyCode::Char('j') | KeyCode::Down => list_state.select_next(),
-//                KeyCode::Char('k') | KeyCode::Up => list_state.select_previous(),
-//                KeyCode::Char('q') | KeyCode::Esc => return Ok(()),
-//                _ => {}
-//            }
-//        }
+        //        if let Some(key) = event::read()?.as_key_press_event() {
+        //            match key.code {
+        //                KeyCode::Char('j') | KeyCode::Down => list_state.select_next(),
+        //                KeyCode::Char('k') | KeyCode::Up => list_state.select_previous(),
+        //                KeyCode::Char('q') | KeyCode::Esc => return Ok(()),
+        //                _ => {}
+        //            }
+        //        }
 
-        match taskHandle {
+        let mut playbackState = getPlaybackState(&taskHandle);
+
+        // 
+        if let Ready = playbackState && toggle_play && !playlist.is_empty()
+		{
+			taskHandle = Some(task::spawn(listenerTask()));
+			sendRequestToPlayer(
+				getNextTrack(track_data.clone(), &playlist).await,
+			)
+			.await;
+		}
+		
+		if let Finished = playbackState && playlist.is_empty()
+		{
+			taskHandle = None;
+			toggle_play = false;
+		}
+		
+		if let Finished = playbackState
+		{
+			let curr_playlist = playlist.clone();
+			eprintln!("Curr Playlist len {}", curr_playlist.len());
+			let mut curr_iter = curr_playlist.iter();
+			eprintln!("Remaining iter length {}", curr_iter.len());
+			let index = curr_iter.next().unwrap();
+			playlist.remove(index);
+			
+			playbackState = Ready;
+        }
+
+		
+/*         match taskHandle {
             None => {
                 if toggle_play {
                     if !playlist.is_empty() {
@@ -158,7 +211,7 @@ async fn run(mut terminal: DefaultTerminal) -> Result<()> {
                 }
             }
         }
-
+ */
         if up.read() == 0.into() {
             list_state.select_previous();
         }
