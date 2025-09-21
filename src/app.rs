@@ -38,7 +38,7 @@ use tokio::{net::TcpListener, task, time::sleep};
 use std::collections::HashSet;
 
 mod polaris;
-use crate::playbackStateType::{Ready, Running, Finished};
+use crate::playbackStateType::{Ready, Waiting, Finished};
 
 async fn getNextTrack(h: polaris::polarisHandle, s: &HashSet<usize>) -> String {
     let mut list_polaris = polaris::getIterator(h).await;
@@ -76,22 +76,24 @@ async fn listenerTask() {
     socket.read(&mut buf).await.unwrap();
 }
 
+#[derive(PartialEq)]
 enum playbackStateType {
     Ready,
-    Running,
+	Waiting,
     Finished,
 }
 
 fn getPlaybackState(
-    t: &Option<task::JoinHandle<()>>,
+    t: &mut Option<task::JoinHandle<()>>,
 ) -> playbackStateType {
     match t {
-        None => Ready,
+        None => Waiting,
         Some(h) => {
             if h.is_finished() {
+                *t = None;
                 Finished
             } else {
-                Running
+                Waiting
             }
         }
     }
@@ -128,6 +130,7 @@ async fn run(mut terminal: DefaultTerminal) -> Result<()> {
     let mut index = 0;
     let mut toggle_play = false;
     let mut playlist: HashSet<usize> = HashSet::new();
+    let mut playbackState = Ready;
     loop {
         terminal.draw(|frame| {
             render(frame, &mut list_state, &list_model, toggle_play, &playlist)
@@ -141,77 +144,36 @@ async fn run(mut terminal: DefaultTerminal) -> Result<()> {
         //            }
         //        }
 
-        let mut playbackState = getPlaybackState(&taskHandle);
-
         // 
-        if let Ready = playbackState && toggle_play && !playlist.is_empty()
-		{
-			taskHandle = Some(task::spawn(listenerTask()));
-			sendRequestToPlayer(
-				getNextTrack(track_data.clone(), &playlist).await,
-			)
-			.await;
+        if Ready == playbackState {
+			if  toggle_play && !playlist.is_empty() {
+	    		taskHandle = Some(task::spawn(listenerTask()));
+		    	sendRequestToPlayer(
+			    	getNextTrack(track_data.clone(), &playlist).await,
+			    )
+			    .await;
+    			playbackState = Waiting;
+		    }
 		}
 		
-		if let Finished = playbackState && playlist.is_empty()
-		{
-			taskHandle = None;
-			toggle_play = false;
+		if Waiting == playbackState {
+			playbackState = getPlaybackState(&mut taskHandle);
 		}
 		
-		if let Finished = playbackState
-		{
+		if Finished == playbackState {
 			let curr_playlist = playlist.clone();
 			eprintln!("Curr Playlist len {}", curr_playlist.len());
 			let mut curr_iter = curr_playlist.iter();
 			eprintln!("Remaining iter length {}", curr_iter.len());
 			let index = curr_iter.next().unwrap();
 			playlist.remove(index);
+			if playlist.is_empty() {
+			    toggle_play = false;
+		    }
 			
 			playbackState = Ready;
         }
 
-		
-/*         match taskHandle {
-            None => {
-                if toggle_play {
-                    if !playlist.is_empty() {
-                        taskHandle = Some(task::spawn(listenerTask()));
-                        sendRequestToPlayer(
-                            getNextTrack(track_data.clone(), &playlist).await,
-                        )
-                        .await;
-                    }
-                }
-            }
-
-            Some(ref h) => {
-                if h.is_finished() && toggle_play {
-                    let curr_playlist = playlist.clone();
-                    eprintln!("Curr Playlist len {}", curr_playlist.len());
-                    let mut curr_iter = curr_playlist.iter();
-                    eprintln!("Remaining iter length {}", curr_iter.len());
-                    let index = curr_iter.next().unwrap();
-                    playlist.remove(index);
-                    if !playlist.is_empty() {
-                        taskHandle = Some(task::spawn(listenerTask()));
-                        sendRequestToPlayer(
-                            getNextTrack(track_data.clone(), &playlist).await,
-                        )
-                        .await;
-                    } else {
-                        taskHandle = None;
-                        toggle_play = false;
-                    }
-                } else if h.is_finished() && !toggle_play {
-                    let curr_playlist = playlist.clone();
-                    let index = curr_playlist.iter().next().unwrap();
-                    playlist.remove(index);
-                    taskHandle = None;
-                }
-            }
-        }
- */
         if up.read() == 0.into() {
             list_state.select_previous();
         }

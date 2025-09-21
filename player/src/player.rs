@@ -163,7 +163,7 @@ async fn spawn(fut: impl Future<Output = ()> + Send + 'static) {
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
 //    let server_addr = (IpAddr::V4(Ipv4Addr::new(192, 168, 1, 100)), 50051);
-    let server_addr = ("ser6.local", 50051);
+    let server_addr = ("raspberrypi.local", 50051);
     let mut retry_count = 3;
 
     while retry_count > 0
