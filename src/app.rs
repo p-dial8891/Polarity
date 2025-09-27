@@ -36,6 +36,7 @@ use tokio::io::AsyncReadExt;
 use tokio::{net::TcpListener, task, time::sleep};
 
 use std::collections::HashSet;
+use std::rc::Rc;
 
 mod polaris;
 use crate::playbackStateType::{Ready, Waiting, Finished};
@@ -127,10 +128,11 @@ async fn run(mut terminal: DefaultTerminal) -> Result<()> {
         .map(|x| x.0)
         .collect::<Vec<String>>();
     let mut list_state = ListState::default().with_selected(Some(0));
-    let mut index = 0;
     let mut toggle_play = false;
-    let mut playlist: HashSet<usize> = HashSet::new();
+    let mut playlist: Rc<HashSet<usize>> = Rc::new(HashSet::new());
     let mut playbackState = Ready;
+	
+	terminal.clear().unwrap();
     loop {
         terminal.draw(|frame| {
             render(frame, &mut list_state, &list_model, toggle_play, &playlist)
@@ -146,7 +148,7 @@ async fn run(mut terminal: DefaultTerminal) -> Result<()> {
 
         // 
         if Ready == playbackState {
-			if  toggle_play && !playlist.is_empty() {
+			if toggle_play && !playlist.is_empty() {
 	    		taskHandle = Some(task::spawn(listenerTask()));
 		    	sendRequestToPlayer(
 			    	getNextTrack(track_data.clone(), &playlist).await,
@@ -161,12 +163,12 @@ async fn run(mut terminal: DefaultTerminal) -> Result<()> {
 		}
 		
 		if Finished == playbackState {
-			let curr_playlist = playlist.clone();
+			let curr_playlist = (*playlist).clone();
 			eprintln!("Curr Playlist len {}", curr_playlist.len());
 			let mut curr_iter = curr_playlist.iter();
 			eprintln!("Remaining iter length {}", curr_iter.len());
 			let index = curr_iter.next().unwrap();
-			playlist.remove(index);
+			Rc::get_mut(&mut playlist).unwrap().remove(index);
 			if playlist.is_empty() {
 			    toggle_play = false;
 		    }
@@ -183,11 +185,13 @@ async fn run(mut terminal: DefaultTerminal) -> Result<()> {
         }
 
         if left.read() == 0.into() {
-            playlist.remove(&list_state.selected().unwrap());
+            Rc::get_mut(&mut playlist).unwrap()
+			    .remove(&list_state.selected().unwrap());
         }
 
         if right.read() == 0.into() {
-            playlist.insert(list_state.selected().unwrap());
+            Rc::get_mut(&mut playlist).unwrap()
+			    .insert(list_state.selected().unwrap());
         }
 
         if req.read() == 0.into() {
