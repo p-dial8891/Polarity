@@ -7,6 +7,10 @@ edition = "2024"
 name = "app"
 path = "src/app.rs"
 
+[[bin]]
+name = "tui"
+path = "src/tui/tui.rs"
+
 [dependencies]
 color-eyre = "0.6.5"
 crossterm = "0.29.0"
