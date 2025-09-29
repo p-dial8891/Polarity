@@ -1,7 +1,14 @@
 use crate::ComponentId::{C1, C2};
+use crate::ComponentList::{L1, L2};
 use std::rc::Rc;
 
 // Enums
+#[derive(Clone)]
+enum ComponentList {
+	L1(Component1Controller),
+	L2(Component2Controller)
+}
+
 #[derive(Clone)]
 enum ComponentId {
 	C1(usize),
@@ -11,17 +18,14 @@ enum ComponentId {
 // Traits
 
 trait Controller {
-    fn register(&self, v: &mut Vec<Rc<dyn Controller>>);
 	fn step(&self) -> Option<Rc<dyn Model>>;
 }
 
 trait Model {
-    fn register(&self, v: &mut Vec<Rc<dyn Model>>);
 	fn step(&self) -> Option<Rc<dyn View>>;
 }
 
 trait View {
-    fn register(&self, v: &mut Vec<Rc<dyn View>>);
 	fn end(&self);
 }
 
@@ -44,12 +48,6 @@ struct Component1View {
 
 // Implementations - Component 1
 impl Controller for Component1Controller {
-    fn register(&self, v: &mut Vec<Rc<dyn Controller>>) {
-        if let C1(i) = self.id { 
-		  v.insert(i,Rc::new((*self).clone())); 
-		}		
-	}
-	
 	fn step(&self) -> Option<Rc<dyn Model>>{
         if let C1(i) = self.id { 
 			let c1_mdl = Component1Model { 
@@ -64,12 +62,6 @@ impl Controller for Component1Controller {
 }
 
 impl Model for Component1Model {
-    fn register(&self, v: &mut Vec<Rc<dyn Model>>) {
-        if let C1(i) = self.id { 
-		  v.insert(i,Rc::new((*self).clone())); 
-		}
-	}
-	
 	fn step(&self) -> Option<Rc<dyn View>> {
         if let C1(i) = self.id { 
 			let c1_viw = Component1View { 
@@ -84,12 +76,6 @@ impl Model for Component1Model {
 }
 
 impl View for Component1View {
-    fn register(&self, v: &mut Vec<Rc<dyn View>>) {
-        if let C1(i) = self.id { 
-		  v.insert(i, Rc::new((*self).clone())); 
-		}		
-	}
-	
 	fn end(&self){
 
 	}
@@ -115,12 +101,6 @@ struct Component2View {
 
 // Implementations - Component 2
 impl Controller for Component2Controller {
-    fn register(&self, v: &mut Vec<Rc<dyn Controller>>) {
-        if let C2(i) = self.id { 
-		  v.insert(i,Rc::new((*self).clone())); 
-		}		
-	}
-	
 	fn step(&self) -> Option<Rc<dyn Model>> {
         if let C2(i) = self.id { 
 			let c2_mdl = Component2Model { 
@@ -135,12 +115,6 @@ impl Controller for Component2Controller {
 }
 
 impl Model for Component2Model {
-    fn register(&self, v: &mut Vec<Rc<dyn Model>>) {
-        if let C2(i) = self.id { 
-		  v.insert(i,Rc::new((*self).clone())); 
-		}		
-	}
-	
 	fn step(&self) -> Option<Rc<dyn View>> {
         if let C2(i) = self.id { 
 			let c2_viw = Component2View { 
@@ -155,20 +129,21 @@ impl Model for Component2Model {
 }
 
 impl View for Component2View {
-    fn register(&self, v: &mut Vec<Rc<dyn View>>) {
-        if let C2(i) = self.id { 
-		  v.insert(i,Rc::new((*self).clone())); 
-		}		
-	}
-	
 	fn end(&self){
 
 	}
 }
 
+fn execute<C: Controller>(controller: C) {
+	controller
+	    .step().unwrap()
+		.step().unwrap()
+		.end()
+}
+
 // Main application
 fn main() {
-    let mut v_ctl = Vec::<Rc<dyn Controller>>::new();
+    let mut v_ctl = Vec::<ComponentList>::new();
 
     let c1_ctl = Component1Controller { 
 	  id: C1(0),
@@ -180,18 +155,13 @@ fn main() {
 	  a: 28
 	};
 
-	c1_ctl.register(&mut v_ctl);
-	c2_ctl.register(&mut v_ctl);
+	v_ctl.insert(0,ComponentList::L1(c1_ctl));
+	v_ctl.insert(1,ComponentList::L2(c2_ctl));
 
-
-	c1_ctl
-	  .step().unwrap()
-	  .step().unwrap()
-	  .end();
-	  
-	c2_ctl
-	  .step().unwrap()
-	  .step().unwrap()
-	  .end();
-	  
+    for i in v_ctl {
+		match i {
+			L1(list_item) => { execute(list_item); }
+            L2(list_item) => { execute(list_item); }
+		}
+	}
 }
