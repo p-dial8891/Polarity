@@ -1,6 +1,9 @@
+use rppal::gpio::Gpio;
 use crate::ComponentId::{C1, C2};
 use crate::ComponentList::{L1, L2};
 use std::rc::Rc;
+
+use std::sync::LazyLock;
 
 // Enums
 #[derive(Clone)]
@@ -33,16 +36,19 @@ trait View {
 #[derive(Clone)]
 struct Component1Controller {
 	id: ComponentId,
+	env: Env,
 	a: i32
 }
 #[derive(Clone)]
 struct Component1Model {
 	id: ComponentId,
+	env: Env,
 	b: String
 }
 #[derive(Clone)]
 struct Component1View {
 	id: ComponentId,
+	env: Env,
 	c: i8
 }
 
@@ -52,6 +58,7 @@ impl Controller for Component1Controller {
         if let C1(i) = self.id { 
 			let c1_mdl = Component1Model { 
 			  id: C1(0),
+			  env: self.env.clone(),
 			  b: String::from("Hello")
 			};
 		    Some(Rc::new(c1_mdl)) 
@@ -66,6 +73,7 @@ impl Model for Component1Model {
         if let C1(i) = self.id { 
 			let c1_viw = Component1View { 
 			  id: C1(0),
+			  env: self.env.clone(),
 			  c: 2
 			};
 		    Some(Rc::new(c1_viw)) 
@@ -141,12 +149,22 @@ fn execute<C: Controller>(controller: C) {
 		.end()
 }
 
+#[derive(Clone)]
+struct Env {
+	gpio_device: &'static Gpio
+}
+
+pub static gpio_d_ll: LazyLock<Gpio> = LazyLock::new(|| {
+Gpio::new().unwrap() } );
+
 // Main application
 fn main() {
     let mut v_ctl = Vec::<ComponentList>::new();
+    let gpio_d = &*gpio_d_ll;
 
     let c1_ctl = Component1Controller { 
 	  id: C1(0),
+	  env: Env { gpio_device: gpio_d },
 	  a: 32
 	};
 
