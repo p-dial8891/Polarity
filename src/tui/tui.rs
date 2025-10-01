@@ -21,15 +21,15 @@ enum ComponentId {
 // Traits
 
 trait Controller {
-	fn step(&self) -> Option<Rc<dyn Model>>;
+	fn step(&mut self) -> Option<Rc<dyn Model>>;
 }
 
 trait Model {
-	fn step(&self) -> Option<Rc<dyn View>>;
+	fn step(&mut self) -> Option<Rc<dyn View>>;
 }
 
 trait View {
-	fn end(&self);
+	fn end(&mut self);
 }
 
 // Component 1
@@ -54,7 +54,7 @@ struct Component1View {
 
 // Implementations - Component 1
 impl Controller for Component1Controller {
-	fn step(&self) -> Option<Rc<dyn Model>>{
+	fn step(&mut self) -> Option<Rc<dyn Model>>{
         if let C1(i) = self.id { 
 			let c1_mdl = Component1Model { 
 			  id: C1(0),
@@ -69,7 +69,7 @@ impl Controller for Component1Controller {
 }
 
 impl Model for Component1Model {
-	fn step(&self) -> Option<Rc<dyn View>> {
+	fn step(&mut self) -> Option<Rc<dyn View>> {
         if let C1(i) = self.id { 
 			let c1_viw = Component1View { 
 			  id: C1(0),
@@ -84,7 +84,7 @@ impl Model for Component1Model {
 }
 
 impl View for Component1View {
-	fn end(&self){
+	fn end(&mut self){
 
 	}
 }
@@ -109,7 +109,7 @@ struct Component2View {
 
 // Implementations - Component 2
 impl Controller for Component2Controller {
-	fn step(&self) -> Option<Rc<dyn Model>> {
+	fn step(&mut self) -> Option<Rc<dyn Model>> {
         if let C2(i) = self.id { 
 			let c2_mdl = Component2Model { 
 			  id: C2(1),
@@ -123,7 +123,7 @@ impl Controller for Component2Controller {
 }
 
 impl Model for Component2Model {
-	fn step(&self) -> Option<Rc<dyn View>> {
+	fn step(&mut self) -> Option<Rc<dyn View>> {
         if let C2(i) = self.id { 
 			let c2_viw = Component2View { 
 			  id: C2(1),
@@ -137,16 +137,17 @@ impl Model for Component2Model {
 }
 
 impl View for Component2View {
-	fn end(&self){
+	fn end(&mut self){
 
 	}
 }
 
-fn execute<C: Controller>(controller: C) {
-	controller
-	    .step().unwrap()
-		.step().unwrap()
-		.end()
+fn execute<C: Controller>(mut controller: C) {
+	let mut model = controller.step().unwrap();
+	let model_mut = Rc::get_mut(&mut model).unwrap();
+	let mut view  = model_mut.step().unwrap();
+	let view_mut  = Rc::get_mut(&mut view).unwrap();
+	let _         = view_mut.end();
 }
 
 #[derive(Clone)]
