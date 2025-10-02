@@ -1,5 +1,4 @@
 use rppal::gpio::Gpio;
-use crate::ComponentId::{C1, C2};
 use crate::ComponentList::{L1, L2};
 use std::rc::Rc;
 
@@ -10,12 +9,6 @@ use std::sync::LazyLock;
 enum ComponentList {
 	L1(Component1Controller),
 	L2(Component2Controller)
-}
-
-#[derive(Clone)]
-enum ComponentId {
-	C1(usize),
-	C2(usize)
 }
 
 // Traits
@@ -35,19 +28,16 @@ trait View {
 // Component 1
 #[derive(Clone)]
 struct Component1Controller {
-	id: ComponentId,
 	env: Env,
 	a: i32
 }
 #[derive(Clone)]
 struct Component1Model {
-	id: ComponentId,
 	env: Env,
 	b: String
 }
 #[derive(Clone)]
 struct Component1View {
-	id: ComponentId,
 	env: Env,
 	c: i8
 }
@@ -57,7 +47,6 @@ impl Controller for Component1Controller {
 	fn step(&mut self) -> Option<Rc<dyn Model>>{
         if let C1(i) = self.id { 
 			let c1_mdl = Component1Model { 
-			  id: C1(0),
 			  env: self.env.clone(),
 			  b: String::from("Hello")
 			};
@@ -72,7 +61,6 @@ impl Model for Component1Model {
 	fn step(&mut self) -> Option<Rc<dyn View>> {
         if let C1(i) = self.id { 
 			let c1_viw = Component1View { 
-			  id: C1(0),
 			  env: self.env.clone(),
 			  c: 2
 			};
@@ -92,17 +80,14 @@ impl View for Component1View {
 // Component 2
 #[derive(Clone)]
 struct Component2Controller {
-	id: ComponentId,
 	a: i32
 }
 #[derive(Clone)]
 struct Component2Model {
-	id: ComponentId,
 	b: String
 }
 #[derive(Clone)]
 struct Component2View {
-	id: ComponentId,
 	c: i8
 }
 
@@ -112,7 +97,6 @@ impl Controller for Component2Controller {
 	fn step(&mut self) -> Option<Rc<dyn Model>> {
         if let C2(i) = self.id { 
 			let c2_mdl = Component2Model { 
-			  id: C2(1),
 			  b: String::from("GoodBye")
 			};
 		    Some(Rc::new(c2_mdl)) 
@@ -126,7 +110,6 @@ impl Model for Component2Model {
 	fn step(&mut self) -> Option<Rc<dyn View>> {
         if let C2(i) = self.id { 
 			let c2_viw = Component2View { 
-			  id: C2(1),
 			  c: 4
 			};
 		    Some(Rc::new(c2_viw)) 
@@ -164,13 +147,11 @@ fn main() {
     let gpio_d = &*gpio_d_ll;
 
     let c1_ctl = Component1Controller { 
-	  id: C1(0),
 	  env: Env { gpio_device: gpio_d },
 	  a: 32
 	};
 
     let c2_ctl = Component2Controller { 
-	  id: C2(1),
 	  a: 28
 	};
 
