@@ -8,11 +8,10 @@ use crate::tui::screen1;
 use crate::tui::Controller;
 
 fn execute<C: Controller>(mut controller: C) {
-	let mut model = controller.step().unwrap();
-	let model_mut = model.as_mut();
-	let mut view  = model_mut.step().unwrap();
-	let view_mut  = view.as_mut();
-	let _         = view_mut.end();
+    controller
+	    .step().unwrap().as_mut()
+		.step().unwrap().as_mut()
+		.end();
 }
 
 #[derive(Clone)]
