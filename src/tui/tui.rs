@@ -1,6 +1,6 @@
 use rppal::gpio::Gpio;
 use crate::ComponentList::{L1, L2};
-use std::rc::Rc;
+use std::boxed::Box;
 
 use std::sync::LazyLock;
 
@@ -11,14 +11,24 @@ enum ComponentList {
 	L2(Component2Controller)
 }
 
+#[derive(Clone)]
+enum ScreenList {
+	S1,
+	S2,
+	S3
+}
+
 // Traits
 
 trait Controller {
-	fn step(&mut self) -> Option<Rc<dyn Model>>;
+	fn step(&mut self) -> Option<Box<dyn Model>>;
+	fn set_screen(&mut self) {
+		
+	}
 }
 
 trait Model {
-	fn step(&mut self) -> Option<Rc<dyn View>>;
+	fn step(&mut self) -> Option<Box<dyn View>>;
 }
 
 trait View {
@@ -44,30 +54,26 @@ struct Component1View {
 
 // Implementations - Component 1
 impl Controller for Component1Controller {
-	fn step(&mut self) -> Option<Rc<dyn Model>>{
-        if let C1(i) = self.id { 
-			let c1_mdl = Component1Model { 
-			  env: self.env.clone(),
-			  b: String::from("Hello")
-			};
-		    Some(Rc::new(c1_mdl)) 
-		} else {
-		    None
-		}
+	fn step(&mut self) -> Option<Box<dyn Model>>{
+		let c1_mdl = Component1Model { 
+		  env: self.env.clone(),
+		  b: String::from("Hello")
+		};
+		Some(Box::new(c1_mdl)) 
+	}
+	
+	fn set_screen(&mut self) {
+		self.env.active_screen = ScreenList::S3;
 	}
 }
 
 impl Model for Component1Model {
-	fn step(&mut self) -> Option<Rc<dyn View>> {
-        if let C1(i) = self.id { 
-			let c1_viw = Component1View { 
-			  env: self.env.clone(),
-			  c: 2
-			};
-		    Some(Rc::new(c1_viw)) 
-		} else {
-		    None
-		}
+	fn step(&mut self) -> Option<Box<dyn View>> {
+		let c1_viw = Component1View { 
+		  env: self.env.clone(),
+		  c: 2
+		};
+		Some(Box::new(c1_viw)) 
 	}
 }
 
@@ -94,28 +100,21 @@ struct Component2View {
 
 // Implementations - Component 2
 impl Controller for Component2Controller {
-	fn step(&mut self) -> Option<Rc<dyn Model>> {
-        if let C2(i) = self.id { 
-			let c2_mdl = Component2Model { 
-			  b: String::from("GoodBye")
-			};
-		    Some(Rc::new(c2_mdl)) 
-		} else {
-			None
-		}
+	fn step(&mut self) -> Option<Box<dyn Model>> {
+		let c2_mdl = Component2Model { 
+		  b: String::from("GoodBye")
+		};
+		Some(Box::new(c2_mdl)) 
 	}
+	
 }
 
 impl Model for Component2Model {
-	fn step(&mut self) -> Option<Rc<dyn View>> {
-        if let C2(i) = self.id { 
-			let c2_viw = Component2View { 
-			  c: 4
-			};
-		    Some(Rc::new(c2_viw)) 
-		} else {
-			None
-		}
+	fn step(&mut self) -> Option<Box<dyn View>> {
+		let c2_viw = Component2View { 
+		  c: 4
+		};
+		Some(Box::new(c2_viw)) 
 	}
 }
 
@@ -127,15 +126,16 @@ impl View for Component2View {
 
 fn execute<C: Controller>(mut controller: C) {
 	let mut model = controller.step().unwrap();
-	let model_mut = Rc::get_mut(&mut model).unwrap();
+	let model_mut = model.as_mut();
 	let mut view  = model_mut.step().unwrap();
-	let view_mut  = Rc::get_mut(&mut view).unwrap();
+	let view_mut  = view.as_mut();
 	let _         = view_mut.end();
 }
 
 #[derive(Clone)]
 struct Env {
-	gpio_device: &'static Gpio
+	gpio_device: &'static Gpio,
+	active_screen: ScreenList
 }
 
 pub static gpio_d_ll: LazyLock<Gpio> = LazyLock::new(|| {
@@ -147,7 +147,8 @@ fn main() {
     let gpio_d = &*gpio_d_ll;
 
     let c1_ctl = Component1Controller { 
-	  env: Env { gpio_device: gpio_d },
+	  env: Env { gpio_device: gpio_d,
+          active_screen: ScreenList::S1	  },
 	  a: 32
 	};
 
