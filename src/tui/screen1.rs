@@ -3,12 +3,14 @@ use crate::tui::Controller as ControllerTrait;
 use crate::tui::Model as ModelTrait;
 use crate::tui::View as ViewTrait;
 use crate::tui::app::Env;
+use std::rc::Rc;
 
 // Component 1
 #[derive(Clone)]
 pub struct Controller {
 	pub env: Env,
-	pub a: i32
+	pub a: i32,
+	pub mdl: Option<Rc<dyn ModelTrait>>
 }
 #[derive(Clone)]
 struct Model {
@@ -23,12 +25,18 @@ struct View {
 
 // Implementations - Component 1
 impl ControllerTrait for Controller {
-	fn step(&mut self) -> Option<Box<dyn ModelTrait>>{
+	fn step(&mut self) -> Option<Rc<dyn ModelTrait>>{
 		let model = Model { 
 		  env: self.env.clone(),
 		  b: String::from("Hello")
 		};
-		Some(Box::new(model)) 
+		match self.mdl {
+			None     =>  {
+			    self.mdl = Some(Rc::new(model));
+			    self.mdl.clone() }
+				
+			_        => self.mdl.clone()
+		}
 	}
 	
 	fn set_screen(&mut self) {
@@ -37,12 +45,12 @@ impl ControllerTrait for Controller {
 }
 
 impl ModelTrait for Model {
-	fn step(&mut self) -> Option<Box<dyn ViewTrait>> {
+	fn step(&mut self) -> Option<Rc<dyn ViewTrait>> {
 		let view = View { 
 		  env: self.env.clone(),
 		  c: 2
 		};
-		Some(Box::new(view)) 
+		Some(Rc::new(view)) 
 	}
 }
 

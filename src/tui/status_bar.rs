@@ -3,6 +3,8 @@ use crate::tui::Controller as ControllerTrait;
 use crate::tui::Model as ModelTrait;
 use crate::tui::View as ViewTrait;
 
+use std::rc::Rc;
+
 // Component 2
 #[derive(Clone)]
 pub struct Component2Controller {
@@ -20,21 +22,21 @@ struct Component2View {
 
 // Implementations - Component 2
 impl ControllerTrait for Component2Controller {
-	fn step(&mut self) -> Option<Box<dyn ModelTrait>> {
+	fn step(&mut self) -> Option<Rc<dyn ModelTrait>> {
 		let c2_mdl = Component2Model { 
 		  b: String::from("GoodBye")
 		};
-		Some(Box::new(c2_mdl)) 
+		Some(Rc::new(c2_mdl)) 
 	}
 	
 }
 
 impl ModelTrait for Component2Model {
-	fn step(&mut self) -> Option<Box<dyn ViewTrait>> {
+	fn step(&mut self) -> Option<Rc<dyn ViewTrait>> {
 		let c2_viw = Component2View { 
 		  c: 4
 		};
-		Some(Box::new(c2_viw)) 
+		Some(Rc::new(c2_viw)) 
 	}
 }
 

@@ -2,6 +2,8 @@ mod screen1;
 mod status_bar;
 pub mod app;
 
+use std::rc::Rc;
+
 // Enums
 #[derive(Clone)]
 pub enum ComponentList {
@@ -16,14 +18,14 @@ pub enum ScreenList {
 
 // Traits
 trait Controller {
-	fn step(&mut self) -> Option<Box<dyn Model>>;
+	fn step(&mut self) -> Option<Rc<dyn Model>>;
 	fn set_screen(&mut self) {
 		
 	}
 }
 
 trait Model {
-	fn step(&mut self) -> Option<Box<dyn View>>;
+	fn step(&mut self) -> Option<Rc<dyn View>>;
 }
 
 trait View {
