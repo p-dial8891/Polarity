@@ -1,61 +1,68 @@
-use crate::tui::ScreenList;
-use crate::tui::Controller as ControllerTrait;
-use crate::tui::Model as ModelTrait;
-use crate::tui::View as ViewTrait;
-use crate::tui::app::Env;
-use std::rc::Rc;
+use crate::tui::Component;
+use std::rc::{Rc, Weak};
 
-// Component 1
-#[derive(Clone)]
+pub struct Starting {
+
+	pub w : Weak<Vec<Rc<dyn Component>>>,
+	
+}	
+	
 pub struct Controller {
-	pub env: Env,
-	pub a: i32,
-	pub mdl: Option<Rc<dyn ModelTrait>>
-}
-#[derive(Clone)]
-struct Model {
-	env: Env,
-	b: String
-}
-#[derive(Clone)]
-struct View {
-	env: Env,
-	c: i8
+	
+	pub w : Weak<Vec<Rc<dyn Component>>>,
+	
 }
 
-// Implementations - Component 1
-impl ControllerTrait for Controller {
-	fn step(&mut self) -> Option<Rc<dyn ModelTrait>>{
-		let model = Model { 
-		  env: self.env.clone(),
-		  b: String::from("Hello")
-		};
-		match self.mdl {
-			None     =>  {
-			    self.mdl = Some(Rc::new(model));
-			    self.mdl.clone() }
-				
-			_        => self.mdl.clone()
-		}
+impl Component for Starting {
+
+    fn controller(&mut self) -> Option<Rc<dyn Component>> {
+		
+		Some(self.step())
+		
 	}
 	
-	fn set_screen(&mut self) {
-		self.env.active_screen = ScreenList::S1;
+	fn model(&mut self) -> Option<Rc<dyn Component>> {
+		
+		None
+		
 	}
+	
+	fn view(&mut self) {
+		
+	}
+
+	fn step(&mut self) -> Rc<dyn Component> {
+		
+		let p = self.w.upgrade().unwrap();
+        p[1].clone()
+	
+    }
+
 }
 
-impl ModelTrait for Model {
-	fn step(&mut self) -> Option<Rc<dyn ViewTrait>> {
-		let view = View { 
-		  env: self.env.clone(),
-		  c: 2
-		};
-		Some(Rc::new(view)) 
-	}
-}
+impl Component for Controller {
 
-impl ViewTrait for View {
-	fn end(&mut self){
-
+    fn controller(&mut self) -> Option<Rc<dyn Component>> {
+		
+		None
+		
 	}
+	
+	fn model(&mut self) -> Option<Rc<dyn Component>> {
+		
+		None
+		
+	}
+	
+	fn view(&mut self) {
+		
+	}
+
+	fn step(&mut self) -> Rc<dyn Component> {
+		
+		let p = self.w.upgrade().unwrap();
+        p[1].clone()
+	
+    }
+
 }

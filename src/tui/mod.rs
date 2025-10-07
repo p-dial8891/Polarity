@@ -1,33 +1,48 @@
 mod screen1;
-mod status_bar;
 pub mod app;
 
 use std::rc::Rc;
 
-// Enums
-#[derive(Clone)]
-pub enum ComponentList {
-	L1(screen1::Controller),
-	L2(status_bar::Component2Controller)
+struct Components {
+
+	v : Rc<Vec<Rc<dyn Component>>>
+
 }
 
-#[derive(Clone)]
-pub enum ScreenList {
-	S1
+trait Component {
+	
+	fn controller(&mut self) -> Option<Rc<dyn Component>>;
+	
+	fn model(&mut self) -> Option<Rc<dyn Component>>;
+	
+	fn view(&mut self) -> ();
+	
+	fn step(&mut self) -> Rc<dyn Component>;
+	
 }
 
-// Traits
-trait Controller {
-	fn step(&mut self) -> Option<Rc<dyn Model>>;
-	fn set_screen(&mut self) {
+impl Components {
+	
+	fn new() -> Self {
 		
+		Components {
+			v : Rc::new(Vec::new())
+		}
+	
 	}
+
+    fn initialise(&mut self) {
+		
+	    let v2 = self.v.clone();
+		let mut v_mut = Rc::get_mut(&mut self.v).unwrap();
+		v_mut.insert(0, Rc::new(screen1::Starting { 
+		    w: Rc::downgrade(&v2)  } ) 
+		);
+		
+		v_mut.insert(1, Rc::new(screen1::Controller { 
+		    w: Rc::downgrade(&v2)} )
+		);	
+	}
+	
 }
 
-trait Model {
-	fn step(&mut self) -> Option<Rc<dyn View>>;
-}
-
-trait View {
-	fn end(&mut self);
-}
