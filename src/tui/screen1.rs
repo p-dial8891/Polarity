@@ -1,5 +1,8 @@
-use crate::tui::{Components, Component};
+use crate::tui::{Components};
 use std::rc::{Rc, Weak};
+use crate::tui;
+
+type Component = tui::Component<Model,View,Controller>;
 
 pub struct Screen1 {
 
@@ -25,9 +28,19 @@ pub struct View {
 	
 }
 
+impl Screen1 {
+			
+	pub fn controller(&mut self) -> Rc<Component> {
+		
+		self.v[0].clone()
+	
+	}
+	
+}
+
 impl Controller {
 
-	fn model(&mut self) -> Rc<Component> {
+	pub fn model(&mut self) -> Rc<Component> {
 		
 	    self.step()
 		
@@ -44,7 +57,7 @@ impl Controller {
 
 impl Model {
 
-	fn view(&mut self) -> Rc<Component> {
+	pub fn view(&mut self) -> Rc<Component> {
 		
 	    self.step()
 		
@@ -61,7 +74,7 @@ impl Model {
 
 impl View {
 
-	fn end(&mut self) -> () {
+	pub fn end(&mut self) -> () {
 		
 	}
 
@@ -95,5 +108,41 @@ impl Components for Screen1 {
 		    w: Rc::downgrade(&v2)} ) )
 		);	
 	}
+
+}
+
+impl Component {
 	
+	pub fn unwrap_controller(&mut self) -> &mut Controller {
+		
+		match self {
+			
+			Component::Controller(c) => c,
+            _                        => panic!("Wrong type"),
+		
+		}
+		
+    }
+
+	pub fn unwrap_model(&mut self) -> &mut Model {
+		
+		match self {
+			
+			Component::Model(m) => m,
+            _                   => panic!("Wrong type"),
+		
+		}
+		
+    }
+	
+	pub fn unwrap_view(&mut self) -> &mut View {
+		
+		match self {
+			
+			Component::View(v) => v,
+            _                  => panic!("Wrong type"),
+		
+		}
+		
+    }	
 }

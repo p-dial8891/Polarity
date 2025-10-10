@@ -3,11 +3,11 @@ pub mod app;
 
 use std::rc::Rc;
 
-enum Component {
+enum Component<M,V,C> {
 	
-	Controller(screen1::Controller),
-	Model(screen1::Model),
-	View(screen1::View)
+	Controller(C),
+	Model(M),
+	View(V)
 	
 }
 
@@ -19,4 +19,3 @@ trait Components {
     fn initialise(&mut self);
 	
 }
-
