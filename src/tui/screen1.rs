@@ -1,37 +1,39 @@
-use crate::tui::Component;
+use crate::tui::{Components, Component};
 use std::rc::{Rc, Weak};
 
-pub struct Starting {
+pub struct Screen1 {
 
-	pub w : Weak<Vec<Rc<dyn Component>>>,
-	
-}	
-	
+	v : Rc<Vec<Rc<Component>>>
+
+}
+
 pub struct Controller {
 	
-	pub w : Weak<Vec<Rc<dyn Component>>>,
+	pub w : Weak<Vec<Rc<Component>>>,
 	
 }
 
-impl Component for Starting {
-
-    fn controller(&mut self) -> Option<Rc<dyn Component>> {
-		
-		Some(self.step())
-		
-	}
+pub struct Model {
 	
-	fn model(&mut self) -> Option<Rc<dyn Component>> {
-		
-		None
-		
-	}
+	pub w : Weak<Vec<Rc<Component>>>,
 	
-	fn view(&mut self) {
+}
+
+pub struct View {
+	
+	pub w : Weak<Vec<Rc<Component>>>,
+	
+}
+
+impl Controller {
+
+	fn model(&mut self) -> Rc<Component> {
+		
+	    self.step()
 		
 	}
 
-	fn step(&mut self) -> Rc<dyn Component> {
+	fn step(&mut self) -> Rc<Component> {
 		
 		let p = self.w.upgrade().unwrap();
         p[1].clone()
@@ -40,29 +42,58 @@ impl Component for Starting {
 
 }
 
-impl Component for Controller {
+impl Model {
 
-    fn controller(&mut self) -> Option<Rc<dyn Component>> {
+	fn view(&mut self) -> Rc<Component> {
 		
-		None
-		
-	}
-	
-	fn model(&mut self) -> Option<Rc<dyn Component>> {
-		
-		None
-		
-	}
-	
-	fn view(&mut self) {
+	    self.step()
 		
 	}
 
-	fn step(&mut self) -> Rc<dyn Component> {
+	fn step(&mut self) -> Rc<Component> {
 		
 		let p = self.w.upgrade().unwrap();
-        p[1].clone()
+        p[2].clone()
 	
     }
 
+}
+
+impl View {
+
+	fn end(&mut self) -> () {
+		
+	}
+
+
+}
+
+impl Components for Screen1 {
+	type Item = Screen1;
+
+	fn new() -> Screen1 {
+		
+		Screen1 {
+			v : Rc::new(Vec::new())
+		}
+	
+	}
+
+    fn initialise(&mut self) {
+		
+	    let v2 = self.v.clone();
+		let mut v_mut = Rc::get_mut(&mut self.v).unwrap();
+		v_mut.insert(0, Rc::new(Component::Controller(Controller { 
+		    w: Rc::downgrade(&v2)  } ) ) 
+		);
+		
+		v_mut.insert(1, Rc::new(Component::Model(Model { 
+		    w: Rc::downgrade(&v2)} ) )
+		);	
+		
+		v_mut.insert(2, Rc::new(Component::View(View { 
+		    w: Rc::downgrade(&v2)} ) )
+		);	
+	}
+	
 }
