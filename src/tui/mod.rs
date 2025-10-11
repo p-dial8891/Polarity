@@ -4,7 +4,7 @@ pub mod app;
 use std::rc::Rc;
 
 #[derive(Clone)]
-enum Component<M,V,C> {
+enum ComponentData<M,V,C> {
 	
 	Controller(C),
 	Model(M),
@@ -21,10 +21,18 @@ trait Components<'c> {
 
 trait IntoComponent<M,V,C> {
 	
-	fn unwrap_controller(&self) -> &C;
+	fn unwrap_controller(self) -> C;
 	
-	fn unwrap_model(&self) -> &M;
+	fn unwrap_model(self) -> M;
 	
-	fn unwrap_view(&self) -> &V;
+	fn unwrap_view(self) -> V;
 	
 }
+
+trait Compute<M,V,C> {
+	type State;
+	type Output;
+		
+	fn compute(self, s: Self::State) -> ( Self::Output, Self::State );
+
+}	

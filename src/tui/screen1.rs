@@ -1,88 +1,39 @@
-use crate::tui::{Components, IntoComponent};
-use std::rc::{Rc, Weak};
+use crate::tui::{Components, IntoComponent, Compute};
 use crate::tui;
-use std::ops::IndexMut;
+use std::collections::VecDeque;
 
-type Component = tui::Component<Model,View,Controller>;
+type S1_State = tui::ComponentData<Model,View,Controller>;
+type S1_Output = tui::ComponentData<Model,View,Controller>;
 
 pub struct Screen1<'a> {
 
-	v : Rc<Vec<Rc<Component>>>,
-	a : &'a mut u32
+	pub v : VecDeque<S1_State>,
+	pub a : &'a mut u32
 
 }
 
 #[derive(Clone)]
 pub struct Controller {
 	
-	pub w : Weak<Vec<Rc<Component>>>,
+	pub s : i32,
+	pub b : u8
 	
 }
 
 #[derive(Clone)]
 pub struct Model {
 	
-	pub w : Weak<Vec<Rc<Component>>>,
+	pub s : u32,
+	pub b : u16
 	
 }
 
 #[derive(Clone)]
 pub struct View {
 	
-	pub w : Weak<Vec<Rc<Component>>>,
+	pub s : u16,
+	pub b : u64
 	
-}
-
-impl Screen1<'_> {
-			
-	pub fn controller(&self) -> Rc<Component> {
-		
-		self.v[0].clone()
-	
-	}
-	
-}
-
-impl Controller {
-
-	pub fn model(&self) -> Rc<Component> {
-		
-	    self.step()
-		
-	}
-
-	fn step(&self) -> Rc<Component> {
-
-        let p = self.w.upgrade().unwrap();
-        p[1].clone()
-	
-    }
-
-}
-
-impl Model {
-
-	pub fn view(&self) -> Rc<Component> {
-		
-	    self.step()
-		
-	}
-
-	fn step(&self) -> Rc<Component> {
-
-        let p = self.w.upgrade().unwrap();
-        p[2].clone()
-	
-    }
-
-}
-
-impl View {
-
-	pub fn end(&self) -> () {
-		
-	}
-
 }
 
 impl<'c> Components<'c> for Screen1<'_> {
@@ -91,20 +42,10 @@ impl<'c> Components<'c> for Screen1<'_> {
 	fn new(data: &'c mut u32) -> Screen1<'c> {
 		
 		Screen1 {
-			v : Rc::new_cyclic(|wp| {
-				
-				let mut n = Vec::new();
-			    n.insert(0, Rc::new(Component::Controller(Controller { 
-					w: wp.clone()  } )  ) 
-				);
-				
-				n.insert(1, Rc::new(Component::Model(Model { 
-					w: wp.clone()  } ) )
-				);	
-				
-				n.insert(2, Rc::new(Component::View(View { 
-					w: wp.clone()  } ) )
-			    ); n } ),
+			v : VecDeque::from([
+			        S1_State::Controller( Controller { s:0, b:0 } ),
+			        S1_State::Model( Model { s:0, b:0 } ),
+				    S1_State::View( View { s:0, b:0 } )] ),
 			a : data
 		}
 	
@@ -112,40 +53,96 @@ impl<'c> Components<'c> for Screen1<'_> {
 
 }
 
-impl
-IntoComponent<Model,View,Controller> for Component {
+impl Screen1<'_> {
 	
-	fn unwrap_controller(&self) -> &Controller {
+	pub fn start(&self) -> S1_Output {
+ 	    S1_Output::Controller ( Controller {
+	        s: 32567,
+		    b: 7 } )
+	}
+}
+
+impl
+IntoComponent<Model,View,Controller> for S1_Output {
+	
+	fn unwrap_controller(self) -> Controller {
 		
 		match self {
 			
-			Component::Controller(c) => c,
-            _                        => panic!("Wrong type"),
+			S1_Output::Controller(c) => c,
+            _                       => panic!("Wrong type"),
 		
 		}
 		
     }
 
-	fn unwrap_model(&self) -> &Model {
+	fn unwrap_model(self) -> Model {
 		
 		match self {
 			
-			Component::Model(m) => m,
-            _                   => panic!("Wrong type"),
+			S1_Output::Model(m) => m,
+            _                  => panic!("Wrong type"),
 		
 		}
 		
     }
 	
-	fn unwrap_view(&self) -> &View {
+	fn unwrap_view(self) -> View {
 		
 		match self {
 			
-			Component::View(v) => v,
-            _                  => panic!("Wrong type"),
+			S1_Output::View(v) => v,
+            _                 => panic!("Wrong type"),
 		
 		}
 		
     }	
 
 }
+
+impl Compute<Model,View,Controller> for Controller {
+	type State = S1_State;
+	type Output = S1_Output;
+	
+	fn compute(self, s: S1_State) -> ( S1_Output, S1_State ) {			
+	    ( 
+		  S1_Output::Model( Model {
+	        s: 32567,
+		    b: 64 } ), 
+	      S1_State::Controller(self)
+	    )
+    }
+	
+}
+
+impl Compute<Model,View,Controller> for Model {
+	type State = S1_State;
+	type Output = S1_Output;
+	
+	fn compute(self, s: S1_State) -> ( S1_Output, S1_State ) {			
+	    ( 
+		  S1_Output::View ( View {
+	        s: 32567,
+		    b: 64 } ), 
+	      S1_State::Model(self)
+	    )
+    }
+	
+}
+
+impl Compute<Model,View,Controller> for View {
+	type State = S1_State;
+	type Output = S1_Output;
+	
+	fn compute(self, s: S1_State) -> ( S1_Output, S1_State ) {			
+	    ( 
+		  S1_Output::Controller ( Controller {
+	        s: 32567,
+		    b: 7 } ), 
+	      S1_State::View(self)
+	    )
+    }
+	
+}
+		
+		
