@@ -3,6 +3,7 @@ pub mod app;
 
 use std::rc::Rc;
 
+#[derive(Clone)]
 enum Component<M,V,C> {
 	
 	Controller(C),
@@ -11,11 +12,19 @@ enum Component<M,V,C> {
 	
 }
 
-trait Components {
-	type Item;
+trait Components<'c> {
+	type Item<'b>;
 	
-	fn new() -> Self::Item;
+	fn new(data : &'c mut u32) -> Self::Item<'c>;
 
-    fn initialise(&mut self);
+}
+
+trait IntoComponent<M,V,C> {
+	
+	fn unwrap_controller(&self) -> &C;
+	
+	fn unwrap_model(&self) -> &M;
+	
+	fn unwrap_view(&self) -> &V;
 	
 }

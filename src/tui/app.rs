@@ -1,22 +1,20 @@
-use crate::tui::{self, screen1, Components};
+use crate::tui::{self, screen1::Screen1, Components, IntoComponent};
 use std::rc::Rc;
 
 pub fn main() {
-    let mut cs = screen1::Screen1::new();
-	cs.initialise();
+	let mut d = 34;
 	
-	let mut bind = cs.controller();
-	let mut c = Rc::get_mut(&mut bind).unwrap()
-	    .unwrap_controller();
+    let s = Screen1::new(&mut d);
+	
+	let c = s.controller();
 		
-	let mut bind = c.model();
-	let mut m = Rc::get_mut(&mut bind).unwrap()
-	    .unwrap_model();
+	let bind = c.unwrap_controller();
+	let m    = bind.model();
 		
-	let mut bind = m.view();
-	let mut v = Rc::get_mut(&mut bind).unwrap()
-	    .unwrap_view();
+	let bind = m.unwrap_model();
+	let v    = bind.view();
 
-	let _     = v.end();
+	let bind = v.unwrap_view();
+	let _    = bind.end();
 	  
 }

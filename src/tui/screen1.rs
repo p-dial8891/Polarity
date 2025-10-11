@@ -1,36 +1,41 @@
-use crate::tui::{Components};
+use crate::tui::{Components, IntoComponent};
 use std::rc::{Rc, Weak};
 use crate::tui;
+use std::ops::IndexMut;
 
 type Component = tui::Component<Model,View,Controller>;
 
-pub struct Screen1 {
+pub struct Screen1<'a> {
 
-	v : Rc<Vec<Rc<Component>>>
+	v : Rc<Vec<Rc<Component>>>,
+	a : &'a mut u32
 
 }
 
+#[derive(Clone)]
 pub struct Controller {
 	
 	pub w : Weak<Vec<Rc<Component>>>,
 	
 }
 
+#[derive(Clone)]
 pub struct Model {
 	
 	pub w : Weak<Vec<Rc<Component>>>,
 	
 }
 
+#[derive(Clone)]
 pub struct View {
 	
 	pub w : Weak<Vec<Rc<Component>>>,
 	
 }
 
-impl Screen1 {
+impl Screen1<'_> {
 			
-	pub fn controller(&mut self) -> Rc<Component> {
+	pub fn controller(&self) -> Rc<Component> {
 		
 		self.v[0].clone()
 	
@@ -40,15 +45,15 @@ impl Screen1 {
 
 impl Controller {
 
-	pub fn model(&mut self) -> Rc<Component> {
+	pub fn model(&self) -> Rc<Component> {
 		
 	    self.step()
 		
 	}
 
-	fn step(&mut self) -> Rc<Component> {
-		
-		let p = self.w.upgrade().unwrap();
+	fn step(&self) -> Rc<Component> {
+
+        let p = self.w.upgrade().unwrap();
         p[1].clone()
 	
     }
@@ -57,15 +62,15 @@ impl Controller {
 
 impl Model {
 
-	pub fn view(&mut self) -> Rc<Component> {
+	pub fn view(&self) -> Rc<Component> {
 		
 	    self.step()
 		
 	}
 
-	fn step(&mut self) -> Rc<Component> {
-		
-		let p = self.w.upgrade().unwrap();
+	fn step(&self) -> Rc<Component> {
+
+        let p = self.w.upgrade().unwrap();
         p[2].clone()
 	
     }
@@ -74,46 +79,43 @@ impl Model {
 
 impl View {
 
-	pub fn end(&mut self) -> () {
+	pub fn end(&self) -> () {
 		
 	}
 
-
 }
 
-impl Components for Screen1 {
-	type Item = Screen1;
+impl<'c> Components<'c> for Screen1<'_> {
+	type Item<'b> = Screen1<'b>;
 
-	fn new() -> Screen1 {
+	fn new(data: &'c mut u32) -> Screen1<'c> {
 		
 		Screen1 {
-			v : Rc::new(Vec::new())
+			v : Rc::new_cyclic(|wp| {
+				
+				let mut n = Vec::new();
+			    n.insert(0, Rc::new(Component::Controller(Controller { 
+					w: wp.clone()  } )  ) 
+				);
+				
+				n.insert(1, Rc::new(Component::Model(Model { 
+					w: wp.clone()  } ) )
+				);	
+				
+				n.insert(2, Rc::new(Component::View(View { 
+					w: wp.clone()  } ) )
+			    ); n } ),
+			a : data
 		}
 	
 	}
 
-    fn initialise(&mut self) {
-		
-	    let v2 = self.v.clone();
-		let mut v_mut = Rc::get_mut(&mut self.v).unwrap();
-		v_mut.insert(0, Rc::new(Component::Controller(Controller { 
-		    w: Rc::downgrade(&v2)  } ) ) 
-		);
-		
-		v_mut.insert(1, Rc::new(Component::Model(Model { 
-		    w: Rc::downgrade(&v2)} ) )
-		);	
-		
-		v_mut.insert(2, Rc::new(Component::View(View { 
-		    w: Rc::downgrade(&v2)} ) )
-		);	
-	}
-
 }
 
-impl Component {
+impl
+IntoComponent<Model,View,Controller> for Component {
 	
-	pub fn unwrap_controller(&mut self) -> &mut Controller {
+	fn unwrap_controller(&self) -> &Controller {
 		
 		match self {
 			
@@ -124,7 +126,7 @@ impl Component {
 		
     }
 
-	pub fn unwrap_model(&mut self) -> &mut Model {
+	fn unwrap_model(&self) -> &Model {
 		
 		match self {
 			
@@ -135,7 +137,7 @@ impl Component {
 		
     }
 	
-	pub fn unwrap_view(&mut self) -> &mut View {
+	fn unwrap_view(&self) -> &View {
 		
 		match self {
 			
@@ -145,4 +147,5 @@ impl Component {
 		}
 		
     }	
+
 }
