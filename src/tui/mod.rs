@@ -16,6 +16,8 @@ trait Components<'c> {
 	type Item<'b>;
 	
 	fn new(data : &'c mut u32) -> Self::Item<'c>;
+	
+	fn run(&mut self);
 
 }
 
@@ -33,6 +35,6 @@ trait Compute<M,V,C> {
 	type State;
 	type Output;
 		
-	fn compute(self, s: Self::State) -> ( Self::Output, Self::State );
+	fn compute(self, s: &mut Self::State) -> Self::Output;
 
 }	
