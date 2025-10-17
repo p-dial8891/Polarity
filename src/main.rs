@@ -1,5 +1,5 @@
 mod tui;
 
 fn main() {
-    tui::app::main();	
+    tui::app::main();
 }
