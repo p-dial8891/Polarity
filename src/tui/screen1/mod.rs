@@ -2,15 +2,26 @@ use crate::tui;
 use crate::tui::{Components, Compute, IntoComponent};
 use ratatui::DefaultTerminal;
 use rppal::gpio::{self, InputPin};
+use crate::polaris;
 
 mod controller;
 mod model;
 mod view;
 
-use crate::tui::screen1::{controller::Controller, model::Model, view::View};
+use crate::tui::screen1::{
+	controller::{
+		Controller, ControllerState
+	}, 
+	model::{
+		Model, ModelState
+	}, 
+	view::{
+		View, ViewState
+	}
+};
 
-type State = tui::ComponentData<Model, View, Controller>;
-type Output = tui::ComponentData<Model, View, Controller>;
+pub type State = tui::ComponentData<ModelState, ViewState, ControllerState>;
+pub type Output = tui::ComponentData<Model, View, Controller>;
 
 pub struct Screen1 {
     pub v: Vec<State>,
@@ -23,9 +34,9 @@ impl<'c> Components<'c> for Screen1 {
     fn new() -> Screen1 {
         Screen1 {
             v: Vec::from([
-                State::Controller(Controller { s: 0, b: 0 }),
-                State::Model(Model { s: 0, b: 0 }),
-                State::View(View { s: 0, b: 0 }),
+                State::Controller(ControllerState { s: 0, b: 0 }),
+                State::Model(ModelState	{ s: 0, b: 0 }),
+                State::View(ViewState { s: 0, b: 0 }),
             ]),
         }
     }
@@ -46,8 +57,9 @@ impl<'c> Components<'c> for Screen1 {
 }
 
 impl Screen1 {
-    pub fn start(&self) -> Output {
-        Output::Controller(Controller { s: 32567, b: 7 })
+    pub async fn start(&self) -> Output {
+        Output::Controller(Controller {
+            data : polaris::getBody().await.unwrap()})
     }
 }
 

@@ -3,7 +3,7 @@ use ratatui::DefaultTerminal;
 use rppal::gpio::{self, Gpio, InputPin};
 use std::{thread, time::Duration};
 
-pub fn main() {
+pub async fn main() {
     let gpio = Gpio::new().unwrap();
     let up = gpio.get(17).unwrap().into_input();
     let down = gpio.get(22).unwrap().into_input();
@@ -16,11 +16,11 @@ pub fn main() {
 
     let mut s1 = Screen1::new();
 
-    let i1 = s1.start();
+    let i1 = s1.start().await;
 
     let mut s2 = Screen1::new();
 
-    let i2 = s2.start();
+    let i2 = s2.start().await;
 
     loop {
         let i1 = s1.run(i1.clone(), &mut t, g.clone());

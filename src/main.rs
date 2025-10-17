@@ -1,5 +1,7 @@
 mod tui;
+mod polaris;
 
-fn main() {
-    tui::app::main();
+#[tokio::main]
+async fn main() {
+    tui::app::main().await;
 }
