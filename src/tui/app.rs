@@ -15,16 +15,10 @@ pub async fn main() {
     let mut t = ratatui::init();
 
     let mut s1 = Screen1::new();
-
     let i1 = s1.start().await;
 
-    let mut s2 = Screen1::new();
-
-    let i2 = s2.start().await;
-
     loop {
-        let i1 = s1.run(i1.clone(), &mut t, g.clone());
-        let i2 = s2.run(i2.clone(), &mut t, g.clone());
+        let i1 = s1.run(i1.clone(), &mut t, g.clone()).await;
         thread::sleep(Duration::from_millis(250));
     }
 }

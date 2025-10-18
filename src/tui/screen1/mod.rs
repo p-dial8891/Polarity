@@ -1,8 +1,10 @@
 use crate::tui;
-use crate::tui::{Components, Compute, IntoComponent};
+use crate::tui::{Components, Compute, IntoComponent, IntoComp};
 use ratatui::DefaultTerminal;
 use rppal::gpio::{self, InputPin};
 use crate::polaris;
+use std::rc::Rc;
+use std::sync::mpsc::{Sender, Receiver, channel};
 
 mod controller;
 mod model;
@@ -32,35 +34,40 @@ impl<'c> Components<'c> for Screen1 {
     type Output = Output;
 
     fn new() -> Screen1 {
+		let (tx, rx) = channel();
         Screen1 {
             v: Vec::from([
-                State::Controller(ControllerState { s: 0, b: 0 }),
-                State::Model(ModelState	{ s: 0, b: 0 }),
-                State::View(ViewState { s: 0, b: 0 }),
-            ]),
+                State::Controller(ControllerState { s: 0, b: 0, rx: rx }),
+                State::Model(ModelState	{ s: 0, b: 0, list: Rc::new(Vec::new()), 
+				    tx: tx.clone() }),
+                State::View(ViewState { s: 0, b: 0, tx: tx.clone() }),
+            ])
         }
     }
 
-    fn run(
+    async fn run(
         &mut self,
         o: Output,
         terminal: &mut DefaultTerminal,
         gpio_pins: [&'c InputPin; 6],
     ) -> Output {
         o.unwrap_controller()
-            .compute(&mut self.v[0], terminal, gpio_pins)
+            .compute(&mut self.v[0], terminal, gpio_pins).await
             .unwrap_model()
-            .compute(&mut self.v[1], terminal, gpio_pins)
+            .compute(&mut self.v[1], terminal, gpio_pins).await
             .unwrap_view()
-            .compute(&mut self.v[2], terminal, gpio_pins)
+            .compute(&mut self.v[2], terminal, gpio_pins).await
     }
+
 }
 
 impl Screen1 {
-    pub async fn start(&self) -> Output {
-        Output::Controller(Controller {
-            data : polaris::getBody().await.unwrap()})
+    pub async fn start(&mut self) -> Output {
+        Output::Controller ( 
+		    Controller::new().await
+		)
     }
+		
 }
 
 impl IntoComponent<Model, View, Controller> for Output {
@@ -84,4 +91,41 @@ impl IntoComponent<Model, View, Controller> for Output {
             _ => panic!("Wrong type"),
         }
     }
+}
+
+
+impl IntoComp<ModelState, ViewState, ControllerState> for State {
+    fn unwrap_controller(&mut self) -> &mut ControllerState {
+        match self {
+            State::Controller(c) => c,
+            _ => panic!("Wrong type"),
+        }
+    }
+
+    fn unwrap_model(&mut self) -> &mut ModelState {
+        match self {
+            State::Model(m) => m,
+            _ => panic!("Wrong type"),
+        }
+    }
+
+    fn unwrap_view(&mut self) -> &mut ViewState {
+        match self {
+            State::View(v) => v,
+            _ => panic!("Wrong type"),
+        }
+    }
+}
+
+#[derive(Clone)]
+enum ModelCommand {
+	
+	Init,
+	PlaybackFinished,
+	SelectNext,
+	SelectPrevious,
+	AddTrack,
+	RemoveTrack,
+	TogglePlay,
+	
 }

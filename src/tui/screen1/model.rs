@@ -1,33 +1,50 @@
 use crate::tui;
-use crate::tui::screen1::{controller::Controller, view::View};
-use crate::tui::{Components, Compute, IntoComponent};
+use crate::tui::screen1::{controller::Controller, view::View, 
+    ModelCommand::{self, Init} };
+use crate::tui::{Components, Compute, IntoComponent, IntoComp};
 use ratatui::DefaultTerminal;
 use rppal::gpio::{self, InputPin};
-//type State = tui::ComponentData<Model, View, Controller>;
-//type Output = tui::ComponentData<Model, View, Controller>;
 use crate::tui::screen1::{State, Output};
-use crate::polaris::polarisHandle;
+use crate::polaris::{self, polarisHandle};
+use std::rc::Rc;
+use std::sync::mpsc::{Sender, Receiver, channel};
 
 #[derive(Clone)]
 pub struct Model {
-    pub data: polarisHandle
+    pub data: polarisHandle,
+	pub cmd: ModelCommand
 }
 
-#[derive(Clone)]
 pub struct ModelState {
     pub s: u32,
     pub b: u16,
+	pub list: Rc<Vec<String>>,
+	pub tx : Sender<Option<()>>
 }
 
-impl<'c> Compute<'c, Model, View, Controller> for Model {
+impl<'c> Compute<'c> for Model {
     type State = State;
     type Output = Output;
 
-    fn compute(
-	    self, s: &mut State, 
+    async fn compute(
+	    self, 
+		s: &mut State, 
 		_: &mut DefaultTerminal, 
-		_: [&'c InputPin; 6]
+		_: [&'c InputPin; 6],
 	) -> Output {
-        Output::View(View { data : self.data })
+		
+		match self.cmd {
+			
+			Init => { 
+			    s.unwrap_model().list = Rc::new(polaris::getIterator(self.data.clone())
+                    .await
+                    .map(|x| x.0)
+                    .collect::<Vec<String>>());
+		    },
+			_ => {()}
+		}
+			
+        Output::View(View { data : self.data,
+            list : s.unwrap_model().list.clone()	})
     }
 }

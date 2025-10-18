@@ -18,7 +18,7 @@ trait Components<'c> {
 
     fn new() -> Self::Item;
 
-    fn run(
+    async fn run(
         &mut self,
         o: Self::Output,
         terminal: &mut DefaultTerminal,
@@ -34,11 +34,19 @@ trait IntoComponent<M, V, C> {
     fn unwrap_view(self) -> V;
 }
 
-trait Compute<'c, M, V, C> {
+trait IntoComp<M, V, C> {
+    fn unwrap_controller(&mut self) -> &mut C;
+
+    fn unwrap_model(&mut self) -> &mut M;
+
+    fn unwrap_view(&mut self) -> &mut V;
+}
+
+trait Compute<'c> {
     type State;
     type Output;
 
-    fn compute(
+    async fn compute(
         self,
         s: &mut Self::State,
         terminal: &mut DefaultTerminal,
