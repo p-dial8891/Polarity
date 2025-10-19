@@ -5,6 +5,8 @@ use rppal::gpio::{self, InputPin};
 use crate::polaris;
 use std::rc::Rc;
 use std::sync::mpsc::{Sender, Receiver, channel};
+use ratatui::widgets::{List, ListDirection, ListItem, ListState, Paragraph};
+use std::collections::HashSet;
 
 mod controller;
 mod model;
@@ -37,8 +39,14 @@ impl<'c> Components<'c> for Screen1 {
 		let (tx, rx) = channel();
         Screen1 {
             v: Vec::from([
-                State::Controller(ControllerState { s: 0, b: 0, rx: rx }),
-                State::Model(ModelState	{ s: 0, b: 0, list: Rc::new(Vec::new()), 
+                State::Controller(ControllerState { 
+				    start: true, 
+					rx: rx }),
+                State::Model(ModelState	{ 
+				    playlist: Rc::new(HashSet::new()), 
+				    selection : ListState::default().with_selected(    Some(0)),
+					list: Rc::new(Vec::new()), 
+					toggle: false,
 				    tx: tx.clone() }),
                 State::View(ViewState { s: 0, b: 0, tx: tx.clone() }),
             ])
@@ -118,8 +126,9 @@ impl IntoComp<ModelState, ViewState, ControllerState> for State {
 }
 
 #[derive(Clone)]
-enum ModelCommand {
+pub enum ModelCommand {
 	
+	Noop,
 	Init,
 	PlaybackFinished,
 	SelectNext,
@@ -128,4 +137,12 @@ enum ModelCommand {
 	RemoveTrack,
 	TogglePlay,
 	
+}
+
+#[derive(Clone)]
+pub enum ViewCommand {
+	
+	Noop,
+    PlayTrack(String, Rc<Vec<String>>, ListState, Rc<HashSet<usize>>),
+	Draw(Rc<Vec<String>>, ListState, Rc<HashSet<usize>>),
 }

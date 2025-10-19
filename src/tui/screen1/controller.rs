@@ -7,6 +7,9 @@ use crate::polaris::{self, polarisHandle};
 use crate::tui::screen1::{State, Output};
 use std::rc::Rc;
 use std::sync::mpsc::{Sender, Receiver, channel};
+use crate::tui::app::{
+    UP_KEY, DOWN_KEY, LEFT_KEY, RIGHT_KEY, QUIT_KEY, REQ_KEY };
+use std::process::Command;
 
 #[derive(Clone)]
 pub struct Controller {
@@ -14,8 +17,7 @@ pub struct Controller {
 }
 
 pub struct ControllerState {
-    pub s: i32,
-	pub b: i8,
+    pub start: bool,
 	pub rx: Receiver<Option<()>>
 }
 
@@ -30,8 +32,51 @@ impl<'c> Compute<'c> for Controller {
         _: &mut DefaultTerminal,
         gpio_pins: [&'c InputPin; 6],
     ) -> Output {
+		let state_data = s.unwrap_controller();
+		
+		if state_data.start == true {
+            state_data.start = false;
+			eprintln!("<Controller> : Initialised.");
+			return Output::Model(Model { data : self.data,
+			    cmd : ModelCommand::Init	});
+		}
+		if gpio_pins[UP_KEY].read() == 0.into() {
+			eprintln!("<Controller> : Up key pressed.");
+			return Output::Model(Model { data : self.data,
+			    cmd : ModelCommand::SelectPrevious	});
+		}
+		if gpio_pins[DOWN_KEY].read() == 0.into() {
+			eprintln!("<Controller> : Down key pressed.");
+			return Output::Model(Model { data : self.data,
+			    cmd : ModelCommand::SelectNext	});
+		}
+		if gpio_pins[LEFT_KEY].read() == 0.into() {
+			eprintln!("<Controller> : Left key pressed.");
+			return Output::Model(Model { data : self.data,
+			    cmd : ModelCommand::RemoveTrack	});
+		}
+		if gpio_pins[RIGHT_KEY].read() == 0.into() {
+			eprintln!("<Controller> : Right key pressed.");
+			return Output::Model(Model { data : self.data,
+			    cmd : ModelCommand::AddTrack	});
+		}
+		if gpio_pins[REQ_KEY].read() == 0.into() {
+			eprintln!("<Controller> : Request key pressed.");
+			return Output::Model(Model { data : self.data,
+			    cmd : ModelCommand::TogglePlay	});
+		}
+		if gpio_pins[QUIT_KEY].read() == 0.into() {
+			eprintln!("<Controller> : Quit key pressed.");
+            let _ = Command::new("sudo")
+                .arg("shutdown")
+                .arg("-h")
+                .arg("0")
+                .output()
+                .expect("Unable to shutdown.");
+		}
+		// should not matter what happens from here.	
         Output::Model(Model { data : self.data,
-			cmd : ModelCommand::Init	})
+			cmd : ModelCommand::Noop	})
     }
 }
 

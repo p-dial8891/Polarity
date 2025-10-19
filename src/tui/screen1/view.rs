@@ -1,5 +1,6 @@
 use crate::tui;
-use crate::tui::screen1::{controller::Controller, model::Model};
+use crate::tui::screen1::{controller::Controller, model::Model,
+    ViewCommand::{self}};
 use crate::tui::{Components, Compute, IntoComponent, IntoComp};
 use ratatui::DefaultTerminal;
 use rppal::gpio::{self, InputPin};
@@ -11,7 +12,7 @@ use std::sync::mpsc::{Sender, Receiver, channel};
 #[derive(Clone)]
 pub struct View {
     pub data: polarisHandle,
-	pub list: Rc<Vec<String>>,
+	pub cmd: ViewCommand,
 }
 
 pub struct ViewState {
