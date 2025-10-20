@@ -36,8 +36,10 @@ use tokio::io::AsyncReadExt;
 use tokio::{net::TcpListener, task, time::sleep};
 
 use std::collections::HashSet;
+use std::rc::Rc;
 
 mod polaris;
+use crate::playbackStateType::{Ready, Waiting, Finished};
 
 async fn getNextTrack(h: polaris::polarisHandle, s: &HashSet<usize>) -> String {
     let mut list_polaris = polaris::getIterator(h).await;
@@ -75,6 +77,29 @@ async fn listenerTask() {
     socket.read(&mut buf).await.unwrap();
 }
 
+#[derive(PartialEq)]
+enum playbackStateType {
+    Ready,
+	Waiting,
+    Finished,
+}
+
+fn getPlaybackState(
+    t: &mut Option<task::JoinHandle<()>>,
+) -> playbackStateType {
+    match t {
+        None => Waiting,
+        Some(h) => {
+            if h.is_finished() {
+                *t = None;
+                Finished
+            } else {
+                Waiting
+            }
+        }
+    }
+}
+
 #[tokio::main]
 async fn main() -> Result<()> {
     color_eyre::install().unwrap();
@@ -103,60 +128,52 @@ async fn run(mut terminal: DefaultTerminal) -> Result<()> {
         .map(|x| x.0)
         .collect::<Vec<String>>();
     let mut list_state = ListState::default().with_selected(Some(0));
-    let mut index = 0;
     let mut toggle_play = false;
-    let mut playlist: HashSet<usize> = HashSet::new();
+    let mut playlist: Rc<HashSet<usize>> = Rc::new(HashSet::new());
+    let mut playbackState = Ready;
+	
+	terminal.clear().unwrap();
     loop {
         terminal.draw(|frame| {
             render(frame, &mut list_state, &list_model, toggle_play, &playlist)
         })?;
-//        if let Some(key) = event::read()?.as_key_press_event() {
-//            match key.code {
-//                KeyCode::Char('j') | KeyCode::Down => list_state.select_next(),
-//                KeyCode::Char('k') | KeyCode::Up => list_state.select_previous(),
-//                KeyCode::Char('q') | KeyCode::Esc => return Ok(()),
-//                _ => {}
-//            }
-//        }
+        //        if let Some(key) = event::read()?.as_key_press_event() {
+        //            match key.code {
+        //                KeyCode::Char('j') | KeyCode::Down => list_state.select_next(),
+        //                KeyCode::Char('k') | KeyCode::Up => list_state.select_previous(),
+        //                KeyCode::Char('q') | KeyCode::Esc => return Ok(()),
+        //                _ => {}
+        //            }
+        //        }
 
-        match taskHandle {
-            None => {
-                if toggle_play {
-                    if !playlist.is_empty() {
-                        taskHandle = Some(task::spawn(listenerTask()));
-                        sendRequestToPlayer(
-                            getNextTrack(track_data.clone(), &playlist).await,
-                        )
-                        .await;
-                    }
-                }
-            }
-
-            Some(ref h) => {
-                if h.is_finished() && toggle_play {
-                    let curr_playlist = playlist.clone();
-                    eprintln!("Curr Playlist len {}", curr_playlist.len());
-                    let mut curr_iter = curr_playlist.iter();
-                    eprintln!("Remaining iter length {}", curr_iter.len());
-                    let index = curr_iter.next().unwrap();
-                    playlist.remove(index);
-                    if !playlist.is_empty() {
-                        taskHandle = Some(task::spawn(listenerTask()));
-                        sendRequestToPlayer(
-                            getNextTrack(track_data.clone(), &playlist).await,
-                        )
-                        .await;
-                    } else {
-                        taskHandle = None;
-                        toggle_play = false;
-                    }
-                } else if h.is_finished() && !toggle_play {
-                    let curr_playlist = playlist.clone();
-                    let index = curr_playlist.iter().next().unwrap();
-                    playlist.remove(index);
-                    taskHandle = None;
-                }
-            }
+        // 
+        if Ready == playbackState {
+			if toggle_play && !playlist.is_empty() {
+	    		taskHandle = Some(task::spawn(listenerTask()));
+		    	sendRequestToPlayer(
+			    	getNextTrack(track_data.clone(), &playlist).await,
+			    )
+			    .await;
+    			playbackState = Waiting;
+		    }
+		}
+		
+		if Waiting == playbackState {
+			playbackState = getPlaybackState(&mut taskHandle);
+		}
+		
+		if Finished == playbackState {
+			let curr_playlist = (*playlist).clone();
+			eprintln!("Curr Playlist len {}", curr_playlist.len());
+			let mut curr_iter = curr_playlist.iter();
+			eprintln!("Remaining iter length {}", curr_iter.len());
+			let index = curr_iter.next().unwrap();
+			Rc::get_mut(&mut playlist).unwrap().remove(index);
+			if playlist.is_empty() {
+			    toggle_play = false;
+		    }
+			
+			playbackState = Ready;
         }
 
         if up.read() == 0.into() {
@@ -168,11 +185,13 @@ async fn run(mut terminal: DefaultTerminal) -> Result<()> {
         }
 
         if left.read() == 0.into() {
-            playlist.remove(&list_state.selected().unwrap());
+            Rc::get_mut(&mut playlist).unwrap()
+			    .remove(&list_state.selected().unwrap());
         }
 
         if right.read() == 0.into() {
-            playlist.insert(list_state.selected().unwrap());
+            Rc::get_mut(&mut playlist).unwrap()
+			    .insert(list_state.selected().unwrap());
         }
 
         if req.read() == 0.into() {
