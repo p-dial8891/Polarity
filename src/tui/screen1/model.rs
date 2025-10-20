@@ -27,6 +27,7 @@ use std::rc::Rc;
 use std::sync::mpsc::{Sender, Receiver, channel};
 use ratatui::widgets::{List, ListDirection, ListItem, ListState, Paragraph};
 use std::collections::HashSet;
+use tokio::task;
 
 #[derive(Clone)]
 pub struct Model {
@@ -39,7 +40,7 @@ pub struct ModelState {
     pub selection: ListState,
 	pub list: Rc<Vec<String>>,
 	pub toggle: bool,
-	pub tx : Sender<Option<()>>
+	pub tx : Sender<Option<task::JoinHandle<()>>>
 }
 
 async fn getNextTrack(h: polaris::polarisHandle, s: &HashSet<usize>) -> String {
@@ -102,7 +103,7 @@ impl<'c> Compute<'c> for Model {
 					    } 
 					);
 				} else 
-				if { state_data.toggle } {
+				if state_data.toggle {
 					state_data.toggle = false;
 				}
 

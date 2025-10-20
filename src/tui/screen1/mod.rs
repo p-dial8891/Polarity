@@ -41,6 +41,7 @@ impl<'c> Components<'c> for Screen1 {
             v: Vec::from([
                 State::Controller(ControllerState { 
 				    start: true, 
+					task: None,
 					rx: rx }),
                 State::Model(ModelState	{ 
 				    playlist: Rc::new(HashSet::new()), 

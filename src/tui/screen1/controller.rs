@@ -10,6 +10,7 @@ use std::sync::mpsc::{Sender, Receiver, channel};
 use crate::tui::app::{
     UP_KEY, DOWN_KEY, LEFT_KEY, RIGHT_KEY, QUIT_KEY, REQ_KEY };
 use std::process::Command;
+use tokio::task;
 
 #[derive(Clone)]
 pub struct Controller {
@@ -18,7 +19,8 @@ pub struct Controller {
 
 pub struct ControllerState {
     pub start: bool,
-	pub rx: Receiver<Option<()>>
+	pub task: Option<task::JoinHandle<()>>,
+	pub rx: Receiver<Option<task::JoinHandle<()>>>
 }
 
 
@@ -40,6 +42,20 @@ impl<'c> Compute<'c> for Controller {
 			return Output::Model(Model { data : self.data,
 			    cmd : ModelCommand::Init	});
 		}
+		
+		if let Some(t) = &state_data.task {
+			if t.is_finished() {
+				state_data.task = None;
+				return Output::Model(Model { data : self.data,
+			    cmd : ModelCommand::PlaybackFinished	});
+			}
+		}
+		
+		match state_data.rx.try_recv() {
+			Ok(t_handle) => { state_data.task = t_handle; }
+			_ => {}
+		}
+	
 		if gpio_pins[UP_KEY].read() == 0.into() {
 			eprintln!("<Controller> : Up key pressed.");
 			return Output::Model(Model { data : self.data,
