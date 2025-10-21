@@ -14,6 +14,7 @@ use crate::tui::screen1::{controller::Controller, view::View,
 	ViewCommand::{
 		self, 
 		Noop as ViewNoop,
+		Init as ViewInit,
 		PlayTrack,
 		Draw,
 	}		
@@ -73,11 +74,11 @@ impl<'c> Compute<'c> for Model {
                 eprintln!("<Model> : intialised.");
 			    return Output::View(View {
                     data : self.data,
-			        cmd : Draw(
-					    state_data.list.clone(),
+			        cmd : ViewInit(
+						state_data.list.clone(),
 						state_data.selection.clone(),
-                        state_data.playlist.clone(),
-                        state_data.toggle ) 
+						state_data.playlist.clone(),
+						state_data.toggle )
 					} 
 				);
 		    },

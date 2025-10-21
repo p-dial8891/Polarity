@@ -19,10 +19,13 @@ pub async fn main() {
     let quit = gpio.get(5).unwrap().into_input();
     let req = gpio.get(6).unwrap().into_input();
     let g = [&up, &down, &left, &right, &quit, &req];
+
     let mut t = ratatui::init();
+    t.clear();
 
     let mut s1 = Screen1::new();
     let i1 = s1.start().await;
+	
 
     loop {
         let i1 = s1.run(i1.clone(), &mut t, g.clone()).await;

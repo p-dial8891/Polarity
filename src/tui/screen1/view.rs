@@ -1,6 +1,6 @@
 use crate::tui;
 use crate::tui::screen1::{controller::Controller, model::Model,
-    ViewCommand::{self, Draw, PlayTrack}};
+    ViewCommand::{self, Init, Draw, PlayTrack}};
 use crate::tui::{Components, Compute, IntoComponent, IntoComp};
 use rppal::gpio::{self, InputPin};
 use crate::tui::screen1::{State, Output};
@@ -137,6 +137,12 @@ impl<'c> Compute<'c> for View {
     ) -> Output {
 		
 		match self.cmd {
+			Init(data, mut list_state, playlist, toggle_symbol) => {
+			    terminal.clear();	
+    			terminal.draw(|frame| {
+				    render(frame, &mut list_state, &data, toggle_symbol, &playlist) }).unwrap();
+			},
+			
 		    PlayTrack(name, data, mut list_state, playlist, toggle_symbol) => {
                 let state_data = s.unwrap_view();
 				let _ = state_data.tx.send(Some(task::spawn(listenerTask())));
