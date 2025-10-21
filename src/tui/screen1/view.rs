@@ -50,12 +50,6 @@ fn render(
     let vertical = Layout::vertical([Length(8), Length(2)]);
     let [top, bottom] = vertical.areas(frame.area());
 
-    //let title = Line::from_iter([
-    //    Span::from("List Widget").bold(),
-    //    Span::from(" (Press 'q' to quit and arrow keys to navigate)"),
-    //]);
-    //frame.render_widget(title.centered(), top);
-
     render_list(frame, top, list_state, list_model, l_playlist);
     render_bottom(frame, bottom, toggle_play);
 }
@@ -80,7 +74,7 @@ pub fn render_list(
                 }
             },
         ))
-        //    .highlight_style(SELECTED_STYLE);
+        //.highlight_style(SELECTED_STYLE);
         .highlight_style(Modifier::UNDERLINED);
     frame.render_stateful_widget(list, area, list_state);
 }
@@ -143,17 +137,17 @@ impl<'c> Compute<'c> for View {
     ) -> Output {
 		
 		match self.cmd {
-		    PlayTrack(name, data, mut list_state, playlist) => {
+		    PlayTrack(name, data, mut list_state, playlist, toggle_symbol) => {
                 let state_data = s.unwrap_view();
-				state_data.tx.send(Some(task::spawn(listenerTask())));
+				let _ = state_data.tx.send(Some(task::spawn(listenerTask())));
 				sendRequestToPlayer(name).await;
                 terminal.draw(|frame| {
-				    render(frame, &mut list_state, &data, false, &playlist) } ).unwrap();
+				    render(frame, &mut list_state, &data, toggle_symbol, &playlist) }).unwrap();
             },
 			
-			Draw(data, mut list_state, playlist) => {
-                terminal.draw(|frame| {
-				    render(frame, &mut list_state, &data, false, &playlist) } ).unwrap();
+			Draw(data, mut list_state, playlist, toggle_symbol) => {
+    			terminal.draw(|frame| {
+				    render(frame, &mut list_state, &data, toggle_symbol, &playlist) }).unwrap();
             },
 
             _ => {}			

@@ -76,7 +76,8 @@ impl<'c> Compute<'c> for Model {
 			        cmd : Draw(
 					    state_data.list.clone(),
 						state_data.selection.clone(),
-                        state_data.playlist.clone()	) 
+                        state_data.playlist.clone(),
+                        state_data.toggle ) 
 					} 
 				);
 		    },
@@ -99,12 +100,22 @@ impl<'c> Compute<'c> for Model {
 			    	        next,
 				    		state_data.list.clone(),
 					    	state_data.selection.clone(),
-                            state_data.playlist.clone()	) 
+							state_data.playlist.clone(),
+							state_data.toggle ) 
 					    } 
 					);
 				} else 
 				if state_data.toggle {
 					state_data.toggle = false;
+					return Output::View(View {
+						data : self.data,
+						cmd : Draw(
+							state_data.list.clone(),
+							state_data.selection.clone(),
+							state_data.playlist.clone(),
+							state_data.toggle ) 
+						} 
+					);
 				}
 
 				return Output::View(View {
@@ -123,7 +134,8 @@ impl<'c> Compute<'c> for Model {
 			        cmd : Draw(
 					    state_data.list.clone(),
 						state_data.selection.clone(),
-                        state_data.playlist.clone()	) 
+                        state_data.playlist.clone(),
+                        state_data.toggle ) 
 					} 
 				);
 			},
@@ -137,7 +149,8 @@ impl<'c> Compute<'c> for Model {
 			        cmd : Draw(
 					    state_data.list.clone(),
 						state_data.selection.clone(),
-                        state_data.playlist.clone()	) 
+                        state_data.playlist.clone(),
+                        state_data.toggle ) 
 					} 
 				);
 			},
@@ -152,7 +165,8 @@ impl<'c> Compute<'c> for Model {
 			        cmd : Draw(
 					    state_data.list.clone(),
 						state_data.selection.clone(),
-                        state_data.playlist.clone()	) 
+                        state_data.playlist.clone(),
+                        state_data.toggle ) 
 					} 
 				);				
             },				
@@ -167,7 +181,8 @@ impl<'c> Compute<'c> for Model {
 			        cmd : Draw(
 					    state_data.list.clone(),
 						state_data.selection.clone(),
-                        state_data.playlist.clone()	) 
+                        state_data.playlist.clone(),
+                        state_data.toggle ) 
 					} 
 				);				
             },	
@@ -184,12 +199,22 @@ impl<'c> Compute<'c> for Model {
 			    	        next,
 				    		state_data.list.clone(),
 					    	state_data.selection.clone(),
-                            state_data.playlist.clone()	) 
+							state_data.playlist.clone(),
+							state_data.toggle ) 
 					    } 
 					);
 				} else 
 				if { state_data.toggle } {
 					state_data.toggle = false;
+					return Output::View(View {
+						data : self.data,
+						cmd : Draw(
+							state_data.list.clone(),
+							state_data.selection.clone(),
+							state_data.playlist.clone(),
+							state_data.toggle ) 
+						} 
+					);
 				}
 
 				return Output::View(View {

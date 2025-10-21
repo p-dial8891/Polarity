@@ -144,6 +144,6 @@ pub enum ModelCommand {
 pub enum ViewCommand {
 	
 	Noop,
-    PlayTrack(String, Rc<Vec<String>>, ListState, Rc<HashSet<usize>>),
-	Draw(Rc<Vec<String>>, ListState, Rc<HashSet<usize>>),
+    PlayTrack(String, Rc<Vec<String>>, ListState, Rc<HashSet<usize>>, bool),
+	Draw(Rc<Vec<String>>, ListState, Rc<HashSet<usize>>, bool),
 }
