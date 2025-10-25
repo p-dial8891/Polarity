@@ -58,7 +58,7 @@ impl<'c> Compute<'c> for Model {
 	    self, 
 		s: &mut State, 
 		_: &mut DefaultTerminal, 
-		_: [&'c InputPin; 6],
+		_: [&'c InputPin; 5],
 	) -> Output {
 		
 		let mut state_data = s.unwrap_model();

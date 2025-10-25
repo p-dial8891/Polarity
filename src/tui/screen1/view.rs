@@ -133,7 +133,7 @@ impl<'c> Compute<'c> for View {
         self,
         s: &mut State,
         terminal: &mut DefaultTerminal,
-        _: [&'c InputPin; 6],
+        _: [&'c InputPin; 5],
     ) -> Output {
 		
 		match self.cmd {

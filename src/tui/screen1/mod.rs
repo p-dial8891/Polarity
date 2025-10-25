@@ -1,5 +1,5 @@
 use crate::tui;
-use crate::tui::{Components, Compute, IntoComponent, IntoComp};
+use crate::tui::{Components, Compute, IntoComponent, IntoComp, Execute};
 use ratatui::DefaultTerminal;
 use rppal::gpio::{self, InputPin};
 use crate::polaris;
@@ -26,6 +26,7 @@ use crate::tui::screen1::{
 
 pub type State = tui::ComponentData<ModelState, ViewState, ControllerState>;
 pub type Output = tui::ComponentData<Model, View, Controller>;
+pub type Executor<'c> = tui::Execute<'c, Screen1>;
 
 pub struct Screen1 {
     pub v: Vec<State>,
@@ -58,7 +59,7 @@ impl<'c> Components<'c> for Screen1 {
         &mut self,
         o: Output,
         terminal: &mut DefaultTerminal,
-        gpio_pins: [&'c InputPin; 6],
+        gpio_pins: [&'c InputPin; 5],
     ) -> Output {
         o.unwrap_controller()
             .compute(&mut self.v[0], terminal, gpio_pins).await
@@ -68,15 +69,11 @@ impl<'c> Components<'c> for Screen1 {
             .compute(&mut self.v[2], terminal, gpio_pins).await
     }
 
-}
-
-impl Screen1 {
-    pub async fn start(&mut self) -> Output {
+    async fn start(&mut self) -> Output {
         Output::Controller ( 
 		    Controller::new().await
 		)
     }
-		
 }
 
 impl IntoComponent<Model, View, Controller> for Output {
@@ -147,4 +144,26 @@ pub enum ViewCommand {
 	Init(Rc<Vec<String>>, ListState, Rc<HashSet<usize>>, bool),
     PlayTrack(String, Rc<Vec<String>>, ListState, Rc<HashSet<usize>>, bool),
 	Draw(Rc<Vec<String>>, ListState, Rc<HashSet<usize>>, bool),
+}
+
+impl<'c> Execute<'c,Screen1> {
+	pub async fn init(&mut self, handle: &String) {
+		if handle == &self.screen_name {
+		    self.current_output = Some(self.current_screen.start().await);
+		}
+	}
+	
+	pub async fn execute(
+	    &mut self, 
+		handle: &String,
+		terminal: &mut DefaultTerminal,
+        gpio_pins: [&'c InputPin; 5]
+	) {
+		if handle == &self.screen_name {
+		    self.current_output = Some(
+			    self.current_screen.run(self.current_output.clone().unwrap(), 
+				terminal, gpio_pins).await
+			);
+		}
+	}
 }

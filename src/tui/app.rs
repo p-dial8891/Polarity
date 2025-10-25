@@ -1,4 +1,5 @@
 use crate::tui::{self, Components, Compute, IntoComponent, screen1, screen1::Screen1};
+use crate::tui::{App_List};
 use ratatui::DefaultTerminal;
 use rppal::gpio::{self, Gpio, InputPin};
 use std::{thread, time::Duration};
@@ -7,8 +8,7 @@ pub const UP_KEY : usize = 0;
 pub const DOWN_KEY : usize = 1;
 pub const LEFT_KEY : usize = 2;
 pub const RIGHT_KEY : usize = 3;
-pub const QUIT_KEY : usize = 4;
-pub const REQ_KEY : usize = 5;
+pub const REQ_KEY : usize = 4;
 
 pub async fn main() {
     let gpio = Gpio::new().unwrap();
@@ -18,17 +18,50 @@ pub async fn main() {
     let right = gpio.get(23).unwrap().into_input();
     let quit = gpio.get(5).unwrap().into_input();
     let req = gpio.get(6).unwrap().into_input();
-    let g = [&up, &down, &left, &right, &quit, &req];
+    let g = [&up, &down, &left, &right, &req];
 
     let mut t = ratatui::init();
     t.clear();
-
-    let mut s1 = Screen1::new();
-    let i1 = s1.start().await;
 	
+	let mut a = App_List(Vec::new());
 
+    // Screen definitions - start
+    let mut e1 = screen1::Executor { 
+		screen_name: a.enumerate("Main"), 
+		current_output: None, 
+		current_screen: Screen1::new() 
+	};
+
+    let mut e2 = screen1::Executor { 
+	    screen_name: a.enumerate("Shutdown"), 
+		current_output: None, 
+		current_screen: Screen1::new() 
+	};
+	// Screen definitions - end
+	
+	let mut i = a.get_iter();
+    let mut i_previous = None;
+	let mut i_next = Some(i.next());
+	
     loop {
-        let i1 = s1.run(i1.clone(), &mut t, g.clone()).await;
+        if i_previous != i_next {
+			// Screen Initialisations - start
+			e1.init(i_next.unwrap().unwrap()).await;
+			e2.init(i_next.unwrap().unwrap()).await;
+			// Screen Initialisations - end
+		}
+		
+		// Screen execution - start
+		e1.execute(i_next.unwrap().unwrap(), &mut t, g.clone()).await;
+		e2.execute(i_next.unwrap().unwrap(), &mut t, g.clone()).await;
+		// Screen execution - end
+		
+		i_previous = i_next.clone();
+		
+		if quit.read() == 0.into() {
+			i_next = Some(i.next());
+		}
+			
         thread::sleep(Duration::from_millis(250));
     }
 }

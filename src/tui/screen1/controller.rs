@@ -8,7 +8,7 @@ use crate::tui::screen1::{State, Output};
 use std::rc::Rc;
 use std::sync::mpsc::{Sender, Receiver, channel};
 use crate::tui::app::{
-    UP_KEY, DOWN_KEY, LEFT_KEY, RIGHT_KEY, QUIT_KEY, REQ_KEY };
+    UP_KEY, DOWN_KEY, LEFT_KEY, RIGHT_KEY, REQ_KEY };
 use std::process::Command;
 use tokio::task;
 
@@ -32,7 +32,7 @@ impl<'c> Compute<'c> for Controller {
         self,
         s: &mut State,
         _: &mut DefaultTerminal,
-        gpio_pins: [&'c InputPin; 6],
+        gpio_pins: [&'c InputPin; 5],
     ) -> Output {
 		let state_data = s.unwrap_controller();
 		
@@ -81,7 +81,7 @@ impl<'c> Compute<'c> for Controller {
 			return Output::Model(Model { data : self.data,
 			    cmd : ModelCommand::TogglePlay	});
 		}
-		if gpio_pins[QUIT_KEY].read() == 0.into() {
+/* 		if gpio_pins[QUIT_KEY].read() == 0.into() {
 			eprintln!("<Controller> : Quit key pressed.");
             let _ = Command::new("sudo")
                 .arg("shutdown")
@@ -89,7 +89,7 @@ impl<'c> Compute<'c> for Controller {
                 .arg("0")
                 .output()
                 .expect("Unable to shutdown.");
-		}
+		} */
 		// should not matter what happens from here.	
         Output::Model(Model { data : self.data,
 			cmd : ModelCommand::Noop	})

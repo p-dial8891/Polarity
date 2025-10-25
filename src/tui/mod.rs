@@ -18,11 +18,13 @@ trait Components<'c> {
 
     fn new() -> Self::Item;
 
+    async fn start(&mut self) -> Self::Output;
+
     async fn run(
         &mut self,
         o: Self::Output,
         terminal: &mut DefaultTerminal,
-        gpio_pins: [&'c InputPin; 6],
+        gpio_pins: [&'c InputPin; 5],
     ) -> Self::Output;
 }
 
@@ -50,6 +52,29 @@ trait Compute<'c> {
         self,
         s: &mut Self::State,
         terminal: &mut DefaultTerminal,
-        gpio_pins: [&'c InputPin; 6],
+        gpio_pins: [&'c InputPin; 5],
     ) -> Self::Output;
+}
+
+struct Execute<'c, S : Components<'c>> {
+	
+	screen_name : String,
+	current_output : Option<S::Output>,
+	current_screen : S,
+	
+}
+
+struct App_List(Vec<String>);
+
+impl App_List {
+	
+    pub fn enumerate(& mut self, name : &str ) -> String {
+	    let temp = String::from(name);
+		self.0.push(temp.clone());
+	    temp
+    }
+	
+	pub fn get_iter(&self) -> impl Iterator<Item=&String> {
+		self.0.iter().cycle()
+	}
 }
