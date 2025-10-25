@@ -44,21 +44,23 @@ pub async fn main() {
 	let mut i_next = Some(i.next());
 	
     loop {
+		let next = i_next.unwrap().unwrap();
+		
         if i_previous != i_next {
 			// Screen Initialisations - start
-			e1.init(i_next.unwrap().unwrap()).await;
-			e2.init(i_next.unwrap().unwrap()).await;
+			e1.init(next).await;
+			e2.init(next).await;
 			// Screen Initialisations - end
+		    i_previous = i_next.clone();
 		}
 		
 		// Screen execution - start
-		e1.execute(i_next.unwrap().unwrap(), &mut t, g.clone()).await;
-		e2.execute(i_next.unwrap().unwrap(), &mut t, g.clone()).await;
+		e1.execute(next, &mut t, g.clone()).await;
+		e2.execute(next, &mut t, g.clone()).await;
 		// Screen execution - end
-		
-		i_previous = i_next.clone();
-		
+
 		if quit.read() == 0.into() {
+		    i_previous = i_next.clone();
 			i_next = Some(i.next());
 		}
 			
