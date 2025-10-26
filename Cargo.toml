@@ -9,7 +9,7 @@ path = "src/app.rs"
 
 [[bin]]
 name = "tui"
-path = "src/main.rs"
+path = "terminal/src/main.rs"
 
 [dependencies]
 color-eyre = "0.6.5"
