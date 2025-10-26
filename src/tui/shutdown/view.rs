@@ -1,6 +1,8 @@
 use crate::tui;
 use crate::tui::shutdown::{controller::Controller, model::Model,
-    ViewCommand::{self, Init}};
+    ViewCommand::{self, Init},
+	ControllerCommand::{self, Noop}
+};
 use crate::tui::{Components, Compute, IntoComponent, IntoComp};
 use crate::tui::shutdown::{State, Output};
 
@@ -82,6 +84,6 @@ impl<'c> Compute<'c> for View {
 			_ => {}
 		}
 		
-		Output::Controller(Controller { _a : () })
+		Output::Controller(Controller { cmd : ControllerCommand::Noop })
     }
 }

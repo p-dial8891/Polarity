@@ -1,5 +1,5 @@
 use crate::tui;
-use crate::tui::shutdown::{model::Model, view::View, ModelCommand};
+use crate::tui::shutdown::{model::Model, view::View, ModelCommand, ControllerCommand};
 use crate::tui::{Components, Compute, IntoComponent, IntoComp};
 use ratatui::DefaultTerminal;
 use rppal::gpio::{self, InputPin};
@@ -10,7 +10,7 @@ use std::process::Command;
 
 #[derive(Clone)]
 pub struct Controller {
-    pub _a : ()
+    pub cmd : ControllerCommand
 }
 
 pub struct ControllerState {
@@ -30,6 +30,15 @@ impl<'c> Compute<'c> for Controller {
     ) -> Output {
 		
 		let state_data = s.unwrap_controller();
+		
+		match self.cmd {
+			ControllerCommand::Init => {
+				state_data.start = false;
+				eprintln!("<Controller> : Initialised.");
+				return Output::Model(Model { cmd : ModelCommand::Init	});
+			},
+			_ => {}
+		}
 		
 		if state_data.start == true {
             state_data.start = false;
@@ -57,7 +66,7 @@ impl Controller {
 	pub async fn new() -> Self {
 		
 		Controller {
-            _a: ()
+            cmd: ControllerCommand::Init
 		}
 		
 	}

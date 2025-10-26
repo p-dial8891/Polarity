@@ -1,5 +1,5 @@
 use crate::tui;
-use crate::tui::screen1::{model::Model, view::View, ModelCommand};
+use crate::tui::screen1::{model::Model, view::View, ModelCommand, ControllerCommand};
 use crate::tui::{Components, Compute, IntoComponent, IntoComp};
 use ratatui::DefaultTerminal;
 use rppal::gpio::{self, InputPin};
@@ -14,6 +14,7 @@ use tokio::task;
 
 #[derive(Clone)]
 pub struct Controller {
+	pub cmd: ControllerCommand,
     pub data: polarisHandle,
 }
 
@@ -36,6 +37,14 @@ impl<'c> Compute<'c> for Controller {
     ) -> Output {
 		let state_data = s.unwrap_controller();
 		
+		match self.cmd {
+			ControllerCommand::Init => { 
+			   state_data.start == false;
+			   return Output::Model(Model { data : self.data,
+			    cmd : ModelCommand::Init	}) },
+			_ => {},
+		}
+
 		if state_data.start == true {
             state_data.start = false;
 			eprintln!("<Controller> : Initialised.");
@@ -101,6 +110,7 @@ impl Controller {
 	pub async fn new() -> Self {
 		
 		Controller {
+			cmd : ControllerCommand::Init,
 		    data : polaris::getBody().await.unwrap(),
 		}
 		

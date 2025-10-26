@@ -124,6 +124,14 @@ impl IntoComp<ModelState, ViewState, ControllerState> for State {
 }
 
 #[derive(Clone)]
+pub enum ControllerCommand {
+	
+	Noop,
+	Init,
+	
+}
+
+#[derive(Clone)]
 pub enum ModelCommand {
 	
 	Noop,

@@ -1,6 +1,8 @@
 use crate::tui;
 use crate::tui::screen1::{controller::Controller, model::Model,
-    ViewCommand::{self, Init, Draw, PlayTrack}};
+    ViewCommand::{self, Init, Draw, PlayTrack},
+    ControllerCommand::{self, Noop}
+};
 use crate::tui::{Components, Compute, IntoComponent, IntoComp};
 use rppal::gpio::{self, InputPin};
 use crate::tui::screen1::{State, Output};
@@ -159,6 +161,8 @@ impl<'c> Compute<'c> for View {
             _ => {}			
 		}
 		
-		Output::Controller(Controller { data : self.data })
+		Output::Controller(Controller { 
+		    cmd : ControllerCommand::Noop,
+			data : self.data })
     }
 }
