@@ -1,5 +1,6 @@
 pub mod app;
 mod screen1;
+mod shutdown;
 
 use ratatui::DefaultTerminal;
 use rppal::gpio::InputPin;

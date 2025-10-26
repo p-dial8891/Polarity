@@ -1,4 +1,6 @@
-use crate::tui::{self, Components, Compute, IntoComponent, screen1, screen1::Screen1};
+use crate::tui::{self, Components, Compute, IntoComponent};
+use crate::tui::{screen1, screen1::Screen1};
+use crate::tui::{shutdown, shutdown::Shutdown};
 use crate::tui::{App_List};
 use ratatui::DefaultTerminal;
 use rppal::gpio::{self, Gpio, InputPin};
@@ -32,10 +34,10 @@ pub async fn main() {
 		current_screen: Screen1::new() 
 	};
 
-    let mut e2 = screen1::Executor { 
+    let mut e2 = shutdown::Executor { 
 	    screen_name: a.enumerate("Shutdown"), 
 		current_output: None, 
-		current_screen: Screen1::new() 
+		current_screen: Shutdown::new() 
 	};
 	// Screen definitions - end
 	
