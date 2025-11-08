@@ -5,7 +5,7 @@ use std::io::prelude::*;
 
 pub fn play(path: &str)
 {
-	let mut stream = TcpStream::connect("raspberrypi:9000").unwrap();
+	let mut stream = TcpStream::connect("raspberrypi.local:9000").unwrap();
 
 	// Get an output stream handle to the default physical sound device.
 	// Note that the playback stops when the stream_handle is dropped.//!
