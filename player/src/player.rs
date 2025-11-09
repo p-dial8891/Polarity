@@ -37,20 +37,9 @@ use tokio::task::spawn_blocking;
  
 use bytes::Bytes;
  
-mod auth;
+mod options;
 mod audio;
 
-/*
-#[derive(Parser)]
-struct Flags {
-    /// Sets the secret key to use
-    #[clap(long)]
-    secret: String,
-    /// Sets the port number to listen on.
-    #[clap(long)]
-    port: u16,
-}
-*/
 // This is the type that implements the generated World trait. It is the business logic
 // and is used to start the server.
 #[derive(Clone)]
@@ -92,8 +81,8 @@ async fn getBody(path: String) -> Bytes {
         .expect("Failed to build reqwest client");
 
     // Target URL
-	let mut base_url = String::from("https://www.emstreamer.online/api/audio/");
-	base_url.extend([path.as_str()]);
+	let mut base_url = options::getHost();
+	base_url.extend(["/api/audio/", path.as_str()]);
 	println!("Url : {}", &base_url);
     let url = Url::parse(
 //        "https://www.emstreamer.online/api/audio/AwsMusic/Music/Cannons/Desire - Single/01 Desire.m4a"
@@ -104,7 +93,7 @@ async fn getBody(path: String) -> Bytes {
     // Send request with Bearer token
     let mut response = client
         .get(url)
-        .bearer_auth(auth::token) // your token variable here
+        .bearer_auth(options::getToken()) // your token variable here
         .send()
         .await
         .expect("HTTP request failed");

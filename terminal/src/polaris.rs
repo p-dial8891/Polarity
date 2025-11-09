@@ -14,7 +14,7 @@ use tokio::io::AsyncReadExt;
 use tokio::task::spawn_blocking;
 use webpki_roots::TLS_SERVER_ROOTS;
 
-mod auth;
+use crate::options;
 
 pub type polarisHandle = serde_json::Value;
 
@@ -61,15 +61,17 @@ pub async fn getBody() -> Result<serde_json::Value, ()> {
     //let mut base_url = String::from("https://www.emstreamer.online/api/audio/");
     //base_url.extend([path.as_str()]);
     //println!("Url : {}", &base_url);
+	let mut host_url = options::getHost();
+	host_url.extend(["/api/flatten/"]);
     let url = Url::parse(
-        "https://www.emstreamer.online/api/flatten/", //        &base_url
+        &host_url, //        &base_url
     )
     .expect("Invalid URL");
 
     // Send request with Bearer token
     let mut response = client
         .get(url)
-        .bearer_auth(auth::token) // your token variable here
+        .bearer_auth(options::getToken()) // your token variable here
         .send()
         .await
         .expect("HTTP request failed");

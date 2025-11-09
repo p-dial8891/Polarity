@@ -39,6 +39,7 @@ tracing-opentelemetry = "0.27.0"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 opentelemetry_sdk = { version = "0.26.0", features = ["rt-tokio"] }
 opentelemetry-semantic-conventions = "0.16.0"
+argfile = "0.2.1"
 
 #openssl-sys = { version = "0.9.109", feature = ["vendored"] }
 
