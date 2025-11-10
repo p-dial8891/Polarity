@@ -11,7 +11,7 @@ The software is split into two executables - one that acts as the terminal and t
 The two executables need to specified with an options file which contains the polaris hostname and a token to connect with.
 ```
 --host=www.mypolarisserver.com
---token=abcdefghijklmno
+--token=abcdef1234567890
 ```
 Launching the programs are as below
 ```
