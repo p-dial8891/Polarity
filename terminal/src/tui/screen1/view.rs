@@ -120,8 +120,7 @@ async fn sendRequestToPlayer(path: String) {
     sleep(Duration::from_millis(10)).await;
 }
 
-async fn listenerTask() {
-    let listener = TcpListener::bind("raspberrypi.local:9000").await.unwrap();
+async fn listenerTask(listener : TcpListener) {
     let (mut socket, _) = listener.accept().await.unwrap();
     let mut buf = [0; 1];
     socket.read(&mut buf).await.unwrap();
@@ -147,7 +146,8 @@ impl<'c> Compute<'c> for View {
 			
 		    PlayTrack(name, data, mut list_state, playlist, toggle_symbol) => {
                 let state_data = s.unwrap_view();
-				let _ = state_data.tx.send(Some(task::spawn(listenerTask())));
+				let listener = TcpListener::bind("raspberrypi.local:9000").await.unwrap();
+				let _ = state_data.tx.send(Some(task::spawn(listenerTask(listener))));
 				sendRequestToPlayer(name).await;
                 terminal.draw(|frame| {
 				    render(frame, &mut list_state, &data, toggle_symbol, &playlist) }).unwrap();
