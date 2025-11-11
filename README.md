@@ -7,6 +7,20 @@ The Polarity project aims to capture track enqueueing features that were present
 ## Components
 The software is split into two executables - one that acts as the terminal and the other that plays the audio. The terminal has access to the Polaris server and downloads track info from it. The player also has Polaris access, using it to download songs and play them locally.
 
+## Usage
+The two executables need to specified with an options file which contains the polaris hostname and a token to connect with.
+```
+--host=www.mypolarisserver.com
+--token=abcdef1234567890
+```
+Launching the programs are as below
+```
+tui @options.file
+```
+```
+player @options.file
+```
+
 ## Resources
 [Video](https://www.youtube.com/watch?v=HmmpZukn4Zg)  
 [Hackster.io](https://www.hackster.io/hardcoder/polarity-a-music-player-for-polaris-8cd4eb)
