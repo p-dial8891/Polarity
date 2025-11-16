@@ -127,8 +127,17 @@ impl<'c> Compute<'c> for Model {
 			},
 
 			SelectNext => {
-				state_data.selection.select_next();
-
+				let i = match state_data.selection.selected() {
+					Some(i) => {
+						if i >= state_data.list.len() - 1 {
+							0
+						} else {
+							i + 1
+						}
+					}
+					None => 0,
+				};
+				state_data.selection.select(Some(i));
                 eprintln!("<Model> : next track selected.");
 			    return Output::View(View {
                     data : self.data,
@@ -142,8 +151,17 @@ impl<'c> Compute<'c> for Model {
 			},
 
 			SelectPrevious => {
-				state_data.selection.select_previous();
-
+				let i = match state_data.selection.selected() {
+					Some(i) => {
+						if i == 0 {
+							state_data.list.len() - 1
+						} else {
+							i - 1
+						}
+					}
+					None => 0,
+				};
+				state_data.selection.select(Some(i));
                 eprintln!("<Model> : previous track selected.");
 			    return Output::View(View {
                     data : self.data,

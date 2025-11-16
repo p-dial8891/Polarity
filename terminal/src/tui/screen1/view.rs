@@ -77,6 +77,7 @@ pub fn render_list(
             },
         ))
         //.highlight_style(SELECTED_STYLE);
+		.scroll_padding(2)
         .highlight_style(Modifier::UNDERLINED);
     frame.render_stateful_widget(list, area, list_state);
 }
