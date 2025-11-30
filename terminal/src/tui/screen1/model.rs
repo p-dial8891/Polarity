@@ -22,6 +22,7 @@ use crate::tui::screen1::{controller::Controller, view::View,
 use crate::tui::{Components, Compute, IntoComponent, IntoComp};
 use ratatui::DefaultTerminal;
 use rppal::gpio::{self, InputPin};
+use crate::tui::input::Input;
 use crate::tui::screen1::{State, Output};
 use crate::polaris::{self, polarisHandle};
 use std::rc::Rc;
@@ -58,7 +59,7 @@ impl<'c> Compute<'c> for Model {
 	    self, 
 		s: &mut State, 
 		_: &mut DefaultTerminal, 
-		_: [&'c InputPin; 5],
+		_: &mut Input,
 	) -> Output {
 		
 		let mut state_data = s.unwrap_model();

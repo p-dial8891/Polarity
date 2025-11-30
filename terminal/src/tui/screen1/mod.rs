@@ -2,6 +2,7 @@ use crate::tui;
 use crate::tui::{Components, Compute, IntoComponent, IntoComp, Execute};
 use ratatui::DefaultTerminal;
 use rppal::gpio::{self, InputPin};
+use crate::tui::input::Input;
 use crate::polaris;
 use std::rc::Rc;
 use std::sync::mpsc::{Sender, Receiver, channel};
@@ -59,7 +60,7 @@ impl<'c> Components<'c> for Screen1 {
         &mut self,
         o: Output,
         terminal: &mut DefaultTerminal,
-        gpio_pins: [&'c InputPin; 5],
+        gpio_pins: &mut Input,
     ) -> Output {
         o.unwrap_controller()
             .compute(&mut self.v[0], terminal, gpio_pins).await
@@ -165,7 +166,7 @@ impl<'c> Execute<'c,Screen1> {
 	    &mut self, 
 		handle: &String,
 		terminal: &mut DefaultTerminal,
-        gpio_pins: [&'c InputPin; 5]
+        gpio_pins: &mut Input
 	) {
 		if handle == &self.screen_name {
 		    self.current_output = Some(

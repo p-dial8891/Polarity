@@ -1,9 +1,10 @@
 pub mod app;
 mod screen1;
 mod shutdown;
+mod input;
 
 use ratatui::DefaultTerminal;
-use rppal::gpio::InputPin;
+use input::Input;
 use std::rc::Rc;
 
 #[derive(Clone)]
@@ -25,7 +26,7 @@ trait Components<'c> {
         &mut self,
         o: Self::Output,
         terminal: &mut DefaultTerminal,
-        gpio_pins: [&'c InputPin; 5],
+        gpio_pins: &mut Input,
     ) -> Self::Output;
 }
 
@@ -53,7 +54,7 @@ trait Compute<'c> {
         self,
         s: &mut Self::State,
         terminal: &mut DefaultTerminal,
-        gpio_pins: [&'c InputPin; 5],
+        gpio_pins: &mut Input,
     ) -> Self::Output;
 }
 

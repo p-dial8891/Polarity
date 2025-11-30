@@ -5,6 +5,7 @@ use crate::tui::screen1::{controller::Controller, model::Model,
 };
 use crate::tui::{Components, Compute, IntoComponent, IntoComp};
 use rppal::gpio::{self, InputPin};
+use crate::tui::input::Input;
 use crate::tui::screen1::{State, Output};
 use crate::polaris::{self, polarisHandle};
 use std::rc::Rc;
@@ -135,7 +136,7 @@ impl<'c> Compute<'c> for View {
         self,
         s: &mut State,
         terminal: &mut DefaultTerminal,
-        _: [&'c InputPin; 5],
+        _: &mut Input,
     ) -> Output {
 		
 		match self.cmd {

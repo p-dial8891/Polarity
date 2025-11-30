@@ -3,6 +3,7 @@ use crate::tui::shutdown::{model::Model, view::View, ModelCommand, ControllerCom
 use crate::tui::{Components, Compute, IntoComponent, IntoComp};
 use ratatui::DefaultTerminal;
 use rppal::gpio::{self, InputPin};
+use crate::tui::input::Input;
 use crate::tui::shutdown::{State, Output};
 use crate::tui::app::{
     UP_KEY, DOWN_KEY, LEFT_KEY, RIGHT_KEY, REQ_KEY };
@@ -26,7 +27,7 @@ impl<'c> Compute<'c> for Controller {
         self,
         s: &mut State,
         _: &mut DefaultTerminal,
-        gpio_pins: [&'c InputPin; 5],
+        input: &mut Input,
     ) -> Output {
 		
 		let state_data = s.unwrap_controller();
@@ -46,7 +47,7 @@ impl<'c> Compute<'c> for Controller {
 			return Output::Model(Model { cmd : ModelCommand::Init	});
 		}
 		
- 		if gpio_pins[REQ_KEY].read() == 0.into() {
+ 		if input.keys[REQ_KEY].read(&mut input.ev) == 0.into() {
 			eprintln!("<Controller> : Quit key pressed.");
             let _ = Command::new("sudo")
                 .arg("shutdown")

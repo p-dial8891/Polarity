@@ -15,6 +15,7 @@ use crate::tui::{Components, Compute, IntoComponent, IntoComp};
 use ratatui::DefaultTerminal;
 use crate::tui::shutdown::{State, Output};
 use rppal::gpio::{self, InputPin};
+use crate::tui::input::Input;
 
 #[derive(Clone)]
 pub struct Model {
@@ -33,7 +34,7 @@ impl<'c> Compute<'c> for Model {
 	    self, 
 		s: &mut State, 
 		_: &mut DefaultTerminal, 
-		_: [&'c InputPin; 5],
+		_: &mut Input,
 	) -> Output {
         match self.cmd {
 			

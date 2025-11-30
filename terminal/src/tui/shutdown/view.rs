@@ -14,6 +14,7 @@ use ratatui::text::{Line, Span, Text};
 use ratatui::widgets::{List, ListDirection, ListItem, ListState, Paragraph};
 use ratatui::{DefaultTerminal, Frame};
 use rppal::gpio::{self, InputPin};
+use crate::tui::input::Input;
 
 #[derive(Clone)]
 pub struct View {
@@ -70,7 +71,7 @@ impl<'c> Compute<'c> for View {
         self,
         s: &mut State,
         terminal: &mut DefaultTerminal,
-        _: [&'c InputPin; 5],
+        _: &mut Input,
     ) -> Output {
 		
 		match self.cmd {
