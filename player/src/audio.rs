@@ -2,10 +2,13 @@ use std::fs::File;
 use rodio::{Decoder, OutputStream, source::Source};
 use std::net::TcpStream;
 use std::io::prelude::*;
+use crate::options;
 
 pub fn play(path: &str)
 {
-	let mut stream = TcpStream::connect("raspberrypi.local:9000").unwrap();
+	let mut tui_address = options::getTuiAddress();
+	tui_address.extend([":9000"]);
+	let mut stream = TcpStream::connect(&tui_address).unwrap();
 
 	// Get an output stream handle to the default physical sound device.
 	// Note that the playback stops when the stream_handle is dropped.//!

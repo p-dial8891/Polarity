@@ -6,7 +6,11 @@ struct Flags {
     #[arg(long)]
     host: String,
 	#[arg(long)]
-	token: String
+	token: String,
+	#[arg(long)]
+	player: String,
+	#[arg(long)]
+	tui: String
 }
 
 pub fn getHost() -> String {
@@ -29,4 +33,24 @@ pub fn getToken() -> String {
 	let matches = Flags::parse_from(args);
 
 	matches.token
+}
+
+pub fn getPlayerAddress() -> String {
+	let args = argfile::expand_args(
+		argfile::parse_fromfile,
+		argfile::PREFIX,
+	).unwrap();
+	let matches = Flags::parse_from(args);
+
+	matches.player
+}
+
+pub fn getTuiAddress() -> String {
+	let args = argfile::expand_args(
+		argfile::parse_fromfile,
+		argfile::PREFIX,
+	).unwrap();
+	let matches = Flags::parse_from(args);
+
+	matches.tui
 }

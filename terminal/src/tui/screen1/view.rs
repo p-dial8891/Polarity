@@ -8,6 +8,7 @@ use rppal::gpio::{self, InputPin};
 use crate::tui::input::Input;
 use crate::tui::screen1::{State, Output};
 use crate::polaris::{self, polarisHandle};
+use crate::options;
 use std::rc::Rc;
 use std::sync::mpsc::{Sender, Receiver, channel};
 use std::collections::HashSet;
@@ -102,9 +103,10 @@ pub fn render_bottom(frame: &mut Frame, area: Rect, auto_play: bool) {
 async fn sendRequestToPlayer(path: String) {
     //init_tracing("Polarity example.");
     //println!("Polarity example");
+	let mut player_address = options::getPlayerAddress();
 
     let mut transport = tarpc::serde_transport::tcp::connect(
-        ("raspberrypi.local", 50051),
+        (player_address, 50051),
         Json::default,
     );
     transport.config_mut().max_frame_length(usize::MAX);
@@ -147,8 +149,10 @@ impl<'c> Compute<'c> for View {
 			},
 			
 		    PlayTrack(name, data, mut list_state, playlist, toggle_symbol) => {
+				let mut tui_address = options::getTuiAddress();
+				tui_address.extend([":9000"]);
                 let state_data = s.unwrap_view();
-				let listener = TcpListener::bind("raspberrypi.local:9000").await.unwrap();
+				let listener = TcpListener::bind(&tui_address).await.unwrap();
 				let _ = state_data.tx.send(Some(task::spawn(listenerTask(listener))));
 				sendRequestToPlayer(name).await;
                 terminal.draw(|frame| {
