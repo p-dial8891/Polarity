@@ -8,8 +8,7 @@ use crate::polaris::{self, polarisHandle};
 use crate::tui::screen1::{State, Output};
 use std::rc::Rc;
 use std::sync::mpsc::{Sender, Receiver, channel};
-use crate::tui::app::{
-    UP_KEY, DOWN_KEY, LEFT_KEY, RIGHT_KEY, REQ_KEY };
+use crate::tui::app::Keys::{self, *};
 use std::process::Command;
 use tokio::task;
 
@@ -66,40 +65,31 @@ impl<'c> Compute<'c> for Controller {
 			_ => {}
 		}
 	
-		if input.keys[UP_KEY].read(&mut input.ev) == 0.into() {
+		if input.read(UP_KEY) == 0.into() {
 			eprintln!("<Controller> : Up key pressed.");
 			return Output::Model(Model { data : self.data,
 			    cmd : ModelCommand::SelectPrevious	});
 		}
-		if input.keys[DOWN_KEY].read(&mut input.ev) == 0.into() {
+		if input.read(DOWN_KEY) == 0.into() {
 			eprintln!("<Controller> : Down key pressed.");
 			return Output::Model(Model { data : self.data,
 			    cmd : ModelCommand::SelectNext	});
 		}
-		if input.keys[LEFT_KEY].read(&mut input.ev) == 0.into() {
+		if input.read(LEFT_KEY) == 0.into() {
 			eprintln!("<Controller> : Left key pressed.");
 			return Output::Model(Model { data : self.data,
 			    cmd : ModelCommand::RemoveTrack	});
 		}
-		if input.keys[RIGHT_KEY].read(&mut input.ev) == 0.into() {
+		if input.read(RIGHT_KEY) == 0.into() {
 			eprintln!("<Controller> : Right key pressed.");
 			return Output::Model(Model { data : self.data,
 			    cmd : ModelCommand::AddTrack	});
 		}
-		if input.keys[REQ_KEY].read(&mut input.ev) == 0.into() {
+		if input.read(REQ_KEY) == 0.into() {
 			eprintln!("<Controller> : Request key pressed.");
 			return Output::Model(Model { data : self.data,
 			    cmd : ModelCommand::TogglePlay	});
 		}
-/* 		if input[QUIT_KEY].read() == 0.into() {
-			eprintln!("<Controller> : Quit key pressed.");
-            let _ = Command::new("sudo")
-                .arg("shutdown")
-                .arg("-h")
-                .arg("0")
-                .output()
-                .expect("Unable to shutdown.");
-		} */
 		// should not matter what happens from here.	
         Output::Model(Model { data : self.data,
 			cmd : ModelCommand::Noop	})

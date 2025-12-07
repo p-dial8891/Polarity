@@ -5,8 +5,7 @@ use ratatui::DefaultTerminal;
 use rppal::gpio::{self, InputPin};
 use crate::tui::input::Input;
 use crate::tui::shutdown::{State, Output};
-use crate::tui::app::{
-    UP_KEY, DOWN_KEY, LEFT_KEY, RIGHT_KEY, REQ_KEY };
+use crate::tui::app::Keys::{self, *};
 use std::process::Command;
 
 #[derive(Clone)]
@@ -47,7 +46,7 @@ impl<'c> Compute<'c> for Controller {
 			return Output::Model(Model { cmd : ModelCommand::Init	});
 		}
 		
- 		if input.keys[REQ_KEY].read(&mut input.ev) == 0.into() {
+ 		if input.read(REQ_KEY) == 0.into() {
 			eprintln!("<Controller> : Quit key pressed.");
             let _ = Command::new("sudo")
                 .arg("shutdown")
