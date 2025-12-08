@@ -1,4 +1,3 @@
-use rppal::gpio::{self, Gpio, InputPin, Level};
 use crossterm::{
     event::{poll, read, Event, KeyCode}
 };
@@ -20,13 +19,37 @@ impl InputConfig {
 
 	}
 	
+	fn read(&mut self, e : &mut Option<Event>) -> bool {
+		match e {
+			Some(ev) => {
+				if *ev == Event::Key(KeyCode::Char(self.ch).into()) ||
+				   ( *ev == Event::Key(KeyCode::Enter.into()) && 
+					   self.ch == '\u{000A}' ) ||
+				   ( *ev == Event::Key(KeyCode::Tab.into()) &&
+					   self.ch == '\u{0009}' )   {
+					eprintln!("Key {:?} captured", self.ch);
+					*e = None;
+					false
+				} else {
+					true
+				}
+			}
+			None => true
+		}
+	}
+	
 }
 
+#[cfg(feature = "enable-rppal")]
+use rppal::gpio::{self, Gpio, InputPin, Level};
+
+#[cfg(feature = "enable-rppal")]
 pub struct InputInitialised {
 	pub pin : InputPin,
 	pub ch : char
 }
 
+#[cfg(feature = "enable-rppal")]
 impl InputInitialised {
 	
 	fn read(&mut self, e : &mut Option<Event>) -> Level {
@@ -56,6 +79,7 @@ impl InputInitialised {
 	}
 }	
 
+#[cfg(feature = "enable-rppal")]
 pub struct Input {
 	
 	pub keys : [InputInitialised; 6],
@@ -63,6 +87,7 @@ pub struct Input {
 	
 }
 
+#[cfg(feature = "enable-rppal")]
 impl Input {
 	
 	pub fn init( k : [InputConfig;6] ) -> Input {
@@ -107,6 +132,38 @@ impl Input {
 			Level::High => true
 		}
 	
+	}
+
+}
+
+#[cfg(not(feature = "enable-rppal"))]
+pub struct Input {
+	
+	pub keys : [InputConfig; 6],
+	pub ev : Option<Event>
+	
+}
+
+#[cfg(not(feature = "enable-rppal"))]
+impl Input {
+	
+	pub fn init( k : [InputConfig;6] ) -> Input {
+		
+		Input {
+			keys : k,
+			ev : None
+		}
+	}
+	
+    pub fn set_event(&mut self, c : Event ) {
+		
+		self.ev = Some(c);
+		
+	}
+	
+	pub fn read(&mut self, k : Keys) -> bool {
+		
+		self.keys[k as usize].read(&mut self.ev)
 	}
 
 }
