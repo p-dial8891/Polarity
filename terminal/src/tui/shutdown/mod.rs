@@ -1,7 +1,6 @@
 use crate::tui;
 use crate::tui::{Components, Compute, IntoComponent, IntoComp, Execute};
 use ratatui::DefaultTerminal;
-use rppal::gpio::{self, InputPin};
 use crate::tui::input::Input;
 
 mod controller;

@@ -21,7 +21,6 @@ use crate::tui::screen1::{controller::Controller, view::View,
 };
 use crate::tui::{Components, Compute, IntoComponent, IntoComp};
 use ratatui::DefaultTerminal;
-use rppal::gpio::{self, InputPin};
 use crate::tui::input::Input;
 use crate::tui::screen1::{State, Output};
 use crate::polaris::{self, polarisHandle};

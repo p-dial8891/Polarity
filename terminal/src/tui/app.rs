@@ -4,20 +4,13 @@ use crate::tui::{shutdown, shutdown::Shutdown};
 use crate::tui::{App_List};
 use crate::tui::input::{Input, InputConfig};
 use ratatui::DefaultTerminal;
-use rppal::gpio::{self, Gpio};
 use std::{thread, time::Duration};
 use crossterm::{
     event::{poll, read, Event, KeyCode}
 };
 use crate::tui::app::Keys::{*};
 //use futures::{future::FutureExt, select, StreamExt};
-/*
-pub const UP_KEY : usize = 0;
-pub const DOWN_KEY : usize = 1;
-pub const LEFT_KEY : usize = 2;
-pub const RIGHT_KEY : usize = 3;
-pub const REQ_KEY : usize = 4;
-*/
+
 pub enum Keys {
 	UP_KEY = 0,
 	DOWN_KEY = 1,
@@ -28,12 +21,12 @@ pub enum Keys {
 }
 
 pub async fn main() {
-    let up = InputConfig::init(17, 'j');//gpio.get(17).unwrap().into_input();
-    let down = InputConfig::init(22, 'k');//gpio.get(22).unwrap().into_input();
-    let left = InputConfig::init(27, 'h');//gpio.get(27).unwrap().into_input();
-    let right = InputConfig::init(23, 'l');//gpio.get(23).unwrap().into_input();
-    let quit = InputConfig::init(5, '\u{0009}');//gpio.get(5).unwrap().into_input();
-    let req = InputConfig::init(6, '\u{000A}');//gpio.get(6).unwrap().into_input();
+    let up = InputConfig::init(17, 'j');
+    let down = InputConfig::init(22, 'k');
+    let left = InputConfig::init(27, 'h');
+    let right = InputConfig::init(23, 'l');
+    let quit = InputConfig::init(5, '\u{0009}');
+    let req = InputConfig::init(6, '\u{000A}');
     let keys = [up, down, left, right, req, quit];
 	let mut input = Input::init(keys);
 
@@ -80,7 +73,7 @@ pub async fn main() {
 		e2.execute(next, &mut t, &mut input).await;
 		// Screen execution - end
 
-		if input.read(TAB_KEY) == 0.into() {
+		if input.read(TAB_KEY) == false {
 		    i_previous = i_next.clone();
 			i_next = Some(i.next());
 		}

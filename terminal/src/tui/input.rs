@@ -99,9 +99,13 @@ impl Input {
 		
 	}
 	
-	pub fn read(&mut self, k : Keys) -> Level {
+	pub fn read(&mut self, k : Keys) -> bool {
 		
-		self.keys[k as usize].read(&mut self.ev) 
+		match self.keys[k as usize].read(&mut self.ev) {
+			
+			Level::Low => false,
+			Level::High => true
+		}
 	
 	}
 

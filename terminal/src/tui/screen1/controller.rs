@@ -2,7 +2,6 @@ use crate::tui;
 use crate::tui::screen1::{model::Model, view::View, ModelCommand, ControllerCommand};
 use crate::tui::{Components, Compute, IntoComponent, IntoComp};
 use ratatui::DefaultTerminal;
-use rppal::gpio::{self, InputPin};
 use crate::tui::input::Input;
 use crate::polaris::{self, polarisHandle};
 use crate::tui::screen1::{State, Output};
@@ -65,27 +64,27 @@ impl<'c> Compute<'c> for Controller {
 			_ => {}
 		}
 	
-		if input.read(UP_KEY) == 0.into() {
+		if input.read(UP_KEY) == false {
 			eprintln!("<Controller> : Up key pressed.");
 			return Output::Model(Model { data : self.data,
 			    cmd : ModelCommand::SelectPrevious	});
 		}
-		if input.read(DOWN_KEY) == 0.into() {
+		if input.read(DOWN_KEY) == false {
 			eprintln!("<Controller> : Down key pressed.");
 			return Output::Model(Model { data : self.data,
 			    cmd : ModelCommand::SelectNext	});
 		}
-		if input.read(LEFT_KEY) == 0.into() {
+		if input.read(LEFT_KEY) == false {
 			eprintln!("<Controller> : Left key pressed.");
 			return Output::Model(Model { data : self.data,
 			    cmd : ModelCommand::RemoveTrack	});
 		}
-		if input.read(RIGHT_KEY) == 0.into() {
+		if input.read(RIGHT_KEY) == false {
 			eprintln!("<Controller> : Right key pressed.");
 			return Output::Model(Model { data : self.data,
 			    cmd : ModelCommand::AddTrack	});
 		}
-		if input.read(REQ_KEY) == 0.into() {
+		if input.read(REQ_KEY) == false {
 			eprintln!("<Controller> : Request key pressed.");
 			return Output::Model(Model { data : self.data,
 			    cmd : ModelCommand::TogglePlay	});

@@ -14,7 +14,6 @@ use crate::tui::shutdown::{controller::Controller, view::View,
 use crate::tui::{Components, Compute, IntoComponent, IntoComp};
 use ratatui::DefaultTerminal;
 use crate::tui::shutdown::{State, Output};
-use rppal::gpio::{self, InputPin};
 use crate::tui::input::Input;
 
 #[derive(Clone)]

@@ -13,7 +13,6 @@ use ratatui::style::{Color, Modifier, Style, Stylize};
 use ratatui::text::{Line, Span, Text};
 use ratatui::widgets::{List, ListDirection, ListItem, ListState, Paragraph};
 use ratatui::{DefaultTerminal, Frame};
-use rppal::gpio::{self, InputPin};
 use crate::tui::input::Input;
 
 #[derive(Clone)]

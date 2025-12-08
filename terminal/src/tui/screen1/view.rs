@@ -4,7 +4,6 @@ use crate::tui::screen1::{controller::Controller, model::Model,
     ControllerCommand::{self, Noop}
 };
 use crate::tui::{Components, Compute, IntoComponent, IntoComp};
-use rppal::gpio::{self, InputPin};
 use crate::tui::input::Input;
 use crate::tui::screen1::{State, Output};
 use crate::polaris::{self, polarisHandle};
