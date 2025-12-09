@@ -6,7 +6,7 @@ use crate::polaris;
 use std::rc::Rc;
 use std::sync::mpsc::{Sender, Receiver, channel};
 use ratatui::widgets::{List, ListDirection, ListItem, ListState, Paragraph};
-use std::collections::HashSet;
+use std::collections::VecDeque;
 
 mod controller;
 mod model;
@@ -45,12 +45,12 @@ impl<'c> Components<'c> for Screen1 {
 					task: None,
 					rx: rx }),
                 State::Model(ModelState	{ 
-				    playlist: Rc::new(HashSet::new()), 
+				    playlist: Rc::new(VecDeque::new()), 
 				    selection : ListState::default().with_selected(    Some(0)),
 					list: Rc::new(Vec::new()), 
 					toggle: false,
 				    tx: tx.clone() }),
-                State::View(ViewState { s: 0, b: 0, tx: tx.clone() }),
+                State::View(ViewState { tx: tx.clone() }),
             ])
         }
     }
@@ -149,9 +149,9 @@ pub enum ModelCommand {
 pub enum ViewCommand {
 	
 	Noop,
-	Init(Rc<Vec<String>>, ListState, Rc<HashSet<usize>>, bool),
-    PlayTrack(String, Rc<Vec<String>>, ListState, Rc<HashSet<usize>>, bool),
-	Draw(Rc<Vec<String>>, ListState, Rc<HashSet<usize>>, bool),
+	Init(Rc<Vec<String>>, ListState, Rc<VecDeque<usize>>, bool),
+    PlayTrack(String, Rc<Vec<String>>, ListState, Rc<VecDeque<usize>>, bool),
+	Draw(Rc<Vec<String>>, ListState, Rc<VecDeque<usize>>, bool),
 }
 
 impl<'c> Execute<'c,Screen1> {

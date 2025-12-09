@@ -10,7 +10,7 @@ use crate::polaris::{self, polarisHandle};
 use crate::options;
 use std::rc::Rc;
 use std::sync::mpsc::{Sender, Receiver, channel};
-use std::collections::HashSet;
+use std::collections::VecDeque;
 
 use color_eyre::Result;
 use crossterm::event::{self, KeyCode};
@@ -34,8 +34,6 @@ pub struct View {
 }
 
 pub struct ViewState {
-    pub s: u16,
-    pub b: u64,
 	pub tx : Sender<Option<task::JoinHandle<()>>>
 }
 
@@ -46,7 +44,7 @@ fn render(
     list_state: &mut ListState,
     list_model: &Vec<String>,
     toggle_play: bool,
-    l_playlist: &HashSet<usize>,
+    l_playlist: &VecDeque<usize>,
 ) {
     use Constraint::{Fill, Length, Min};
 
@@ -54,7 +52,7 @@ fn render(
     let [top, bottom] = vertical.areas(frame.area());
 
     render_list(frame, top, list_state, list_model, l_playlist);
-    render_bottom(frame, bottom, toggle_play);
+    render_bottom(frame, bottom, toggle_play, l_playlist, list_state);
 }
 
 const SELECTED_STYLE: Style = Style::new().add_modifier(Modifier::BOLD);
@@ -65,12 +63,13 @@ pub fn render_list(
     area: Rect,
     list_state: &mut ListState,
     list_model: &Vec<String>,
-    l_playlist: &HashSet<usize>,
+    l_playlist: &VecDeque<usize>,
 ) {
     let list =
         List::new(list_model.into_iter().map(|x| x.as_str()).enumerate().map(
             |(i, x)| {
-                if l_playlist.contains(&i) {
+                //if l_playlist.iter().position( |x| { x == &i } ).is_some() {
+				if l_playlist.contains(&i) {
                     ListItem::new(x).yellow()
                 } else {
                     ListItem::new(x).white()
@@ -84,16 +83,29 @@ pub fn render_list(
 }
 
 /// Render a bottom-to-top list.
-pub fn render_bottom(frame: &mut Frame, area: Rect, auto_play: bool) {
-    let final_text;
-    match auto_play {
-        false => final_text = String::from("\n             "),
-        true => {
-            let mut temp_text = String::from("\n             ");
-            temp_text.extend(["A"]);
-            final_text = temp_text;
-        }
-    }
+pub fn render_bottom(
+    frame: &mut Frame, 
+	area: Rect, 
+	auto_play: bool, 
+	l_playlist: &VecDeque<usize>,
+	list_state: &mut ListState,
+) {
+    let autoplay;
+    let q_pos;
+    autoplay = match auto_play {
+        false => { " " },
+        true => { "A" }
+    };
+	let curr_selection = list_state.selected().unwrap();
+	q_pos = match l_playlist.iter().position( |x| { x == &curr_selection } ) {
+		Some(i) => i+1,
+		None => 0
+	};	
+	let mut final_text = String::from("\n           ");
+	final_text.extend([
+		autoplay, " ", 
+		&format!("{:>3}", l_playlist.len()), " ", 
+		&format!("{:>3}", q_pos)]);
     let text = Paragraph::new(final_text);
     frame.render_widget(text, area);
 }

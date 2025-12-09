@@ -27,7 +27,7 @@ use crate::polaris::{self, polarisHandle};
 use std::rc::Rc;
 use std::sync::mpsc::{Sender, Receiver, channel};
 use ratatui::widgets::{List, ListDirection, ListItem, ListState, Paragraph};
-use std::collections::HashSet;
+use std::collections::VecDeque;
 use tokio::task;
 
 #[derive(Clone)]
@@ -37,16 +37,16 @@ pub struct Model {
 }
 
 pub struct ModelState {
-    pub playlist: Rc<HashSet<usize>>,
+    pub playlist: Rc<VecDeque<usize>>,
     pub selection: ListState,
 	pub list: Rc<Vec<String>>,
 	pub toggle: bool,
 	pub tx : Sender<Option<task::JoinHandle<()>>>
 }
 
-async fn getNextTrack(h: polaris::polarisHandle, s: &HashSet<usize>) -> String {
+async fn getNextTrack(h: polaris::polarisHandle, s: &VecDeque<usize>) -> String {
     let mut list_polaris = polaris::getIterator(h).await;
-    let index = s.iter().next().unwrap();
+    let index = s.get(0).unwrap();
     list_polaris.nth(*index).unwrap().1
 }
 
@@ -84,13 +84,13 @@ impl<'c> Compute<'c> for Model {
 		    },
 
 			PlaybackFinished => {
-				let curr_playlist = (*state_data.playlist).clone();
+				//let curr_playlist = (*state_data.playlist).clone();
 				//eprintln!("<Model> : Curr Playlist len {}", curr_playlist.len());
-				let mut curr_iter = curr_playlist.iter();
+				//let mut curr_iter = curr_playlist.iter();
 				//eprintln!("<Model> : Remaining iter length {}", curr_iter.len());
-				let index = curr_iter.next().unwrap();
+				//let index = curr_iter.next().unwrap();
 				//eprintln!("<Model> : playback end detected.");
-			    Rc::get_mut(&mut state_data.playlist).unwrap().remove(index);
+			    Rc::get_mut(&mut state_data.playlist).unwrap().pop_front();
 				
 				if state_data.toggle && !state_data.playlist.is_empty() {
     				let next = getNextTrack(self.data.clone(), &state_data.playlist).await;
@@ -175,8 +175,8 @@ impl<'c> Compute<'c> for Model {
 			},
 
             AddTrack => {
-                Rc::get_mut(&mut state_data.playlist).unwrap()
-				    .insert(state_data.selection.selected().unwrap());
+				let mut p = Rc::get_mut(&mut state_data.playlist).unwrap();
+				p.push_back(state_data.selection.selected().unwrap());
 
                 eprintln!("<Model> : New track added to playlist.");
 			    return Output::View(View {
@@ -191,8 +191,11 @@ impl<'c> Compute<'c> for Model {
             },				
 
             RemoveTrack => {
-                Rc::get_mut(&mut state_data.playlist).unwrap()
-				    .remove(&state_data.selection.selected().unwrap());
+				let mut p = Rc::get_mut(&mut state_data.playlist).unwrap();
+				let i = p.iter().position(
+				    |x| { *x == state_data.selection.selected().unwrap() } 
+				).unwrap();
+				p.remove(i);
 
                 eprintln!("<Model> : Track removed from playlist.");
 			    return Output::View(View {
