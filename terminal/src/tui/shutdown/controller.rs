@@ -22,7 +22,7 @@ impl<'c> Compute<'c> for Controller {
     type Output = Output;
 
     async fn compute(
-        self,
+        mut self,
         s: &mut State,
         _: &mut DefaultTerminal,
         input: &mut Input,

@@ -30,6 +30,7 @@ use tokio::{net::TcpListener, task, time::sleep};
 #[derive(Clone)]
 pub struct View {
     pub data: polarisHandle,
+	pub selection : ListState,
 	pub cmd: ViewCommand,
 }
 
@@ -146,20 +147,20 @@ impl<'c> Compute<'c> for View {
     type Output = Output;
 
     async fn compute(
-        self,
+        mut self,
         s: &mut State,
         terminal: &mut DefaultTerminal,
         _: &mut Input,
     ) -> Output {
 		
 		match self.cmd {
-			Init(data, mut list_state, playlist, toggle_symbol) => {
+			Init(data, playlist, toggle_symbol) => {
 			    terminal.clear();	
     			terminal.draw(|frame| {
-				    render(frame, &mut list_state, &data, toggle_symbol, &playlist) }).unwrap();
+				    render(frame, &mut self.selection, &data, toggle_symbol, &playlist) }).unwrap();
 			},
 			
-		    PlayTrack(name, data, mut list_state, playlist, toggle_symbol) => {
+		    PlayTrack(name, data, playlist, toggle_symbol) => {
 				let mut tui_address = options::getTuiAddress();
 				tui_address.extend([":9000"]);
                 let state_data = s.unwrap_view();
@@ -167,12 +168,12 @@ impl<'c> Compute<'c> for View {
 				let _ = state_data.tx.send(Some(task::spawn(listenerTask(listener))));
 				sendRequestToPlayer(name).await;
                 terminal.draw(|frame| {
-				    render(frame, &mut list_state, &data, toggle_symbol, &playlist) }).unwrap();
+				    render(frame, &mut self.selection, &data, toggle_symbol, &playlist) }).unwrap();
             },
 			
-			Draw(data, mut list_state, playlist, toggle_symbol) => {
+			Draw(data, playlist, toggle_symbol) => {
     			terminal.draw(|frame| {
-				    render(frame, &mut list_state, &data, toggle_symbol, &playlist) }).unwrap();
+				    render(frame, &mut self.selection, &data, toggle_symbol, &playlist) }).unwrap();
             },
 
             _ => {}			
@@ -180,6 +181,7 @@ impl<'c> Compute<'c> for View {
 		
 		Output::Controller(Controller { 
 		    cmd : ControllerCommand::Noop,
-			data : self.data })
+			data : self.data,
+            selection : self.selection	})
     }
 }

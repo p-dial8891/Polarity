@@ -46,7 +46,6 @@ impl<'c> Components<'c> for Screen1 {
 					rx: rx }),
                 State::Model(ModelState	{ 
 				    playlist: Rc::new(VecDeque::new()), 
-				    selection : ListState::default().with_selected(    Some(0)),
 					list: Rc::new(Vec::new()), 
 					toggle: false,
 				    tx: tx.clone() }),
@@ -149,9 +148,9 @@ pub enum ModelCommand {
 pub enum ViewCommand {
 	
 	Noop,
-	Init(Rc<Vec<String>>, ListState, Rc<VecDeque<usize>>, bool),
-    PlayTrack(String, Rc<Vec<String>>, ListState, Rc<VecDeque<usize>>, bool),
-	Draw(Rc<Vec<String>>, ListState, Rc<VecDeque<usize>>, bool),
+	Init(Rc<Vec<String>>, Rc<VecDeque<usize>>, bool),
+    PlayTrack(String, Rc<Vec<String>>, Rc<VecDeque<usize>>, bool),
+	Draw(Rc<Vec<String>>, Rc<VecDeque<usize>>, bool),
 }
 
 impl<'c> Execute<'c,Screen1> {

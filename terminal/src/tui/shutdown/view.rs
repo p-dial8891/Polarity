@@ -67,7 +67,7 @@ impl<'c> Compute<'c> for View {
     type Output = Output;
 
     async fn compute(
-        self,
+        mut self,
         s: &mut State,
         terminal: &mut DefaultTerminal,
         _: &mut Input,

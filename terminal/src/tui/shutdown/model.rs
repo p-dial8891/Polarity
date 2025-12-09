@@ -30,7 +30,7 @@ impl<'c> Compute<'c> for Model {
     type Output = Output;
 
     async fn compute(
-	    self, 
+	    mut self, 
 		s: &mut State, 
 		_: &mut DefaultTerminal, 
 		_: &mut Input,
