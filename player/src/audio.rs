@@ -1,30 +1,29 @@
-use std::fs::File;
-use rodio::{Decoder, OutputStream, source::Source};
-use std::net::TcpStream;
+use tokio::fs::File;
+use rodio::{Decoder, OutputStream, source::Source, Sink};
+use tokio::net::TcpStream;
 use std::io::prelude::*;
 use crate::options;
+use std::sync::{Arc,Mutex};
+use tokio::time::{Duration, sleep};
+use tokio::io::{AsyncWriteExt};
 
-pub fn play(path: &str)
+pub async fn play(path: &str, sink: Arc<Sink>)
 {
 	let mut tui_address = options::getTuiAddress();
 	tui_address.extend([":9000"]);
-	let mut stream = TcpStream::connect(&tui_address).unwrap();
+	let mut stream = TcpStream::connect(&tui_address).await.unwrap();
 
-	// Get an output stream handle to the default physical sound device.
-	// Note that the playback stops when the stream_handle is dropped.//!
-	let stream_handle = rodio::OutputStreamBuilder::open_default_stream()
-			.expect("open default audio stream");
-	let sink = rodio::Sink::connect_new(&stream_handle.mixer());
-	// Load a sound from a file, using a path relative to Cargo.toml
-	let file = File::open(path).unwrap();
+	let file = File::open(path).await.unwrap();
 	// Decode that sound file into a source
-	let source = Decoder::try_from(file).unwrap();
+	let source = Decoder::try_from(file.into_std().await).unwrap();
 	// Play the sound directly on the device
 	//stream_handle.mixer().add(source);
+	
 	sink.append(source);
 
-	sink.sleep_until_end();
-	//std::thread::sleep(std::time::Duration::from_secs(60*5));
+    while !sink.empty() {
+	    sleep(Duration::from_secs(1)).await;
+	}
 
-	stream.write(&[1]).unwrap();
+	stream.write(&[1]).await;
 }	
