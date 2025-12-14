@@ -130,6 +130,12 @@ impl Player for PlayerServer {
 		} );
 		Ok(())
     }
+	
+	async fn skip(self, _: context::Context) -> Result<(),()> {
+		tokio::task::spawn( async move {
+		    self.sink.skip_one(); } );
+		Ok(())
+	}
 }
 
 async fn spawn(fut: impl Future<Output = ()> + Send + 'static) {

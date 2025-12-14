@@ -1,6 +1,7 @@
 pub mod app;
 mod screen1;
 mod shutdown;
+mod playback;
 mod input;
 
 use ratatui::DefaultTerminal;
@@ -60,9 +61,16 @@ trait Compute<'c> {
 
 struct Execute<'c, S : Components<'c>> {
 	
-	screen_name : String,
+	screen_names : Vec<String>,
 	current_output : Option<S::Output>,
 	current_screen : S,
+	
+}
+
+struct ExecuteBG<'c, S : Components<'c>, BG> {
+	
+	pub foreground_executor : &'c mut Execute<'c, S>,
+	current_output : Option<BG>,
 	
 }
 
@@ -70,7 +78,7 @@ struct App_List(Vec<String>);
 
 impl App_List {
 	
-    pub fn enumerate(& mut self, name : &str ) -> String {
+    pub fn register(& mut self, name : &str ) -> String {
 	    let temp = String::from(name);
 		self.0.push(temp.clone());
 	    temp

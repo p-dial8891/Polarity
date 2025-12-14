@@ -7,7 +7,7 @@ mod controller;
 mod model;
 mod view;
 
-use crate::tui::shutdown::{
+use crate::tui::playback::{
 	controller::{
 		Controller, ControllerState
 	}, 
@@ -21,18 +21,18 @@ use crate::tui::shutdown::{
 
 pub type State = tui::ComponentData<ModelState, ViewState, ControllerState>;
 pub type Output = tui::ComponentData<Model, View, Controller>;
-pub type Executor<'c> = tui::Execute<'c, Shutdown>;
+pub type Executor<'c> = tui::Execute<'c, Playback>;
 
-pub struct Shutdown {
+pub struct Playback {
     pub v : Vec<State>
 }
 
-impl<'c> Components<'c> for Shutdown {
-    type Item = Shutdown;
+impl<'c> Components<'c> for Playback {
+    type Item = Playback;
     type Output = Output;
 
-    fn new() -> Shutdown {
-        Shutdown {
+    fn new() -> Playback {
+        Playback {
             v: Vec::from([
                 State::Controller(ControllerState { 
 				    start: true}),
@@ -113,22 +113,24 @@ impl IntoComp<ModelState, ViewState, ControllerState> for State {
 #[derive(Clone)]
 pub enum ControllerCommand {
     Noop,
-    Init
+    Init,
 }
 
 #[derive(Clone)]
 pub enum ModelCommand {
     Noop,
-    Init
+    Init,
+	Req
 }
 
 #[derive(Clone)]
 pub enum ViewCommand {
     Noop,
-    Init
+    Init,
+	Skip
 }
 
-impl<'c> Execute<'c,Shutdown> {
+impl<'c> Execute<'c,Playback> {
 	pub async fn init(&mut self, handle: &String) {
 		if self.screen_names.iter().position(|x| { x == handle }).is_some() {
 		    self.current_output = Some(self.current_screen.start().await);

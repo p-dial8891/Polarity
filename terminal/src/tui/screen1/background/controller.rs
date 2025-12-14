@@ -1,0 +1,60 @@
+use crate::tui;
+use crate::tui::screen1::{background::model::Model, background::view::View, ModelCommand, ControllerCommand};
+use crate::tui::{Components, Compute, IntoComponent, IntoComp};
+use ratatui::DefaultTerminal;
+use crate::tui::input::Input;
+use crate::polaris::{self, polarisHandle};
+use crate::tui::screen1::{State, OutputBG};
+use std::rc::Rc;
+use std::sync::mpsc::{Sender, Receiver, channel};
+use crate::tui::app::Keys::{self, *};
+use std::process::Command;
+use tokio::task;
+use ratatui::widgets::{ListState};
+
+#[derive(Clone)]
+pub struct Controller {
+	pub cmd: ControllerCommand,
+}
+
+impl<'c> Compute<'c> for Controller {
+    type State = State;
+    type Output = OutputBG;
+
+    async fn compute(
+        mut self,
+        s: &mut State,
+        _: &mut DefaultTerminal,
+        input: &mut Input,
+    ) -> Self::Output {
+		let state_data = s.unwrap_controller();
+		
+		if let Some(t) = &state_data.task {
+			if t.is_finished() {
+				state_data.task = None;
+				return Self::Output::Model(Model { 
+			        cmd : ModelCommand::PlaybackFinished	});
+			}
+		}
+		
+		match state_data.rx.try_recv() {
+			Ok(t_handle) => { state_data.task = t_handle; }
+			_ => {}
+		}
+		// should not matter what happens from here.	
+        Self::Output::Model(Model { 
+			cmd : ModelCommand::Noop	})
+    }
+}
+
+impl Controller {
+	
+	pub async fn new() -> Self {
+		
+		Controller {
+			cmd : ControllerCommand::Init,
+		}
+		
+	}
+	
+}

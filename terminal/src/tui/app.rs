@@ -1,6 +1,7 @@
 use crate::tui::{self, Components, Compute, IntoComponent};
 use crate::tui::{screen1, screen1::Screen1};
 use crate::tui::{shutdown, shutdown::Shutdown};
+use crate::tui::{playback, playback::Playback};
 use crate::tui::{App_List};
 use crate::tui::input::{Input, InputConfig};
 use ratatui::DefaultTerminal;
@@ -35,15 +36,25 @@ pub async fn main() {
 	
 	let mut a = App_List(Vec::new());
 
+    let main_bg = String::from("Main_in_background");
+	
     // Screen definitions - start
-    let mut e1 = screen1::Executor { 
-		screen_name: a.enumerate("Main"), 
+    let mut e0 = screen1::Executor { 
+		screen_names: vec![a.register("Main"), main_bg.clone()], 
 		current_output: None, 
 		current_screen: Screen1::new() 
 	};
-
-    let mut e2 = shutdown::Executor { 
-	    screen_name: a.enumerate("Shutdown"), 
+	
+	let mut e1 = e0.with_background();
+	
+    let mut e2 = playback::Executor { 
+	    screen_names: vec![a.register("Playback")], 
+		current_output: None, 
+		current_screen: Playback::new() 
+	};
+	
+    let mut e3 = shutdown::Executor { 
+	    screen_names: vec![a.register("Shutdown")], 
 		current_output: None, 
 		current_screen: Shutdown::new() 
 	};
@@ -53,24 +64,30 @@ pub async fn main() {
     let mut i_previous = None;
 	let mut i_next = Some(i.next());
 	
+	e1.init(&main_bg).await;
+	
     loop {
 		if poll(Duration::from_millis(5)).unwrap() {
 			input.set_event(read().unwrap());
 		}
 		
+		e1.execute(&main_bg, &mut t, &mut input).await;
+		
 		let next = i_next.unwrap().unwrap();
 		
         if i_previous != i_next {
 			// Screen Initialisations - start
-			e1.init(next).await;
+			e1.foreground_executor.init(next).await;
 			e2.init(next).await;
+			e3.init(next).await;
 			// Screen Initialisations - end
 		    i_previous = i_next.clone();
 		}
 		
 		// Screen execution - start
-		e1.execute(next, &mut t, &mut input).await;
+		e1.foreground_executor.execute(next, &mut t, &mut input).await;
 		e2.execute(next, &mut t, &mut input).await;
+		e3.execute(next, &mut t, &mut input).await;
 		// Screen execution - end
 
 		if input.read(TAB_KEY) == false {
