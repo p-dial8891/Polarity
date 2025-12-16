@@ -37,19 +37,21 @@ impl<'c> Components<'c> for Screen1 {
 
     fn new() -> Screen1 {
 		let (tx, rx) = channel();
+        let (tx_refresh, rx_refresh) = channel();
         Screen1 {
             v: Vec::from([
                 State::Controller(ControllerState { 
 				    start: true, 
 					task: None,
-					rx: rx }),
+					rx: rx,
+                    rx_refresh: rx_refresh }),
                 State::Model(ModelState	{ 
 				    playlist: Rc::new(VecDeque::new()), 
 					polaris_data: Rc::new(Vec::new()),
 					list: Rc::new(Vec::new()), 
-					toggle: false,
-				    tx: tx.clone() }),
-                State::View(ViewState { tx: tx.clone() }),
+					toggle: false,}),
+                State::View(ViewState { tx: tx.clone(),
+                    tx_refresh: tx_refresh.clone() }),
             ])
         }
     }
@@ -200,6 +202,7 @@ pub enum ModelCommand {
 	AddTrack,
 	RemoveTrack,
 	TogglePlay,
+    Refresh
 	
 }
 

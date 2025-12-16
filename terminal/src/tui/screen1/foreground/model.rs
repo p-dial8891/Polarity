@@ -9,7 +9,8 @@ use crate::tui::screen1::{foreground::controller::Controller, foreground::view::
 		SelectPrevious,
 		AddTrack,
 		RemoveTrack,
-		TogglePlay 
+		TogglePlay,
+		Refresh 
 	}, 
 	ViewCommand::{
 		self, 
@@ -42,7 +43,6 @@ pub struct ModelState {
 	pub polaris_data : Rc<Vec<(String,String)>>,
 	pub list: Rc<Vec<String>>,
 	pub toggle: bool,
-	pub tx : Sender<Option<task::JoinHandle<()>>>
 }
 
 async fn getNextTrack(list: Rc<Vec<(String,String)>>, s: &VecDeque<usize>) -> String {
@@ -209,6 +209,18 @@ impl<'c> Compute<'c> for Model {
 				);
 			},
 
+			Refresh => {
+				eprintln!("<Model> : Refreshing view.");
+			    return Output::View(View {
+                    data : self.data,
+					selection : self.selection,
+			        cmd : Draw(
+					    state_data.list.clone(),
+                        state_data.playlist.clone(),
+                        state_data.toggle ) 
+					} 
+				);
+			},
 			_ => {	
 			
                 //eprintln!("<Model> : Noop.");			

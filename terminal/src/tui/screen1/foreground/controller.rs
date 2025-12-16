@@ -22,7 +22,8 @@ pub struct Controller {
 pub struct ControllerState {
     pub start: bool,
 	pub task: Option<task::JoinHandle<()>>,
-	pub rx: Receiver<Option<task::JoinHandle<()>>>
+	pub rx: Receiver<Option<task::JoinHandle<()>>>,
+	pub rx_refresh: Receiver<()>
 }
 
 
@@ -54,7 +55,16 @@ impl<'c> Compute<'c> for Controller {
 			    selection : self.selection,
 			    cmd : ModelCommand::Init	});
 		}
-				
+
+		match state_data.rx_refresh.try_recv() {
+			Ok(t_handle) => { 
+				eprintln!("<Controller> : Refresh command received.");
+				return Output::Model(Model { data : self.data,
+			        selection : self.selection,
+			        cmd : ModelCommand::Refresh	}) }
+			_ => {}
+		}
+
 		if input.read(UP_KEY) == false {
 			eprintln!("<Controller> : Up key pressed.");
 			return Output::Model(Model { data : self.data,

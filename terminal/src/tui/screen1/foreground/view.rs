@@ -35,7 +35,8 @@ pub struct View {
 }
 
 pub struct ViewState {
-	pub tx : Sender<Option<task::JoinHandle<()>>>
+	pub tx : Sender<Option<task::JoinHandle<()>>>,
+	pub tx_refresh: Sender<()>
 }
 
 
@@ -152,7 +153,7 @@ impl<'c> Compute<'c> for View {
         terminal: &mut DefaultTerminal,
         _: &mut Input,
     ) -> Output {
-		
+		let mut state_data = s.unwrap_view();
 		match self.cmd {
 			Init(data, playlist, toggle_symbol) => {
 			    terminal.clear();	
@@ -167,7 +168,6 @@ impl<'c> Compute<'c> for View {
 		    PlayTrack(name, data, playlist, toggle_symbol) => {
 				let mut tui_address = options::getTuiAddress();
 				tui_address.extend([":9000"]);
-                let state_data = s.unwrap_view();
 				let listener = TcpListener::bind(&tui_address).await.unwrap();
 				let _ = state_data.tx.send(Some(task::spawn(listenerTask(listener))));
 				sendRequestToPlayer(name).await;

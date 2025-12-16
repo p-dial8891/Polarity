@@ -64,8 +64,20 @@ impl<'c> Compute<'c> for Model {
     				let next = getNextTrack(state_data.polaris_data.clone(), &state_data.playlist).await;
 					eprintln!("<Model> : Next track selected {}",next);
     				return Self::Output::View(View { 
-		    		    cmd : NextTrack(next) 
-					    } 
+		    		    cmd : NextTrack(
+						    next
+					    )
+					} 
+					);
+				} else 
+				if { state_data.toggle } {
+					state_data.toggle = false;
+					return Self::Output::View(View {
+						cmd : Draw(
+							state_data.list.clone(),
+							state_data.playlist.clone(),
+							state_data.toggle ) 
+						} 
 					);
 				}
 				

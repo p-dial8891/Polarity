@@ -1,6 +1,6 @@
 use crate::tui;
 use crate::tui::screen1::{background::controller::Controller, background::model::Model,
-    ViewCommand::{self, Init, Draw, NextTrack},
+    ViewCommand::{self, Init, Draw, PlayTrack, NextTrack},
     ControllerCommand::{self, Noop}
 };
 use crate::tui::{Components, Compute, IntoComponent, IntoComp};
@@ -147,19 +147,24 @@ impl<'c> Compute<'c> for View {
     ) -> Self::Output {
 		
 		match self.cmd {
-			
-		    NextTrack(name) => {
+			NextTrack(name) => {
 				let mut tui_address = options::getTuiAddress();
 				tui_address.extend([":9000"]);
-                let state_data = s.unwrap_view();
+                let mut state_data = s.unwrap_view();
 				let listener = TcpListener::bind(&tui_address).await.unwrap();
 				let _ = state_data.tx.send(Some(task::spawn(listenerTask(listener))));
-				sendRequestToPlayer(name).await;
+				let _ = state_data.tx_refresh.send(());
+                sendRequestToPlayer(name).await;
                 //terminal.draw(|frame| {
-				//    render(frame, &mut self.selection, &data, toggle_symbol, &playlist) }).unwrap();
+				//    render(frame, &mut state_data.selection_copy, &data, toggle_symbol, &playlist) }).unwrap();
             },
 
-            _ => {}			
+            Draw(_, _, _) => {
+                let mut state_data = s.unwrap_view();
+                let _ = state_data.tx_refresh.send(());
+            },
+            
+            _ => {}
 		}
 		
 		Self::Output::Controller(Controller { 
