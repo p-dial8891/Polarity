@@ -42,7 +42,7 @@ fn render(
 ) {
     use Constraint::{Fill, Length, Min};
 
-    let vertical = Layout::vertical([Length(8), Length(2)]);
+    let vertical = Layout::vertical([Fill(1), Length(2)]);
     let [top, bottom] = vertical.areas(frame.area());
 
     render_list(frame, top, list_state, list_model, l_playlist);
