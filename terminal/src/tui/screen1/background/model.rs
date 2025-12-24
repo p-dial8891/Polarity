@@ -53,12 +53,14 @@ impl<'c> Compute<'c> for Model {
 		_: &mut Input,
 	) -> Self::Output {
 		
-		let mut state_data = s.unwrap_model();
+		let mut state_data = s;
 		
 		match self.cmd {
 
 			PlaybackFinished => {
-			    Rc::get_mut(&mut state_data.playlist).unwrap().pop_front();
+				let mut p: &mut VecDeque<usize> = 
+			        Rc::get_mut(&mut state_data.playlist).unwrap();
+				p.pop_front();
 				
 				if state_data.toggle && !state_data.playlist.is_empty() {
     				let next = getNextTrack(state_data.polaris_data.clone(), &state_data.playlist).await;

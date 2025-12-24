@@ -67,8 +67,8 @@ pub async fn main() {
 	e1.init(&main_bg).await;
 	
     loop {
-		if poll(Duration::from_millis(5)).unwrap() {
-			input.set_event(read().unwrap());
+        if poll(Duration::from_millis(5)).unwrap() {
+		    input.set_event(read().unwrap());
 		}
 		
 		e1.execute(&main_bg, &mut t, &mut input).await;
@@ -95,6 +95,6 @@ pub async fn main() {
 			i_next = Some(i.next());
 		}
 			
-        thread::sleep(Duration::from_millis(250));
+        thread::sleep(Duration::from_millis(100));
     }
 }

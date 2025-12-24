@@ -30,13 +30,7 @@ use tokio::{net::TcpListener, task, time::sleep};
 #[derive(Clone)]
 pub struct View {
     pub data: polarisHandle,
-	pub selection : ListState,
 	pub cmd: ViewCommand,
-}
-
-pub struct ViewState {
-	pub tx : Sender<Option<task::JoinHandle<()>>>,
-	pub tx_refresh: Sender<()>
 }
 
 
@@ -153,17 +147,17 @@ impl<'c> Compute<'c> for View {
         terminal: &mut DefaultTerminal,
         _: &mut Input,
     ) -> Output {
-		let mut state_data = s.unwrap_view();
+		let mut state_data = s;
 		match self.cmd {
 			Init(data, playlist, toggle_symbol) => {
 			    terminal.clear();	
     			terminal.draw(|frame| {
-				    render(frame, &mut self.selection, &data, toggle_symbol, &playlist) }).unwrap();
+				    render(frame, &mut state_data.selection, &data, toggle_symbol, &playlist) }).unwrap();
 			},
 			
 			Draw(data, playlist, toggle_symbol) => {
     			terminal.draw(|frame| {
-				    render(frame, &mut self.selection, &data, toggle_symbol, &playlist) }).unwrap();
+				    render(frame, &mut state_data.selection, &data, toggle_symbol, &playlist) }).unwrap();
             },
 		    PlayTrack(name, data, playlist, toggle_symbol) => {
 				let mut tui_address = options::getTuiAddress();
@@ -172,7 +166,7 @@ impl<'c> Compute<'c> for View {
 				let _ = state_data.tx.send(Some(task::spawn(listenerTask(listener))));
 				sendRequestToPlayer(name).await;
                 terminal.draw(|frame| {
-				    render(frame, &mut self.selection, &data, toggle_symbol, &playlist) }).unwrap();
+				    render(frame, &mut state_data.selection, &data, toggle_symbol, &playlist) }).unwrap();
 			},
 			
             _ => {}			
@@ -180,7 +174,6 @@ impl<'c> Compute<'c> for View {
 		
 		Output::Controller(Controller { 
 		    cmd : ControllerCommand::Noop,
-			data : self.data,
-            selection : self.selection	})
+			data : self.data	})
     }
 }

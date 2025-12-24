@@ -13,22 +13,22 @@ mod foreground;
 
 use crate::tui::screen1::foreground::{
 	controller::{
-		Controller, ControllerState
+		Controller
 	}, 
 	model::{
-		Model, ModelState
+		Model, ComponentState
 	}, 
 	view::{
-		View, ViewState
+		View
 	}
 };
 
-pub type State = tui::ComponentData<ModelState, ViewState, ControllerState>;
+pub type State = ComponentState;
 pub type Output = tui::ComponentData<Model, View, Controller>;
 pub type Executor<'c> = tui::Execute<'c, Screen1>;
 
 pub struct Screen1 {
-    pub v: Vec<State>,
+    pub v: State,
 }
 
 impl<'c> Components<'c> for Screen1 {
@@ -39,20 +39,19 @@ impl<'c> Components<'c> for Screen1 {
 		let (tx, rx) = channel();
         let (tx_refresh, rx_refresh) = channel();
         Screen1 {
-            v: Vec::from([
-                State::Controller(ControllerState { 
-				    start: true, 
-					task: None,
-					rx: rx,
-                    rx_refresh: rx_refresh }),
-                State::Model(ModelState	{ 
-				    playlist: Rc::new(VecDeque::new()), 
-					polaris_data: Rc::new(Vec::new()),
-					list: Rc::new(Vec::new()), 
-					toggle: false,}),
-                State::View(ViewState { tx: tx.clone(),
-                    tx_refresh: tx_refresh.clone() }),
-            ])
+            v: ComponentState { 
+				start: true, 
+				task: None,
+				rx: rx,
+				rx_refresh: rx_refresh,
+				playlist: Rc::new(VecDeque::new()), 
+				polaris_data: Rc::new(Vec::new()),
+				list: Rc::new(Vec::new()), 
+				toggle: false,
+				tx: tx.clone(),
+				tx_refresh: tx_refresh.clone(),
+				selection: ListState::default().with_selected(Some(0))
+            }
         }
     }
 
@@ -63,11 +62,11 @@ impl<'c> Components<'c> for Screen1 {
         gpio_pins: &mut Input,
     ) -> Output {
         o.unwrap_controller()
-            .compute(&mut self.v[0], terminal, gpio_pins).await
+            .compute(&mut self.v, terminal, gpio_pins).await
             .unwrap_model()
-            .compute(&mut self.v[1], terminal, gpio_pins).await
+            .compute(&mut self.v, terminal, gpio_pins).await
             .unwrap_view()
-            .compute(&mut self.v[2], terminal, gpio_pins).await
+            .compute(&mut self.v, terminal, gpio_pins).await
     }
 
     async fn start(&mut self) -> Output {
@@ -100,11 +99,11 @@ impl Screen1 {
         gpio_pins: &mut Input,
     ) -> OutputBG {
         o.unwrap_controller()
-            .compute(&mut self.v[0], terminal, gpio_pins).await
+            .compute(&mut self.v, terminal, gpio_pins).await
             .unwrap_model()
-            .compute(&mut self.v[1], terminal, gpio_pins).await
+            .compute(&mut self.v, terminal, gpio_pins).await
             .unwrap_view()
-            .compute(&mut self.v[2], terminal, gpio_pins).await
+            .compute(&mut self.v, terminal, gpio_pins).await
     }
 
     async fn start_as_background(&mut self) -> OutputBG {
@@ -155,29 +154,6 @@ impl IntoComponent<ModelBG, ViewBG, ControllerBG> for OutputBG {
     fn unwrap_view(self) -> ViewBG {
         match self {
             OutputBG::View(v) => v,
-            _ => panic!("Wrong type"),
-        }
-    }
-}
-
-impl IntoComp<ModelState, ViewState, ControllerState> for State {
-    fn unwrap_controller(&mut self) -> &mut ControllerState {
-        match self {
-            State::Controller(c) => c,
-            _ => panic!("Wrong type"),
-        }
-    }
-
-    fn unwrap_model(&mut self) -> &mut ModelState {
-        match self {
-            State::Model(m) => m,
-            _ => panic!("Wrong type"),
-        }
-    }
-
-    fn unwrap_view(&mut self) -> &mut ViewState {
-        match self {
-            State::View(v) => v,
             _ => panic!("Wrong type"),
         }
     }

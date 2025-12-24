@@ -27,7 +27,7 @@ impl<'c> Compute<'c> for Controller {
         _: &mut DefaultTerminal,
         input: &mut Input,
     ) -> Self::Output {
-		let state_data = s.unwrap_controller();
+		let state_data = s;
 		
 		if let Some(t) = &state_data.task {
 			if t.is_finished() {

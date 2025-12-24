@@ -150,17 +150,15 @@ impl<'c> Compute<'c> for View {
 			NextTrack(name) => {
 				let mut tui_address = options::getTuiAddress();
 				tui_address.extend([":9000"]);
-                let mut state_data = s.unwrap_view();
+                let mut state_data = s;
 				let listener = TcpListener::bind(&tui_address).await.unwrap();
 				let _ = state_data.tx.send(Some(task::spawn(listenerTask(listener))));
 				let _ = state_data.tx_refresh.send(());
                 sendRequestToPlayer(name).await;
-                //terminal.draw(|frame| {
-				//    render(frame, &mut state_data.selection_copy, &data, toggle_symbol, &playlist) }).unwrap();
             },
 
             Draw(_, _, _) => {
-                let mut state_data = s.unwrap_view();
+                let mut state_data = s;
                 let _ = state_data.tx_refresh.send(());
             },
             

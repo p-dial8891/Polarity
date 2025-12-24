@@ -34,16 +34,23 @@ use tokio::task;
 #[derive(Clone)]
 pub struct Model {
     pub data: polarisHandle,
-    pub selection: ListState,
 	pub cmd: ModelCommand
 }
 
-pub struct ModelState {
+pub struct ComponentState {
+    pub start: bool,
+	pub task: Option<task::JoinHandle<()>>,
+	pub rx: Receiver<Option<task::JoinHandle<()>>>,
+	pub rx_refresh: Receiver<()>,
     pub playlist: Rc<VecDeque<usize>>,
 	pub polaris_data : Rc<Vec<(String,String)>>,
 	pub list: Rc<Vec<String>>,
 	pub toggle: bool,
+	pub tx : Sender<Option<task::JoinHandle<()>>>,
+	pub tx_refresh: Sender<()>,
+	pub selection: ListState,
 }
+
 
 async fn getNextTrack(list: Rc<Vec<(String,String)>>, s: &VecDeque<usize>) -> String {
     //let mut list_polaris = polaris::getIterator(h).await;
@@ -62,7 +69,7 @@ impl<'c> Compute<'c> for Model {
 		_: &mut Input,
 	) -> Output {
 		
-		let mut state_data = s.unwrap_model();
+		let mut state_data = s;
 		
 		match self.cmd {
 			
@@ -79,7 +86,6 @@ impl<'c> Compute<'c> for Model {
                 eprintln!("<Model> : intialised.");
 			    return Output::View(View {
                     data : self.data,
-					selection : self.selection,
 			        cmd : ViewInit(
 						state_data.list.clone(),
 						state_data.playlist.clone(),
@@ -89,7 +95,7 @@ impl<'c> Compute<'c> for Model {
 		    },
 
 			SelectNext => {
-				let i = match self.selection.selected() {
+				let i = match state_data.selection.selected() {
 					Some(i) => {
 						if i >= state_data.list.len() - 1 {
 							0
@@ -99,11 +105,10 @@ impl<'c> Compute<'c> for Model {
 					}
 					None => 0,
 				};
-				self.selection.select(Some(i));
+				state_data.selection.select(Some(i));
                 eprintln!("<Model> : next track selected.");
 			    return Output::View(View {
                     data : self.data,
-					selection : self.selection,
 			        cmd : Draw(
 					    state_data.list.clone(),
                         state_data.playlist.clone(),
@@ -113,7 +118,7 @@ impl<'c> Compute<'c> for Model {
 			},
 
 			SelectPrevious => {
-				let i = match self.selection.selected() {
+				let i = match state_data.selection.selected() {
 					Some(i) => {
 						if i == 0 {
 							state_data.list.len() - 1
@@ -123,11 +128,10 @@ impl<'c> Compute<'c> for Model {
 					}
 					None => 0,
 				};
-				self.selection.select(Some(i));
+				state_data.selection.select(Some(i));
                 eprintln!("<Model> : previous track selected.");
 			    return Output::View(View {
                     data : self.data,
-                    selection : self.selection,
 			        cmd : Draw(
 					    state_data.list.clone(),
                         state_data.playlist.clone(),
@@ -137,13 +141,13 @@ impl<'c> Compute<'c> for Model {
 			},
 
             AddTrack => {
-				let mut p = Rc::get_mut(&mut state_data.playlist).unwrap();
-				p.push_back(self.selection.selected().unwrap());
+				let mut p: &mut VecDeque<usize> = 
+				    Rc::get_mut(&mut state_data.playlist).unwrap();
+				p.push_back(state_data.selection.selected().unwrap());
 
                 eprintln!("<Model> : New track added to playlist.");
 			    return Output::View(View {
                     data : self.data,
-					selection : self.selection,
 			        cmd : Draw(
 					    state_data.list.clone(),
                         state_data.playlist.clone(),
@@ -153,16 +157,17 @@ impl<'c> Compute<'c> for Model {
             },				
 
             RemoveTrack => {
-				let mut p = Rc::get_mut(&mut state_data.playlist).unwrap();
-				let i = p.iter().position(
-				    |x| { *x == self.selection.selected().unwrap() } 
-				).unwrap();
-				p.remove(i);
+				let mut p: &mut VecDeque<usize> = 
+				    Rc::get_mut(&mut state_data.playlist).unwrap();
+				if let Some(i) = p.iter().position(
+				    |x| { *x == state_data.selection.selected().unwrap() } 
+				) {
+				    p.remove(i);
+				}
 
                 eprintln!("<Model> : Track removed from playlist.");
 			    return Output::View(View {
                     data : self.data,
-					selection : self.selection,
 			        cmd : Draw(
 					    state_data.list.clone(),
                         state_data.playlist.clone(),
@@ -179,7 +184,6 @@ impl<'c> Compute<'c> for Model {
 					eprintln!("<Model> : Next track selected {}",next);
     				return Output::View(View { 
 	    			    data : self.data,
-					    selection : self.selection,
 		    		    cmd : PlayTrack(
 			    	        next,
 				    		state_data.list.clone(),
@@ -192,7 +196,6 @@ impl<'c> Compute<'c> for Model {
 					state_data.toggle = false;
 					return Output::View(View {
 						data : self.data,
-						selection : self.selection,
 						cmd : Draw(
 							state_data.list.clone(),
 							state_data.playlist.clone(),
@@ -203,7 +206,6 @@ impl<'c> Compute<'c> for Model {
 
 				return Output::View(View {
 					data : self.data,
-					selection : self.selection,
 					cmd : ViewNoop 
 					} 
 				);
@@ -213,7 +215,6 @@ impl<'c> Compute<'c> for Model {
 				eprintln!("<Model> : Refreshing view.");
 			    return Output::View(View {
                     data : self.data,
-					selection : self.selection,
 			        cmd : Draw(
 					    state_data.list.clone(),
                         state_data.playlist.clone(),
@@ -226,7 +227,6 @@ impl<'c> Compute<'c> for Model {
                 //eprintln!("<Model> : Noop.");			
 			    return Output::View(View {
                     data : self.data,
-					selection : self.selection,
 			        cmd : ViewNoop 
 					} 
 				);		
