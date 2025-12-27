@@ -4,9 +4,10 @@ mod shutdown;
 mod playback;
 mod input;
 
-use ratatui::DefaultTerminal;
+use ratatui::{DefaultTerminal, Frame};
 use input::Input;
 use std::rc::Rc;
+use ratatui::layout::{Rect};
 
 #[derive(Clone)]
 enum ComponentData<M, V, C> {
@@ -57,6 +58,12 @@ trait Compute<'c> {
         terminal: &mut DefaultTerminal,
         gpio_pins: &mut Input,
     ) -> Self::Output;
+}
+
+trait Render<S> {
+	
+	fn renderer<'a>(&'a mut self, state : &'a mut S) -> 
+	    Box<dyn FnOnce(&mut Frame<'a>, Rect) -> () +'_>;
 }
 
 struct Execute<'c, S : Components<'c>> {

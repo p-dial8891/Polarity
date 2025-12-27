@@ -3,7 +3,7 @@ use crate::tui::screen1::{foreground::controller::Controller, foreground::model:
     ViewCommand::{self, Init, Draw, PlayTrack},
     ControllerCommand::{self, Noop}
 };
-use crate::tui::{Components, Compute, IntoComponent, IntoComp};
+use crate::tui::{Components, Compute, IntoComponent, IntoComp, Render};
 use crate::tui::input::Input;
 use crate::tui::screen1::{State, Output};
 use crate::polaris::{self, polarisHandle};
@@ -33,6 +33,20 @@ pub struct View {
 	pub cmd: ViewCommand,
 }
 
+/// Render the UI with various lists.
+fn render_test<'a>(
+    output: &'a mut View,
+    s : &'a mut State,
+	frame: &'a mut Frame<'a>
+) {
+    use Constraint::{Fill, Length, Min};
+
+    let vertical = Layout::vertical([Fill(1), Length(2)]);
+    let [top, bottom] = vertical.areas(frame.area());
+
+	output.renderer(s)(frame, top);
+
+}
 
 /// Render the UI with various lists.
 fn render(
@@ -76,6 +90,7 @@ pub fn render_list(
 		.scroll_padding(2)
         .highlight_style(Modifier::UNDERLINED);
     frame.render_stateful_widget(list, area, list_state);
+	
 }
 
 /// Render a bottom-to-top list.
@@ -137,6 +152,17 @@ async fn listenerTask(listener : TcpListener) {
     socket.read(&mut buf).await.unwrap();
 }
 
+impl Render<State> for View {
+
+    fn renderer<'a>(&'a mut self, state : &'a mut State) -> 
+	    Box<dyn FnOnce(&mut Frame<'a>, Rect) -> () +'_> {
+
+        Box::new( |mut f,r| { render_list( &mut f, r, &mut state.selection, 
+		                        &state.list, &state.playlist ); } )
+		
+    }		
+}
+
 impl<'c> Compute<'c> for View {
     type State = State;
     type Output = Output;
@@ -148,6 +174,7 @@ impl<'c> Compute<'c> for View {
         _: &mut Input,
     ) -> Output {
 		let mut state_data = s;
+/*
 		match self.cmd {
 			Init(data, playlist, toggle_symbol) => {
 			    terminal.clear();	
@@ -171,9 +198,14 @@ impl<'c> Compute<'c> for View {
 			
             _ => {}			
 		}
+*/	
+        
+		render_test(&mut self, state_data, &mut terminal.get_frame());
 		
 		Output::Controller(Controller { 
 		    cmd : ControllerCommand::Noop,
 			data : self.data	})
     }
 }
+
+

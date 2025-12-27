@@ -3,7 +3,7 @@ use crate::tui::playback::{controller::Controller, model::Model,
     ViewCommand::{self, Init, Skip},
 	ControllerCommand::{self, Noop}
 };
-use crate::tui::{Components, Compute, IntoComponent, IntoComp};
+use crate::tui::{Components, Compute, IntoComponent, IntoComp, Render};
 use crate::tui::playback::{State, Output};
 use crate::options;
 
