@@ -1,10 +1,7 @@
-use crate::tui;
-use crate::tui::screen1::{foreground::controller::Controller, foreground::view::View, 
+use crate::tui::screen1::{foreground::view::View, 
     ModelCommand::{
 		self, 
-		Noop,
 		Init,
-		PlaybackFinished,
 		SelectNext,
 		SelectPrevious,
 		AddTrack,
@@ -13,21 +10,20 @@ use crate::tui::screen1::{foreground::controller::Controller, foreground::view::
 		Refresh 
 	}, 
 	ViewCommand::{
-		self, 
 		Noop as ViewNoop,
 		Init as ViewInit,
 		PlayTrack,
 		Draw,
 	}		
 };
-use crate::tui::{Components, Compute, IntoComponent, IntoComp};
+use crate::tui::{Components, Compute,};
 use ratatui::DefaultTerminal;
 use crate::tui::input::Input;
 use crate::tui::screen1::{State, Output};
 use crate::polaris::{self, polarisHandle};
 use std::rc::Rc;
-use std::sync::mpsc::{Sender, Receiver, channel};
-use ratatui::widgets::{List, ListDirection, ListItem, ListState, Paragraph};
+use std::sync::mpsc::{Sender, Receiver};
+use ratatui::widgets::{ListState};
 use std::collections::VecDeque;
 use tokio::task;
 
@@ -192,7 +188,7 @@ impl<'c> Compute<'c> for Model {
 					    } 
 					);
 				} else 
-				if { state_data.toggle } {
+				if state_data.toggle {
 					state_data.toggle = false;
 					return Output::View(View {
 						data : self.data,

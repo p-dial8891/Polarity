@@ -2,10 +2,9 @@ use crate::tui;
 use crate::tui::{Components, Compute, IntoComponent, IntoComp, Execute, ExecuteBG};
 use ratatui::DefaultTerminal;
 use crate::tui::input::Input;
-use crate::polaris;
 use std::rc::Rc;
-use std::sync::mpsc::{Sender, Receiver, channel};
-use ratatui::widgets::{List, ListDirection, ListItem, ListState, Paragraph};
+use std::sync::mpsc::{channel};
+use ratatui::widgets::{ListState};
 use std::collections::VecDeque;
 
 mod background;

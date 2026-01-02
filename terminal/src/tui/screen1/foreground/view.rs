@@ -1,31 +1,23 @@
-use crate::tui;
-use crate::tui::screen1::{foreground::controller::Controller, foreground::model::Model,
-    ViewCommand::{self, Init, Draw, PlayTrack},
-    ControllerCommand::{self, Noop}
+use crate::tui::screen1::{foreground::controller::Controller,
+    ViewCommand::{self},
+    ControllerCommand::{self}
 };
-use crate::tui::{Components, Compute, IntoComponent, IntoComp, Render};
+use crate::tui::{Components, Compute, Render};
 use crate::tui::input::Input;
 use crate::tui::screen1::{State, Output};
-use crate::polaris::{self, polarisHandle};
+use crate::polaris::{polarisHandle};
 use crate::options;
-use std::rc::Rc;
-use std::sync::mpsc::{Sender, Receiver, channel};
 use std::collections::VecDeque;
-
-use color_eyre::Result;
-use crossterm::event::{self, KeyCode};
 use ratatui::layout::{Constraint, Layout, Rect};
-use ratatui::style::{Color, Modifier, Style, Stylize};
-use ratatui::text::{Line, Span, Text};
-use ratatui::widgets::{List, ListDirection, ListItem, ListState, Paragraph};
+use ratatui::style::{Modifier, Style, Stylize};
+use ratatui::widgets::{List, ListItem, ListState, Paragraph};
 use ratatui::{DefaultTerminal, Frame};
 
-use service::{PlayerClient, init_tracing};
-use std::net::{Ipv4Addr, SocketAddrV4};
-use std::{net::SocketAddr, time::Duration, time::Instant};
+use service::{PlayerClient};
+use std::{time::Duration, time::Instant};
 use tarpc::{client, context, tokio_serde::formats::Json};
 use tokio::io::AsyncReadExt;
-use tokio::{net::TcpListener, task, time::sleep};
+use tokio::{net::TcpListener, time::sleep};
 
 #[derive(Clone)]
 pub struct View {
@@ -34,17 +26,23 @@ pub struct View {
 }
 
 /// Render the UI with various lists.
-fn render_test<'a>(
-    output: &'a mut View,
-    s : &'a mut State,
-	frame: &'a mut Frame<'a>
+fn render_test (
+    s : & mut State,
+	terminal: &mut DefaultTerminal,
 ) {
-    use Constraint::{Fill, Length, Min};
+    use Constraint::{Fill, Length};
 
     let vertical = Layout::vertical([Fill(1), Length(2)]);
-    let [top, bottom] = vertical.areas(frame.area());
+    let [top, bottom] = vertical.areas(terminal.get_frame().area());
 
-	output.renderer(s)(frame, top);
+    {
+	    let a = View::renderer(s);
+	    a(&mut terminal.get_frame(), top);
+	}
+    {
+	    let b = View::renderer(s);
+	    b(&mut terminal.get_frame(), bottom);
+	}
 
 }
 
@@ -56,7 +54,7 @@ fn render(
     toggle_play: bool,
     l_playlist: &VecDeque<usize>,
 ) {
-    use Constraint::{Fill, Length, Min};
+    use Constraint::{Fill, Length};
 
     let vertical = Layout::vertical([Fill(1), Length(2)]);
     let [top, bottom] = vertical.areas(frame.area());
@@ -154,13 +152,13 @@ async fn listenerTask(listener : TcpListener) {
 
 impl Render<State> for View {
 
-    fn renderer<'a>(&'a mut self, state : &'a mut State) -> 
+    fn renderer<'a>(state : &'a mut State) -> 
 	    Box<dyn FnOnce(&mut Frame<'a>, Rect) -> () +'_> {
 
-        Box::new( |mut f,r| { render_list( &mut f, r, &mut state.selection, 
+        Box::new( |f,r| { render_list( f, r, &mut state.selection, 
 		                        &state.list, &state.playlist ); } )
 		
-    }		
+    }
 }
 
 impl<'c> Compute<'c> for View {
@@ -200,7 +198,8 @@ impl<'c> Compute<'c> for View {
 		}
 */	
         
-		render_test(&mut self, state_data, &mut terminal.get_frame());
+		render_test(state_data, terminal);
+		render_test(state_data, terminal);
 		
 		Output::Controller(Controller { 
 		    cmd : ControllerCommand::Noop,

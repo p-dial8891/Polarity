@@ -1,35 +1,20 @@
-use crate::tui;
-use crate::tui::screen1::{background::controller::Controller, background::view::View, 
+use crate::tui::screen1::{background::view::View, 
     ModelCommand::{
 		self, 
-		Noop,
-		Init,
 		PlaybackFinished,
-		SelectNext,
-		SelectPrevious,
-		AddTrack,
-		RemoveTrack,
-		TogglePlay 
 	}, 
 	ViewCommand::{
-		self, 
 		Noop as ViewNoop,
-		Init as ViewInit,
-		PlayTrack,
 		NextTrack,
 		Draw,
 	}		
 };
-use crate::tui::{Components, Compute, IntoComponent, IntoComp};
+use crate::tui::{Compute};
 use ratatui::DefaultTerminal;
 use crate::tui::input::Input;
 use crate::tui::screen1::{State, OutputBG};
-use crate::polaris::{self, polarisHandle};
 use std::rc::Rc;
-use std::sync::mpsc::{Sender, Receiver, channel};
-use ratatui::widgets::{List, ListDirection, ListItem, ListState, Paragraph};
 use std::collections::VecDeque;
-use tokio::task;
 
 #[derive(Clone)]
 pub struct Model {
@@ -72,7 +57,7 @@ impl<'c> Compute<'c> for Model {
 					} 
 					);
 				} else 
-				if { state_data.toggle } {
+				if state_data.toggle {
 					state_data.toggle = false;
 					return Self::Output::View(View {
 						cmd : Draw(

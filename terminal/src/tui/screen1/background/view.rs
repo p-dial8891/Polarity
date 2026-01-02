@@ -1,28 +1,19 @@
-use crate::tui;
-use crate::tui::screen1::{background::controller::Controller, background::model::Model,
-    ViewCommand::{self, Init, Draw, PlayTrack, NextTrack},
-    ControllerCommand::{self, Noop}
+use crate::tui::screen1::{background::controller::Controller,
+    ViewCommand::{self, Draw, NextTrack},
+    ControllerCommand::{self}
 };
-use crate::tui::{Components, Compute, IntoComponent, IntoComp};
+use crate::tui::{Components, Compute,};
 use crate::tui::input::Input;
 use crate::tui::screen1::{State, OutputBG};
-use crate::polaris::{self, polarisHandle};
 use crate::options;
-use std::rc::Rc;
-use std::sync::mpsc::{Sender, Receiver, channel};
 use std::collections::VecDeque;
-
-use color_eyre::Result;
-use crossterm::event::{self, KeyCode};
 use ratatui::layout::{Constraint, Layout, Rect};
-use ratatui::style::{Color, Modifier, Style, Stylize};
-use ratatui::text::{Line, Span, Text};
-use ratatui::widgets::{List, ListDirection, ListItem, ListState, Paragraph};
+use ratatui::style::{Modifier, Style, Stylize};
+use ratatui::widgets::{List, ListItem, ListState, Paragraph};
 use ratatui::{DefaultTerminal, Frame};
 
-use service::{PlayerClient, init_tracing};
-use std::net::{Ipv4Addr, SocketAddrV4};
-use std::{net::SocketAddr, time::Duration, time::Instant};
+use service::{PlayerClient};
+use std::{time::Duration, time::Instant};
 use tarpc::{client, context, tokio_serde::formats::Json};
 use tokio::io::AsyncReadExt;
 use tokio::{net::TcpListener, task, time::sleep};
@@ -40,7 +31,7 @@ fn render(
     toggle_play: bool,
     l_playlist: &VecDeque<usize>,
 ) {
-    use Constraint::{Fill, Length, Min};
+    use Constraint::{Fill, Length};
 
     let vertical = Layout::vertical([Fill(1), Length(2)]);
     let [top, bottom] = vertical.areas(frame.area());

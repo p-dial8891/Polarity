@@ -1,16 +1,8 @@
-use crate::tui;
-use crate::tui::screen1::{background::model::Model, background::view::View, ModelCommand, ControllerCommand};
-use crate::tui::{Components, Compute, IntoComponent, IntoComp};
+use crate::tui::screen1::{background::model::Model, ModelCommand, ControllerCommand};
+use crate::tui::{Compute};
 use ratatui::DefaultTerminal;
 use crate::tui::input::Input;
-use crate::polaris::{self, polarisHandle};
 use crate::tui::screen1::{State, OutputBG};
-use std::rc::Rc;
-use std::sync::mpsc::{Sender, Receiver, channel};
-use crate::tui::app::Keys::{self, *};
-use std::process::Command;
-use tokio::task;
-use ratatui::widgets::{ListState};
 
 #[derive(Clone)]
 pub struct Controller {

@@ -1,13 +1,12 @@
-use crate::tui::{self, Components, Compute, IntoComponent};
+use crate::tui::{Components};
 use crate::tui::{screen1, screen1::Screen1};
 use crate::tui::{shutdown, shutdown::Shutdown};
 use crate::tui::{playback, playback::Playback};
 use crate::tui::{App_List};
 use crate::tui::input::{Input, InputConfig};
-use ratatui::DefaultTerminal;
 use std::{thread, time::Duration};
 use crossterm::{
-    event::{poll, read, Event, KeyCode}
+    event::{poll, read}
 };
 use crate::tui::app::Keys::{*};
 //use futures::{future::FutureExt, select, StreamExt};

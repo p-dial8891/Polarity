@@ -62,7 +62,7 @@ trait Compute<'c> {
 
 trait Render<S> {
 	
-	fn renderer<'a>(&'a mut self, state : &'a mut S) -> 
+	fn renderer<'a>(state : &'a mut S) -> 
 	    Box<dyn FnOnce(&mut Frame<'a>, Rect) -> () +'_>;
 }
 
@@ -71,7 +71,13 @@ struct Execute<'c, S : Components<'c>> {
 	screen_names : Vec<String>,
 	current_output : Option<S::Output>,
 	current_screen : S,
-	
+}
+
+struct ExecuteLayout1<C_Top,C_Bottom,R_Top,R_Bottom>  {
+
+	controllers : (Option<C_Top>,Option<C_Bottom>),
+	renderers : (R_Top, R_Bottom)
+
 }
 
 struct ExecuteBG<'c, S : Components<'c>, BG> {
