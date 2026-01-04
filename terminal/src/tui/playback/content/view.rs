@@ -1,10 +1,10 @@
 use crate::tui;
-use crate::tui::playback::{controller::Controller, model::Model,
+use crate::tui::playback::{content::controller::Controller, content::model::Model,
     ViewCommand::{self, Init, Skip},
 	ControllerCommand::{self, Noop}
 };
 use crate::tui::{Components, Compute, IntoComponent, IntoComp, Render};
-use crate::tui::playback::{State, Output};
+use crate::tui::playback::{State, Output2 as Output};
 use crate::options;
 
 use color_eyre::Result;
@@ -24,11 +24,6 @@ use tokio::{net::TcpListener, task, time::sleep};
 #[derive(Clone)]
 pub struct View {
     pub cmd : ViewCommand,
-	pub selection : ListState
-}
-
-pub struct ViewState {
-    pub _a : ()
 }
 
 async fn sendRequestToPlayer() {
@@ -55,21 +50,6 @@ async fn sendRequestToPlayer() {
     sleep(Duration::from_millis(10)).await;
 }
 
-/// Render the UI with various lists.
-fn render(
-    frame: &mut Frame,
-    list_state: &mut ListState
-) {
-    use Constraint::{Fill, Length, Min};
-
-    let vertical = Layout::vertical([Length(2), Length(8)]);
-    let [top, bottom] = vertical.areas(frame.area());
-
-    render_top(frame, top);
-    render_list(frame, bottom, list_state);
-
-}
-
 const SELECTED_STYLE: Style = Style::new().add_modifier(Modifier::BOLD);
 
 /// Render a list.
@@ -85,11 +65,14 @@ pub fn render_list(
     frame.render_stateful_widget(list, area, list_state);
 }
 
-/// Render a bottom-to-top list.
-pub fn render_top(frame: &mut Frame, area: Rect) {
+impl Render<State> for View {
 
-    let text = Paragraph::new(String::from("  Playback\n"));
-    frame.render_widget(text, area);
+    fn renderer(state : &mut State) -> 
+	    impl FnOnce(&mut Frame, Rect) -> () {
+
+        move |f,r| { render_list( f, r, &mut state.selection ); }
+		
+    }
 }
 
 impl<'c> Compute<'c> for View {
@@ -106,19 +89,20 @@ impl<'c> Compute<'c> for View {
 		match self.cmd {
 			
 			Init => {
-				terminal.clear();	
-				terminal.draw(|frame| {
-					render(frame, &mut self.selection ) }).unwrap();
-			},
+				Output::Controller(Controller { cmd : ControllerCommand::Noop,
+                    redraw: true  } )
+            },
 			
 			Skip => {
-				sendRequestToPlayer().await
+				sendRequestToPlayer().await;
+                Output::Controller(Controller { cmd : ControllerCommand::Noop,
+                    redraw: false  } )
 			},
 			
-			_ => {}
+			_ => {
+                Output::Controller(Controller { cmd : ControllerCommand::Noop,
+                    redraw: false  } )
+            }
 		}
-		
-		Output::Controller(Controller { cmd : ControllerCommand::Noop,
-            selection : self.selection		})
     }
 }

@@ -1,7 +1,7 @@
 use crate::tui::{Components};
 use crate::tui::{screen1, screen1::Screen1};
 use crate::tui::{shutdown, shutdown::Shutdown};
-use crate::tui::{playback, playback::Playback};
+use crate::tui::{playback, playback::{Playback,Executor}};
 use crate::tui::{App_List};
 use crate::tui::input::{Input, InputConfig};
 use std::{thread, time::Duration};
@@ -46,10 +46,10 @@ pub async fn main() {
 	
 	let mut e1 = e0.with_background();
 	
+	a.register("Playback");
     let mut e2 = playback::Executor { 
-	    screen_names: vec![a.register("Playback")], 
-		current_output: None, 
-		current_screen: Playback::new() 
+	    screen: Playback::new(), 
+		controllers: (None,None), 
 	};
 	
     let mut e3 = shutdown::Executor { 
@@ -76,17 +76,23 @@ pub async fn main() {
 		
         if i_previous != i_next {
 			// Screen Initialisations - start
-			e1.foreground_executor.init(next).await;
-			e2.init(next).await;
-			e3.init(next).await;
+			match &next[..] {
+			    "Main" => { e1.foreground_executor.init(next).await; },
+				"Playback" => { e2.init().await; },
+				"Shutdown" => { e3.init(next).await; },
+				_ => {},
+			}
 			// Screen Initialisations - end
 		    i_previous = i_next.clone();
 		}
 		
 		// Screen execution - start
-		e1.foreground_executor.execute(next, &mut t, &mut input).await;
-		e2.execute(next, &mut t, &mut input).await;
-		e3.execute(next, &mut t, &mut input).await;
+		match &next[..] {
+		    "Main" => { e1.foreground_executor.execute(next, &mut t, &mut input).await; },
+			"Playback" => { e2.execute(&mut t, &mut input).await; },
+			"Shutdown" => { e3.execute(next, &mut t, &mut input).await; },
+			_ => {},
+		}
 		// Screen execution - end
 
 		if input.read(TAB_KEY) == false {

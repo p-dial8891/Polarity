@@ -152,11 +152,11 @@ async fn listenerTask(listener : TcpListener) {
 
 impl Render<State> for View {
 
-    fn renderer<'a>(state : &'a mut State) -> 
-	    Box<dyn FnOnce(&mut Frame<'a>, Rect) -> () +'_> {
+    fn renderer(state : &mut State) -> 
+	    impl FnOnce(&mut Frame, Rect) -> () {
 
-        Box::new( |f,r| { render_list( f, r, &mut state.selection, 
-		                        &state.list, &state.playlist ); } )
+        |f,r| { render_list( f, r, &mut state.selection, 
+		                        &state.list, &state.playlist ); }
 		
     }
 }

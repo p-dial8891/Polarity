@@ -1,5 +1,5 @@
 use crate::tui;
-use crate::tui::playback::{controller::Controller, view::View, 
+use crate::tui::playback::{content::controller::Controller, content::view::View, 
     ModelCommand::{
 		self, 
 		Noop,
@@ -15,18 +15,13 @@ use crate::tui::playback::{controller::Controller, view::View,
 };
 use crate::tui::{Components, Compute, IntoComponent, IntoComp};
 use ratatui::DefaultTerminal;
-use crate::tui::playback::{State, Output};
+use crate::tui::playback::{State, Output2 as Output};
 use crate::tui::input::Input;
 use ratatui::widgets::{ListState};
 
 #[derive(Clone)]
 pub struct Model {
     pub cmd : ModelCommand,
-	pub selection : ListState
-}
-
-pub struct ModelState {
-    pub _a : ()
 }
 
 impl<'c> Compute<'c> for Model {
@@ -41,18 +36,15 @@ impl<'c> Compute<'c> for Model {
 	) -> Output {
         match self.cmd {
 			
-			Init => { return Output::View(View { cmd : ViewInit,
-                        selection : self.selection } ) },
+			Init => { return Output::View(View { cmd : ViewInit } ) },
 			
 			Req => {				
-			    match self.selection {
-					_ => { return Output::View(View { cmd : Skip,
-				        selection : self.selection } ) }
+			    match s.selection {
+					_ => { return Output::View(View { cmd : Skip } ) }
 			    }
 			},
-			
-			_ =>  { return Output::View(View { cmd : ViewNoop,
-				        selection : self.selection } ) }
+
+			_ =>  { return Output::View(View { cmd : ViewNoop } ) }
 			
 		}
     }

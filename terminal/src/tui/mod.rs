@@ -60,10 +60,31 @@ trait Compute<'c> {
     ) -> Self::Output;
 }
 
+pub async fn run_screen<'c,S,T,C,M,V> (
+    c: T,
+	s: &'c mut S,
+	terminal: &mut DefaultTerminal,
+	gpio_pins: &mut Input,
+) -> T
+where
+    T: IntoComponent<M,V,C>,
+    C: Compute<'c, State=S, Output=T>,
+    M: Compute<'c, State=S, Output=T>,
+    V: Compute<'c, State=S, Output=T>,
+{
+	c
+    .unwrap_controller()
+	.compute(s, terminal, gpio_pins).await
+	.unwrap_model()
+	.compute(s, terminal, gpio_pins).await
+	.unwrap_view()
+	.compute(s, terminal, gpio_pins).await
+}
+
 trait Render<S> {
 	
-	fn renderer<'a>(state : &'a mut S) -> 
-	    Box<dyn FnOnce(&mut Frame<'a>, Rect) -> () +'_>;
+	fn renderer(state : & mut S) -> 
+	    impl FnOnce(&mut Frame, Rect) -> ();
 }
 
 struct Execute<'c, S : Components<'c>> {
@@ -73,10 +94,10 @@ struct Execute<'c, S : Components<'c>> {
 	current_screen : S,
 }
 
-struct ExecuteLayout1<C_Top,C_Bottom,R_Top,R_Bottom>  {
+struct ExecuteLayout1<S,C_Top,C_Bottom>  {
 
+    screen : S,
 	controllers : (Option<C_Top>,Option<C_Bottom>),
-	renderers : (R_Top, R_Bottom)
 
 }
 

@@ -2,7 +2,7 @@ mod tui;
 mod polaris;
 mod options;
 
-
+#[allow(unused_variables)]
 #[allow(non_camel_case_types)]
 #[tokio::main]
 async fn main() {
