@@ -1,5 +1,5 @@
 use crate::tui::screen1::{foreground::controller::Controller,
-    ViewCommand::{self},
+    ViewCommand::{self, Init, Draw, PlayTrack},
     ControllerCommand::{self}
 };
 use crate::tui::{Components, Compute, Render};
@@ -17,33 +17,12 @@ use service::{PlayerClient};
 use std::{time::Duration, time::Instant};
 use tarpc::{client, context, tokio_serde::formats::Json};
 use tokio::io::AsyncReadExt;
-use tokio::{net::TcpListener, time::sleep};
+use tokio::{task, net::TcpListener, time::sleep};
 
 #[derive(Clone)]
 pub struct View {
     pub data: polarisHandle,
 	pub cmd: ViewCommand,
-}
-
-/// Render the UI with various lists.
-fn render_test (
-    s : & mut State,
-	terminal: &mut DefaultTerminal,
-) {
-    use Constraint::{Fill, Length};
-
-    let vertical = Layout::vertical([Fill(1), Length(2)]);
-    let [top, bottom] = vertical.areas(terminal.get_frame().area());
-
-    {
-	    let a = View::renderer(s);
-	    a(&mut terminal.get_frame(), top);
-	}
-    {
-	    let b = View::renderer(s);
-	    b(&mut terminal.get_frame(), bottom);
-	}
-
 }
 
 /// Render the UI with various lists.
@@ -172,7 +151,7 @@ impl<'c> Compute<'c> for View {
         _: &mut Input,
     ) -> Output {
 		let mut state_data = s;
-/*
+
 		match self.cmd {
 			Init(data, playlist, toggle_symbol) => {
 			    terminal.clear();	
@@ -196,12 +175,8 @@ impl<'c> Compute<'c> for View {
 			
             _ => {}			
 		}
-*/	
-        
-		render_test(state_data, terminal);
-		render_test(state_data, terminal);
-		
-		Output::Controller(Controller { 
+
+        Output::Controller(Controller { 
 		    cmd : ControllerCommand::Noop,
 			data : self.data	})
     }

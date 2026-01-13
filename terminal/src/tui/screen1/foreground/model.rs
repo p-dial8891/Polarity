@@ -47,7 +47,6 @@ pub struct ComponentState {
 	pub selection: ListState,
 }
 
-
 async fn getNextTrack(list: Rc<Vec<(String,String)>>, s: &VecDeque<usize>) -> String {
     //let mut list_polaris = polaris::getIterator(h).await;
     let index = s.get(0).unwrap();
