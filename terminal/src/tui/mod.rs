@@ -7,7 +7,7 @@ mod input;
 use ratatui::{DefaultTerminal, Frame};
 use input::Input;
 use std::rc::Rc;
-use ratatui::layout::{Rect};
+use ratatui::layout::{Constraint, Layout, Rect};
 
 #[derive(Clone)]
 enum ComponentData<M, V, C> {
@@ -85,6 +85,10 @@ trait Render<S> {
 	
 	fn renderer(state : & mut S) -> 
 	    impl FnOnce(&mut Frame, Rect) -> ();
+
+    fn redraw(&self) -> bool {
+        true
+    }
 }
 
 struct Execute<'c, S : Components<'c>> {
@@ -98,6 +102,71 @@ struct ExecuteLayout1<S,C_Top,C_Bottom>  {
 
     screen : S,
 	controllers : (Option<C_Top>,Option<C_Bottom>),
+
+}
+
+trait ExecutorLayout1<S, T1, T2, M1, M2, V1, V2, C1, C2> 
+  where 
+        T1 : IntoComponent<M1,V1,C1> + Clone,
+        T2 : IntoComponent<M2,V2,C2> + Clone,
+        C1 : Render<S> + for<'c> Compute<'c, State=S, Output=T1>,
+        C2 : Render<S> + for<'c> Compute<'c, State=S, Output=T2>,
+        M1 : for<'c> Compute<'c, State=S, Output=T1>,
+        M2 : for<'c> Compute<'c, State=S, Output=T2>,
+        V1 : for<'c> Compute<'c, State=S, Output=T1>,
+        V2 : for<'c> Compute<'c, State=S, Output=T2>,
+{
+
+    fn get_state(&mut self) -> &mut S;
+
+    fn get_controllers(&self) -> (T1, T2);
+
+    fn set_controllers(&mut self, controllers : (T1, T2));
+
+    fn get_renderers(&mut self) -> (impl Render<S>, impl Render<S>);
+
+    async fn init(&mut self);
+
+    async fn run_layout1(
+        &mut self,
+        state : &mut S,
+        terminal: &mut DefaultTerminal,
+        gpio_pins: &mut Input,
+    ) {
+ 
+        let controllers = self.get_controllers();
+
+        let c1 = run_screen(controllers.0, state, terminal, gpio_pins).await;
+        let c2 = run_screen(controllers.1, state, terminal, gpio_pins).await;
+
+        self.set_controllers((c1,c2));
+
+        let controllers = self.get_controllers();
+
+        let r_top = controllers.0.unwrap_controller().redraw();
+        let r_bottom = controllers.1.unwrap_controller().redraw();
+
+        if !r_top && !r_bottom {
+            return;
+        }
+
+        terminal.draw(|frame| {
+            use Constraint::{Fill, Length, Min};
+            let vertical = Layout::vertical([Length(2), Fill(1)]);
+            let [top, bottom] = vertical.areas(frame.area());
+
+            if r_top {		
+                //render_top(frame, top);
+                let r = C1::renderer(self.get_state());
+                r(frame, top);
+            }
+            if r_bottom {
+                //render_list(frame, bottom, &mut self.screen.v.selection);
+                let r = C2::renderer(self.get_state());
+                r(frame, bottom);
+            }
+		}).unwrap();
+    }
 
 }
 
