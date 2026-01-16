@@ -20,6 +20,8 @@ tui @options.file
 ```
 player @options.file
 ```
+## Compatibility
+This software is known to work with 0.14.0 version of Polaris but seems to be incompatible with one of the later versions.
 
 ## Resources
 [Video](https://www.youtube.com/watch?v=HmmpZukn4Zg)  
