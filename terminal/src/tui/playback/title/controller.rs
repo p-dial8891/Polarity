@@ -1,12 +1,18 @@
 use crate::tui;
 use crate::tui::playback::{title::model::Model, title::view::View, ModelCommand, ControllerCommand};
-use crate::tui::{Components, Compute, IntoComponent, IntoComp};
-use ratatui::DefaultTerminal;
+use crate::tui::{Components, Compute, IntoComponent, IntoComp, Render};
 use crate::tui::input::Input;
 use crate::tui::playback::{State, Output1 as Output};
 use crate::tui::app::Keys::{self, *};
 use std::process::Command;
-use ratatui::widgets::{ListState};
+
+use color_eyre::Result;
+use crossterm::event::{self, KeyCode};
+use ratatui::layout::{Constraint, Layout, Rect};
+use ratatui::style::{Color, Modifier, Style, Stylize};
+use ratatui::text::{Line, Span, Text};
+use ratatui::widgets::{List, ListDirection, ListItem, ListState, Paragraph};
+use ratatui::{DefaultTerminal, Frame};
 
 #[derive(Clone)]
 pub struct Controller {
@@ -50,3 +56,26 @@ impl Controller {
 	}
 	
 }
+
+
+/// Render a bottom-to-top list.
+pub fn render_top<'a>(frame: &mut Frame<'a>, area: Rect) {
+
+    let text = Paragraph::new(String::from("  Playback\n"));
+    frame.render_widget(text, area);
+}
+
+impl Render<State> for Controller {
+
+    fn renderer(state : &mut State) -> 
+	    impl FnOnce(&mut Frame, Rect) -> () {
+
+        move |f,r| { render_top( f, r ); }
+		
+    }
+
+	fn redraw(&self) -> bool {
+		self.redraw
+	}
+}
+

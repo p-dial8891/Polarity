@@ -1,8 +1,9 @@
 use crate::tui;
-use crate::tui::{Components, Compute, IntoComponent, IntoComp, Execute, ExecuteLayout1, run_screen, Render };
+use crate::tui::{Components, Compute, IntoComponent, IntoComp, Execute, 
+    ExecutorForLayout1, ExecuteLayout1, run_screen, Render };
 use crate::tui::input::Input;
-use crate::tui::playback::title::view::render_top;
-use crate::tui::playback::content::view::render_list;
+//use crate::tui::playback::title::controller::render_top;
+//use crate::tui::playback::content::controller::render_list;
 use std::rc::Rc;
 use std::sync::mpsc::{channel};
 use std::collections::VecDeque;
@@ -200,8 +201,8 @@ pub enum ViewCommand {
 
 pub type State = ComponentState;
 pub type Output1 = tui::ComponentData<Model1, View1, Controller1>;
-pub type Executor = tui::ExecuteLayout1<Playback,Output1,Output2>;
-
+//pub type Executor = tui::ExecuteLayout1<Playback,Output1,Output2>;
+/*
 impl ExecuteLayout1<Playback,Output1,Output2> {
 	
     pub async fn init(&mut self) {
@@ -247,3 +248,45 @@ impl ExecuteLayout1<Playback,Output1,Output2> {
 
 	}
 }		
+*/
+pub struct Executor {
+    pub screen: Playback,
+    pub controllers: (Option<Output1>, Option<Output2>)
+}
+
+impl ExecutorForLayout1 <
+    State, 
+    Output1, 
+    Output2, 
+    Model1, 
+    Model2, 
+    View1, 
+    View2, 
+    Controller1, 
+    Controller2 > 
+  for Executor
+{
+    fn get_state(&mut self) -> &mut State {
+        &mut self.screen.v
+    }
+
+    fn get_controllers(&self) -> (Output1, Output2) {
+        (
+            self.controllers.0.clone().unwrap(),
+            self.controllers.1.clone().unwrap()
+        )
+    }
+
+    fn set_controllers(&mut self, controllers : (Output1, Output2)) {
+        self.controllers.0 = Some(controllers.0);
+        self.controllers.1 = Some(controllers.1);
+    }
+
+    async fn init(&mut self) {
+        self.set_controllers((
+            Output1::Controller( Controller1 { cmd : ControllerCommand::Init, redraw: true } ),
+            Output2::Controller( Controller2 { cmd : ControllerCommand::Init, redraw: true } )
+        ));    
+    }
+
+}

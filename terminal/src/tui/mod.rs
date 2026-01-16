@@ -97,15 +97,15 @@ struct Execute<'c, S : Components<'c>> {
 	current_output : Option<S::Output>,
 	current_screen : S,
 }
-
+/*
 struct ExecuteLayout1<S,C_Top,C_Bottom>  {
 
     screen : S,
 	controllers : (Option<C_Top>,Option<C_Bottom>),
 
 }
-
-trait ExecutorLayout1<S, T1, T2, M1, M2, V1, V2, C1, C2> 
+*/
+trait ExecutorForLayout1<S, T1, T2, M1, M2, V1, V2, C1, C2> 
   where 
         T1 : IntoComponent<M1,V1,C1> + Clone,
         T2 : IntoComponent<M2,V2,C2> + Clone,
@@ -123,21 +123,18 @@ trait ExecutorLayout1<S, T1, T2, M1, M2, V1, V2, C1, C2>
 
     fn set_controllers(&mut self, controllers : (T1, T2));
 
-    fn get_renderers(&mut self) -> (impl Render<S>, impl Render<S>);
-
     async fn init(&mut self);
 
-    async fn run_layout1(
+    async fn execute(
         &mut self,
-        state : &mut S,
         terminal: &mut DefaultTerminal,
         gpio_pins: &mut Input,
     ) {
  
         let controllers = self.get_controllers();
 
-        let c1 = run_screen(controllers.0, state, terminal, gpio_pins).await;
-        let c2 = run_screen(controllers.1, state, terminal, gpio_pins).await;
+        let c1 = run_screen(controllers.0, self.get_state(), terminal, gpio_pins).await;
+        let c2 = run_screen(controllers.1, self.get_state(), terminal, gpio_pins).await;
 
         self.set_controllers((c1,c2));
 
