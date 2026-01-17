@@ -97,14 +97,7 @@ struct Execute<'c, S : Components<'c>> {
 	current_output : Option<S::Output>,
 	current_screen : S,
 }
-/*
-struct ExecuteLayout1<S,C_Top,C_Bottom>  {
 
-    screen : S,
-	controllers : (Option<C_Top>,Option<C_Bottom>),
-
-}
-*/
 trait ExecutorForLayout1<S, T1, T2, M1, M2, V1, V2, C1, C2> 
   where 
         T1 : IntoComponent<M1,V1,C1> + Clone,
@@ -117,7 +110,7 @@ trait ExecutorForLayout1<S, T1, T2, M1, M2, V1, V2, C1, C2>
         V2 : for<'c> Compute<'c, State=S, Output=T2>,
 {
 
-    fn get_state(&mut self) -> &mut S;
+    //fn get_state(&mut self) -> &mut S;
 
     fn get_controllers(&self) -> (T1, T2);
 
@@ -127,14 +120,15 @@ trait ExecutorForLayout1<S, T1, T2, M1, M2, V1, V2, C1, C2>
 
     async fn execute(
         &mut self,
+        state: &mut S,
         terminal: &mut DefaultTerminal,
         gpio_pins: &mut Input,
     ) {
  
         let controllers = self.get_controllers();
 
-        let c1 = run_screen(controllers.0, self.get_state(), terminal, gpio_pins).await;
-        let c2 = run_screen(controllers.1, self.get_state(), terminal, gpio_pins).await;
+        let c1 = run_screen(controllers.0, state, terminal, gpio_pins).await;
+        let c2 = run_screen(controllers.1, state, terminal, gpio_pins).await;
 
         self.set_controllers((c1,c2));
 
@@ -147,19 +141,19 @@ trait ExecutorForLayout1<S, T1, T2, M1, M2, V1, V2, C1, C2>
             return;
         }
 
-        terminal.draw(|frame| {
+        terminal.draw( |frame| {
             use Constraint::{Fill, Length, Min};
             let vertical = Layout::vertical([Length(2), Fill(1)]);
             let [top, bottom] = vertical.areas(frame.area());
 
             if r_top {		
                 //render_top(frame, top);
-                let r = C1::renderer(self.get_state());
+                let r = C1::renderer(state);
                 r(frame, top);
             }
             if r_bottom {
                 //render_list(frame, bottom, &mut self.screen.v.selection);
-                let r = C2::renderer(self.get_state());
+                let r = C2::renderer(state);
                 r(frame, bottom);
             }
 		}).unwrap();

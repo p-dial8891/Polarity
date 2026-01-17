@@ -1,9 +1,7 @@
 use crate::tui;
 use crate::tui::{Components, Compute, IntoComponent, IntoComp, Execute, 
-    ExecutorForLayout1, ExecuteLayout1, run_screen, Render };
+    ExecutorForLayout1, run_screen, Render };
 use crate::tui::input::Input;
-//use crate::tui::playback::title::controller::render_top;
-//use crate::tui::playback::content::controller::render_list;
 use std::rc::Rc;
 use std::sync::mpsc::{channel};
 use std::collections::VecDeque;
@@ -31,10 +29,25 @@ use crate::tui::playback::title::{
 	}
 };
 
+use crate::tui::playback::content::{
+	controller::{
+		Controller as Controller2, 
+	}, 
+	model::{
+		Model as Model2, 
+	}, 
+	view::{
+		View as View2, 
+	}
+};
 
 pub struct Playback {
     pub v: State,
 }
+
+pub type State = ComponentState;
+pub type Output1 = tui::ComponentData<Model1, View1, Controller1>;
+pub type Output2 = tui::ComponentData<Model2, View2, Controller2>;
 
 impl<'c> Components<'c> for Playback {
     type Item = Playback;
@@ -70,20 +83,6 @@ impl<'c> Components<'c> for Playback {
     }
 }
 
-use crate::tui::playback::content::{
-	controller::{
-		Controller as Controller2, 
-	}, 
-	model::{
-		Model as Model2, 
-	}, 
-	view::{
-		View as View2, 
-	}
-};
-
-pub type Output2 = tui::ComponentData<Model2, View2, Controller2>;
-
 impl IntoComponent<Model1, View1, Controller1> for Output1 {
     fn unwrap_controller(self) -> Controller1 {
         match self {
@@ -100,6 +99,29 @@ impl IntoComponent<Model1, View1, Controller1> for Output1 {
     }
 
     fn unwrap_view(self) -> View1 {
+        match self {
+            Output1::View(v) => v,
+            _ => panic!("Wrong type"),
+        }
+    }
+}
+
+impl IntoComp<Model1, View1, Controller1> for Output1 {
+    fn unwrap_controller(&mut self) -> &mut Controller1 {
+        match self {
+            Output1::Controller(c) => c,
+            _ => panic!("Wrong type"),
+        }
+    }
+
+    fn unwrap_model(&mut self) -> &mut Model1 {
+        match self {
+            Output1::Model(m) => m,
+            _ => panic!("Wrong type"),
+        }
+    }
+
+    fn unwrap_view(&mut self) -> &mut View1 {
         match self {
             Output1::View(v) => v,
             _ => panic!("Wrong type"),
@@ -130,29 +152,6 @@ impl IntoComponent<Model2, View2, Controller2> for Output2 {
     }
 }
 
-impl IntoComp<Model1, View1, Controller1> for Output1 {
-    fn unwrap_controller(&mut self) -> &mut Controller1 {
-        match self {
-            Output1::Controller(c) => c,
-            _ => panic!("Wrong type"),
-        }
-    }
-
-    fn unwrap_model(&mut self) -> &mut Model1 {
-        match self {
-            Output1::Model(m) => m,
-            _ => panic!("Wrong type"),
-        }
-    }
-
-    fn unwrap_view(&mut self) -> &mut View1 {
-        match self {
-            Output1::View(v) => v,
-            _ => panic!("Wrong type"),
-        }
-    }
-}
-
 impl IntoComp<Model2, View2, Controller2> for Output2 {
     fn unwrap_controller(&mut self) -> &mut Controller2 {
         match self {
@@ -175,6 +174,7 @@ impl IntoComp<Model2, View2, Controller2> for Output2 {
         }
     }
 }
+
 #[derive(Clone)]
 pub enum ControllerCommand {
 	
@@ -199,58 +199,7 @@ pub enum ViewCommand {
 	Skip
 }
 
-pub type State = ComponentState;
-pub type Output1 = tui::ComponentData<Model1, View1, Controller1>;
-//pub type Executor = tui::ExecuteLayout1<Playback,Output1,Output2>;
-/*
-impl ExecuteLayout1<Playback,Output1,Output2> {
-	
-    pub async fn init(&mut self) {
-		
-		self.controllers.0 = Some( Output1::Controller( 
-		    Controller1 { cmd : ControllerCommand::Init, redraw: true } ));
-		self.controllers.1 = Some( Output2::Controller( 
-            Controller2 { cmd : ControllerCommand::Init, redraw: true } ));
-			
-	}
-	
-	pub async fn execute(
-	    &mut self, 
-		terminal: &mut DefaultTerminal,
-        gpio_pins: &mut Input
-	) {
-
-		self.controllers.0 = Some(run_screen(self.controllers.0.clone().unwrap(), &mut self.screen.v, terminal, gpio_pins).await);
-        self.controllers.1 = Some(run_screen(self.controllers.1.clone().unwrap(), &mut self.screen.v, terminal, gpio_pins).await);
-
-		let r_top = self.controllers.0.as_mut().unwrap().unwrap_controller().redraw;
-		let r_bottom = self.controllers.1.as_mut().unwrap().unwrap_controller().redraw;
-		
-		if !r_top && !r_bottom {
-			return;
-		}
-
-        terminal.draw(|frame| {
-            use Constraint::{Fill, Length, Min};
-            let vertical = Layout::vertical([Length(2), Length(8)]);
-            let [top, bottom] = vertical.areas(frame.area());
-            if r_top {		
-                //render_top(frame, top);
-                let r = View1::renderer(&mut self.screen.v);
-                r(frame, top);
-            }
-            if r_bottom {
-                //render_list(frame, bottom, &mut self.screen.v.selection);
-                let r = View2::renderer(&mut self.screen.v);
-                r(frame, bottom);
-            }
-		}).unwrap();
-
-	}
-}		
-*/
 pub struct Executor {
-    pub screen: Playback,
     pub controllers: (Option<Output1>, Option<Output2>)
 }
 
@@ -263,12 +212,13 @@ impl ExecutorForLayout1 <
     View1, 
     View2, 
     Controller1, 
-    Controller2 > 
+    Controller2 
+> 
   for Executor
 {
-    fn get_state(&mut self) -> &mut State {
-        &mut self.screen.v
-    }
+    //fn get_state(&mut self) -> &mut State {
+    //    &mut Rc::get_mut(&mut self.screen).unwrap().v
+    //}
 
     fn get_controllers(&self) -> (Output1, Output2) {
         (

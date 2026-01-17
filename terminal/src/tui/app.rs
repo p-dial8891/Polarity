@@ -5,6 +5,7 @@ use crate::tui::{playback, playback::{Playback,Executor}};
 use crate::tui::{App_List};
 use crate::tui::input::{Input, InputConfig};
 use std::{thread, time::Duration};
+use std::rc::Rc;
 use crossterm::{
     event::{poll, read}
 };
@@ -47,8 +48,8 @@ pub async fn main() {
 	let mut e1 = e0.with_background();
 	
 	a.register("Playback");
+	let mut playback = Playback::new();
     let mut e2 = playback::Executor { 
-	    screen: Playback::new(), 
 		controllers: (None,None), 
 	};
 	
@@ -89,7 +90,7 @@ pub async fn main() {
 		// Screen execution - start
 		match &next[..] {
 		    "Main" => { e1.foreground_executor.execute(next, &mut t, &mut input).await; },
-			"Playback" => { e2.execute(&mut t, &mut input).await; },
+			"Playback" => {	e2.execute(&mut playback.v, &mut t, &mut input).await; },
 			"Shutdown" => { e3.execute(next, &mut t, &mut input).await; },
 			_ => {},
 		}
