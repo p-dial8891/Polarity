@@ -1,4 +1,4 @@
 
-pub mod controller;
-pub mod model;
-pub mod view;
+pub mod controllers;
+pub mod models;
+pub mod views;

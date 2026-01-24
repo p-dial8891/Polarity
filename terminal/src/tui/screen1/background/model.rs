@@ -60,11 +60,7 @@ impl<'c> Compute<'c> for Model {
 				if state_data.toggle {
 					state_data.toggle = false;
 					return Self::Output::View(View {
-						cmd : Draw(
-							state_data.list.clone(),
-							state_data.playlist.clone(),
-							state_data.toggle ) 
-						} 
+						cmd : Draw	} 
 					);
 				}
 				

@@ -1,5 +1,5 @@
 use crate::tui;
-use crate::tui::{Components, Compute, IntoComponent, IntoComp, Execute, ExecuteBG};
+use crate::tui::{Components, Compute, IntoComponent, IntoComp, ExecutorForLayout1, ExecutorForBackground};
 use ratatui::DefaultTerminal;
 use crate::tui::input::Input;
 use std::rc::Rc;
@@ -11,30 +11,41 @@ mod background;
 mod foreground;
 
 use crate::tui::screen1::foreground::{
+	controllers::{
+		Controller1, Controller2
+	}, 
+	models::{
+		Model1, Model2, ComponentState
+	}, 
+	views::{
+		View1, View2
+	}
+};
+
+use crate::tui::screen1::background::{
 	controller::{
-		Controller
+		Controller as ControllerBG, 
 	}, 
 	model::{
-		Model, ComponentState
+		Model as ModelBG, 
 	}, 
 	view::{
-		View
+		View as ViewBG, 
 	}
 };
 
 pub type State = ComponentState;
-pub type Output = tui::ComponentData<Model, View, Controller>;
-pub type Executor<'c> = tui::Execute<'c, Screen1>;
+pub type Output1 = tui::ComponentData<Model1, View1, Controller1>;
+pub type Output2 = tui::ComponentData<Model2, View2, Controller2>;
+pub type OutputBG = tui::ComponentData<ModelBG, ViewBG, ControllerBG>;
 
 pub struct Screen1 {
     pub v: State,
 }
 
-impl<'c> Components<'c> for Screen1 {
-    type Item = Screen1;
-    type Output = Output;
-
-    fn new() -> Screen1 {
+impl Screen1 {
+	
+    pub fn new() -> Self {
 		let (tx, rx) = channel();
         let (tx_refresh, rx_refresh) = channel();
         Screen1 {
@@ -53,83 +64,49 @@ impl<'c> Components<'c> for Screen1 {
             }
         }
     }
-
-    async fn run(
-        &mut self,
-        o: Output,
-        terminal: &mut DefaultTerminal,
-        gpio_pins: &mut Input,
-    ) -> Output {
-        o.unwrap_controller()
-            .compute(&mut self.v, terminal, gpio_pins).await
-            .unwrap_model()
-            .compute(&mut self.v, terminal, gpio_pins).await
-            .unwrap_view()
-            .compute(&mut self.v, terminal, gpio_pins).await
-    }
-
-    async fn start(&mut self) -> Output {
-        Output::Controller ( 
-		    Controller::new().await
-		)
-    }
 }
 
-use crate::tui::screen1::background::{
-	controller::{
-		Controller as ControllerBG, 
-	}, 
-	model::{
-		Model as ModelBG, 
-	}, 
-	view::{
-		View as ViewBG, 
-	}
-};
-
-pub type OutputBG = tui::ComponentData<ModelBG, ViewBG, ControllerBG>;
-
-impl Screen1 {
-	
-    async fn run_as_background(
-        &mut self,
-        o: OutputBG,
-        terminal: &mut DefaultTerminal,
-        gpio_pins: &mut Input,
-    ) -> OutputBG {
-        o.unwrap_controller()
-            .compute(&mut self.v, terminal, gpio_pins).await
-            .unwrap_model()
-            .compute(&mut self.v, terminal, gpio_pins).await
-            .unwrap_view()
-            .compute(&mut self.v, terminal, gpio_pins).await
-    }
-
-    async fn start_as_background(&mut self) -> OutputBG {
-        OutputBG::Controller ( 
-		    ControllerBG::new().await
-		)
-    }
-}
-
-impl IntoComponent<Model, View, Controller> for Output {
-    fn unwrap_controller(self) -> Controller {
+impl IntoComponent<Model1, View1, Controller1> for Output1 {
+    fn unwrap_controller(self) -> Controller1 {
         match self {
-            Output::Controller(c) => c,
+            Output1::Controller(c) => c,
             _ => panic!("Wrong type"),
         }
     }
 
-    fn unwrap_model(self) -> Model {
+    fn unwrap_model(self) -> Model1 {
         match self {
-            Output::Model(m) => m,
+            Output1::Model(m) => m,
             _ => panic!("Wrong type"),
         }
     }
 
-    fn unwrap_view(self) -> View {
+    fn unwrap_view(self) -> View1 {
         match self {
-            Output::View(v) => v,
+            Output1::View(v) => v,
+            _ => panic!("Wrong type"),
+        }
+    }
+}
+
+impl IntoComponent<Model2, View2, Controller2> for Output2 {
+    fn unwrap_controller(self) -> Controller2 {
+        match self {
+            Output2::Controller(c) => c,
+            _ => panic!("Wrong type"),
+        }
+    }
+
+    fn unwrap_model(self) -> Model2 {
+        match self {
+            Output2::Model(m) => m,
+            _ => panic!("Wrong type"),
+        }
+    }
+
+    fn unwrap_view(self) -> View2 {
+        match self {
+            Output2::View(v) => v,
             _ => panic!("Wrong type"),
         }
     }
@@ -185,65 +162,77 @@ pub enum ModelCommand {
 pub enum ViewCommand {
 	
 	Noop,
-	Init(Rc<Vec<String>>, Rc<VecDeque<usize>>, bool),
+	Init,
     NextTrack(String),
-    PlayTrack(String, Rc<Vec<String>>, Rc<VecDeque<usize>>, bool),
-	Draw(Rc<Vec<String>>, Rc<VecDeque<usize>>, bool),
+    PlayTrack(String),
+	Draw,
 }
 
-impl<'c> Execute<'c,Screen1> {
-	pub async fn init(&mut self, handle: &String) {
-		if self.screen_names.iter().position(|x| { x == handle }).is_some() {
-		    self.current_output = Some(self.current_screen.start().await);
-		}
-	}
-
-	pub async fn execute(
-	    &mut self, 
-		handle: &String,
-		terminal: &mut DefaultTerminal,
-        gpio_pins: &mut Input
-	) {
-		if self.screen_names.iter().position(|x| { x == handle }).is_some() {
-		    self.current_output = Some(
-			    self.current_screen.run(self.current_output.clone().unwrap(), 
-				terminal, gpio_pins).await
-			);
-		}
-	}
-	
-	pub fn with_background(&'c mut self) -> ExecuteBG<'c, Screen1, OutputBG> {
-		ExecuteBG {
-			foreground_executor : self,
-			current_output : None
-		}
-	}
-	
+pub struct Executor {
+	pub controllers: (Option<Output1>, Option<Output2>),
 }
 
-impl<'c> ExecuteBG<'c, Screen1, OutputBG> {
+pub struct ExecutorBG {
+	pub controllers: Option<OutputBG>,
+}
 
-	pub async fn init(&mut self, handle: &String) {
-		if self.foreground_executor.screen_names.iter().position(
-		        |x| { x == handle }).is_some() {
-		    self.current_output = Some(self.foreground_executor
-				.current_screen.start_as_background().await);
-		}
+impl ExecutorForLayout1 <
+    State, 
+    Output1, 
+    Output2, 
+    Model1, 
+    Model2, 
+    View1, 
+    View2, 
+    Controller1, 
+    Controller2 
+> 
+  for Executor
+{
+
+    fn get_controllers(&self) -> (Output1, Output2) {
+        (
+            self.controllers.0.clone().unwrap(),
+            self.controllers.1.clone().unwrap()
+        )
+    }
+
+    fn set_controllers(&mut self, controllers : (Output1, Output2)) {
+        self.controllers.0 = Some(controllers.0);
+        self.controllers.1 = Some(controllers.1);
+    }
+
+    async fn init(&mut self) {
+        self.set_controllers((
+            Output1::Controller( Controller1::new().await ),
+            Output2::Controller( Controller2::new().await )
+        ));    
+    }
+
+}
+
+impl ExecutorForBackground <
+	State, 
+	OutputBG, 
+	ModelBG, 
+	ViewBG, 
+	ControllerBG
+> 
+  for ExecutorBG
+{
+
+	fn get_controller(&self) -> OutputBG {
+		self.controllers.clone().unwrap()
 	}
 
-	pub async fn execute(
-	    &mut self, 
-		handle: &String,
-		terminal: &mut DefaultTerminal,
-        gpio_pins: &mut Input
-	) {
-		if self.foreground_executor.screen_names.iter().position(
-		        |x| { x == handle }).is_some() {
-		    self.current_output = Some(
-			    self.foreground_executor.current_screen
-				    .run_as_background(self.current_output.clone().unwrap(), 
-				    terminal, gpio_pins).await
-			);
-		}
+	fn set_controller(&mut self, controller : OutputBG) {
+		self.controllers = Some(controller);
 	}
+
+	async fn init(&mut self) {
+		self.set_controller(
+			OutputBG::Controller( ControllerBG::new().await )
+		);    
+	}
+
 }

@@ -91,13 +91,6 @@ trait Render<S> {
     }
 }
 
-struct Execute<'c, S : Components<'c>> {
-	
-	screen_names : Vec<String>,
-	current_output : Option<S::Output>,
-	current_screen : S,
-}
-
 trait ExecutorForLayout1<S, T1, T2, M1, M2, V1, V2, C1, C2> 
   where 
         T1 : IntoComponent<M1,V1,C1> + Clone,
@@ -109,8 +102,6 @@ trait ExecutorForLayout1<S, T1, T2, M1, M2, V1, V2, C1, C2>
         V1 : for<'c> Compute<'c, State=S, Output=T1>,
         V2 : for<'c> Compute<'c, State=S, Output=T2>,
 {
-
-    //fn get_state(&mut self) -> &mut S;
 
     fn get_controllers(&self) -> (T1, T2);
 
@@ -143,15 +134,13 @@ trait ExecutorForLayout1<S, T1, T2, M1, M2, V1, V2, C1, C2>
 
         terminal.draw( |frame| {
             use Constraint::{Fill, Length, Min};
-            let vertical = Layout::vertical([Length(2), Fill(1)]);
+            let vertical = Layout::vertical([Fill(1), Length(2)]);
             let [top, bottom] = vertical.areas(frame.area());
 
-            if r_top {		
+            if r_top || r_bottom {		
                 //render_top(frame, top);
                 let r = C1::renderer(state);
                 r(frame, top);
-            }
-            if r_bottom {
                 //render_list(frame, bottom, &mut self.screen.v.selection);
                 let r = C2::renderer(state);
                 r(frame, bottom);
@@ -161,11 +150,113 @@ trait ExecutorForLayout1<S, T1, T2, M1, M2, V1, V2, C1, C2>
 
 }
 
+trait ExecutorForBackground<S, T, M, V, C> 
+  where 
+        T : IntoComponent<M,V,C> + Clone,
+        C : for<'c> Compute<'c, State=S, Output=T>,
+        M : for<'c> Compute<'c, State=S, Output=T>,
+        V : for<'c> Compute<'c, State=S, Output=T>,
+{
+
+    fn get_controller(&self) -> T;
+
+    fn set_controller(&mut self, controller : T);
+
+    async fn init(&mut self);
+
+    async fn execute(
+        &mut self,
+        state: &mut S,
+        terminal: &mut DefaultTerminal,
+        gpio_pins: &mut Input,
+    ) {
+ 
+        let controller = self.get_controller();
+
+        let c = run_screen(controller, state, terminal, gpio_pins).await;
+
+        self.set_controller(c);
+
+    }
+
+}
+
+// trait Executor2ForLayout1<S, T1, T2, M1, M2, V1, V2, C1, C2> 
+//   where 
+//         T1 : IntoComponent<M1,V1,C1> + Clone,
+//         T2 : IntoComponent<M2,V2,C2> + Clone,
+//         C1 : Render<S> + for<'c> Compute<'c, State=S, Output=T1>,
+//         C2 : Render<S> + for<'c> Compute<'c, State=S, Output=T2>,
+//         M1 : for<'c> Compute<'c, State=S, Output=T1>,
+//         M2 : for<'c> Compute<'c, State=S, Output=T2>,
+//         V1 : for<'c> Compute<'c, State=S, Output=T1>,
+//         V2 : for<'c> Compute<'c, State=S, Output=T2>,
+// {
+
+//     //fn get_state(&mut self) -> &mut S;
+
+//     fn get_controllers(&self) -> (T1, T2);
+
+//     fn set_controllers(&mut self, controllers : (T1, T2));
+
+//     async fn init(&mut self);
+
+//     async fn execute(
+//         &mut self,
+//         state: &mut S,
+//         terminal: &mut DefaultTerminal,
+//         gpio_pins: &mut Input,
+//     ) {
+ 
+//         let controllers = self.get_controllers();
+
+//         let c1 = run_screen(controllers.0, state, terminal, gpio_pins).await;
+//         let c2 = run_screen(controllers.1, state, terminal, gpio_pins).await;
+
+//         self.set_controllers((c1,c2));
+
+//         let controllers = self.get_controllers();
+
+//         let r_top = controllers.0.unwrap_controller().redraw();
+//         let r_bottom = controllers.1.unwrap_controller().redraw();
+
+//         if !r_top && !r_bottom {
+//             return;
+//         }
+
+//         terminal.draw( |frame| {
+//             use Constraint::{Fill, Length, Min};
+//             let vertical = Layout::vertical([Length(2), Fill(1)]);
+//             let [top, bottom] = vertical.areas(frame.area());
+
+//             if r_top {		
+//                 //render_top(frame, top);
+//                 let r = V1::renderer(state);
+//                 r(frame, top);
+//             }
+//             if r_bottom {
+//                 //render_list(frame, bottom, &mut self.screen.v.selection);
+//                 let r = V2::renderer(state);
+//                 r(frame, bottom);
+//             }
+// 		}).unwrap();
+//     }
+
+// }
+/*
 struct ExecuteBG<'c, S : Components<'c>, BG> {
 	
 	pub foreground_executor : &'c mut Execute<'c, S>,
 	current_output : Option<BG>,
 	
+}
+*/
+
+struct Execute<'c, S : Components<'c>> {
+	
+	screen_names : Vec<String>,
+	current_output : Option<S::Output>,
+	current_screen : S,
 }
 
 struct App_List(Vec<String>);

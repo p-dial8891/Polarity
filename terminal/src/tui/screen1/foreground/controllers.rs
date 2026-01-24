@@ -1,29 +1,23 @@
-use crate::tui::screen1::{foreground::controller::Controller,
-    ViewCommand::{self, Init, Draw, PlayTrack},
-    ControllerCommand::{self}
-};
+use crate::tui::screen1::{foreground::models::{Model1, Model2}, ModelCommand, ControllerCommand};
 use crate::tui::{Components, Compute, Render};
+use ratatui::{DefaultTerminal, Frame};
 use crate::tui::input::Input;
-use crate::tui::screen1::{State, Output};
-use crate::polaris::{polarisHandle};
-use crate::options;
-use std::collections::VecDeque;
+use crate::polaris::{self, polarisHandle};
+use crate::tui::screen1::{State, Output1, Output2};
+use crate::tui::app::Keys::{*};
+
 use ratatui::layout::{Constraint, Layout, Rect};
 use ratatui::style::{Modifier, Style, Stylize};
 use ratatui::widgets::{List, ListItem, ListState, Paragraph};
-use ratatui::{DefaultTerminal, Frame};
+
+use crate::options;
+use std::collections::VecDeque;
 
 use service::{PlayerClient};
 use std::{time::Duration, time::Instant};
 use tarpc::{client, context, tokio_serde::formats::Json};
 use tokio::io::AsyncReadExt;
 use tokio::{task, net::TcpListener, time::sleep};
-
-#[derive(Clone)]
-pub struct View {
-    pub data: polarisHandle,
-	pub cmd: ViewCommand,
-}
 
 /// Render the UI with various lists.
 fn render(
@@ -129,7 +123,7 @@ async fn listenerTask(listener : TcpListener) {
     socket.read(&mut buf).await.unwrap();
 }
 
-impl Render<State> for View {
+impl Render<State> for Controller1 {
 
     fn renderer(state : &mut State) -> 
 	    impl FnOnce(&mut Frame, Rect) -> () {
@@ -138,48 +132,157 @@ impl Render<State> for View {
 		                        &state.list, &state.playlist ); }
 		
     }
+
+	fn redraw(&self) -> bool {
+		self.redraw
+	}
 }
 
-impl<'c> Compute<'c> for View {
+impl Render<State> for Controller2 {
+
+    fn renderer(state : &mut State) -> 
+	    impl FnOnce(&mut Frame, Rect) -> () {
+
+        |f,r| { render_bottom( f, r, state.toggle, 
+			&state.playlist, &mut state.selection ); }
+		
+    }
+
+	fn redraw(&self) -> bool {
+		self.redraw
+	}
+}
+
+#[derive(Clone)]
+pub struct Controller1 {
+	pub cmd: ControllerCommand,
+    pub data: polarisHandle,
+	pub redraw : bool,
+}
+
+#[derive(Clone)]
+pub struct Controller2 {
+	pub cmd: ControllerCommand,
+	pub redraw : bool,
+}
+
+impl<'c> Compute<'c> for Controller1 {
     type State = State;
-    type Output = Output;
+    type Output = Output1;
 
     async fn compute(
         mut self,
         s: &mut State,
-        terminal: &mut DefaultTerminal,
-        _: &mut Input,
-    ) -> Output {
-		let mut state_data = s;
+        _: &mut DefaultTerminal,
+        input: &mut Input,
+    ) -> Self::Output {
+
+		let state_data = s;
 
 		match self.cmd {
-			Init(data, playlist, toggle_symbol) => {
-			    terminal.clear();	
-    			terminal.draw(|frame| {
-				    render(frame, &mut state_data.selection, &data, toggle_symbol, &playlist) }).unwrap();
-			},
-			
-			Draw(data, playlist, toggle_symbol) => {
-    			terminal.draw(|frame| {
-				    render(frame, &mut state_data.selection, &data, toggle_symbol, &playlist) }).unwrap();
-            },
-		    PlayTrack(name, data, playlist, toggle_symbol) => {
-				let mut tui_address = options::getTuiAddress();
-				tui_address.extend([":9000"]);
-				let listener = TcpListener::bind(&tui_address).await.unwrap();
-				let _ = state_data.tx.send(Some(task::spawn(listenerTask(listener))));
-				sendRequestToPlayer(name).await;
-                terminal.draw(|frame| {
-				    render(frame, &mut state_data.selection, &data, toggle_symbol, &playlist) }).unwrap();
-			},
-			
-            _ => {}			
+			ControllerCommand::Init => { 
+			   state_data.start = false;
+			   return Self::Output::Model(Model1 { data : self.data,
+			    cmd : ModelCommand::Init	}) },
+			_ => {},
+		}
+	
+		if state_data.start == true {
+            state_data.start = false;
+			eprintln!("<Controller> : Initialised.");
+			return Self::Output::Model(Model1 { data : self.data,
+			    cmd : ModelCommand::Init	});
 		}
 
-        Output::Controller(Controller { 
-		    cmd : ControllerCommand::Noop,
-			data : self.data	})
+		match state_data.rx_refresh.try_recv() {
+			Ok(t_handle) => { 
+				eprintln!("<Controller> : Refresh command received.");
+				return Self::Output::Model(Model1 { data : self.data,
+			        cmd : ModelCommand::Refresh	}) }
+			_ => {}
+		}
+
+		if input.read(UP_KEY) == false {
+			eprintln!("<Controller> : Up key pressed.");
+			return Self::Output::Model(Model1 { data : self.data,
+			    cmd : ModelCommand::SelectPrevious	});
+		}
+		if input.read(DOWN_KEY) == false {
+			eprintln!("<Controller> : Down key pressed.");
+			return Self::Output::Model(Model1 { data : self.data,
+			    cmd : ModelCommand::SelectNext	});
+		}
+		if input.read(LEFT_KEY) == false {
+			eprintln!("<Controller> : Left key pressed.");
+			return Self::Output::Model(Model1 { data : self.data,
+			    cmd : ModelCommand::RemoveTrack	});
+		}
+		if input.read(RIGHT_KEY) == false {
+			eprintln!("<Controller> : Right key pressed.");
+			return Self::Output::Model(Model1 { data : self.data,
+			    cmd : ModelCommand::AddTrack	});
+		}
+		// should not matter what happens from here.	
+        Self::Output::Model(Model1 { data : self.data,
+			cmd : ModelCommand::Noop	})
     }
 }
 
+impl<'c> Compute<'c> for Controller2 {
+    type State = State;
+    type Output = Output2;
 
+    async fn compute(
+        mut self,
+        s: &mut State,
+        _: &mut DefaultTerminal,
+        input: &mut Input,
+    ) -> Self::Output {
+		let state_data = s;
+
+		match self.cmd {
+			ControllerCommand::Init => { 
+			   state_data.start = false;
+			   return Self::Output::Model(Model2 { 
+			    cmd : ModelCommand::Init	}) },
+			_ => {},
+		}
+		
+		if input.read(REQ_KEY) == false {
+			eprintln!("<Controller> : Request key pressed.");
+			return Self::Output::Model(Model2 {
+			    cmd : ModelCommand::TogglePlay	});
+		}
+	
+		// should not matter what happens from here.	
+        Self::Output::Model(Model2 {
+			cmd : ModelCommand::Noop	})
+    }
+}
+
+impl Controller1 {
+	
+	pub async fn new() -> Self {
+		
+		Controller1 {
+			cmd : ControllerCommand::Init,
+		    data : polaris::getBody().await.unwrap(),
+			redraw : true,
+		}
+		
+	}
+	
+}
+
+impl Controller2 {
+	
+	pub async fn new() -> Self {
+		
+		Controller2 {
+			cmd : ControllerCommand::Init,
+			redraw : true,
+		}
+		
+	}
+	
+}
