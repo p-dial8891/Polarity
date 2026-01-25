@@ -1,6 +1,6 @@
 use crate::tui;
 use crate::tui::{Components, Compute, IntoComponent, IntoComp, 
-    ExecutorForLayout1, run_screen, Render };
+    ExecutorForLayout2, run_screen, Render };
 use crate::tui::input::Input;
 use std::rc::Rc;
 use std::sync::mpsc::{channel};
@@ -203,7 +203,7 @@ pub struct Executor {
     pub controllers: (Option<Output1>, Option<Output2>)
 }
 
-impl ExecutorForLayout1 <
+impl ExecutorForLayout2 <
     State, 
     Output1, 
     Output2, 

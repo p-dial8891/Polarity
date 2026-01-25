@@ -1,4 +1,4 @@
-use crate::tui::{Components, ExecutorForLayout1, ExecutorForBackground};
+use crate::tui::{Components, ExecutorForLayout1, ExecutorForLayout2, ExecutorForBackground};
 use crate::tui::{screen1, screen1::Screen1};
 use crate::tui::{shutdown, shutdown::Shutdown};
 use crate::tui::{playback, playback::{Playback,Executor}};
