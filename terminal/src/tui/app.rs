@@ -10,6 +10,9 @@ use crossterm::{
     event::{poll, read}
 };
 use crate::tui::app::Keys::{*};
+use crossterm::{
+    event::{KeyCode}
+};
 //use futures::{future::FutureExt, select, StreamExt};
 
 pub enum Keys {
@@ -22,12 +25,12 @@ pub enum Keys {
 }
 
 pub async fn main() {
-    let up = InputConfig::init(17, 'j');
-    let down = InputConfig::init(22, 'k');
-    let left = InputConfig::init(27, 'h');
-    let right = InputConfig::init(23, 'l');
-    let quit = InputConfig::init(5, '\u{0009}');
-    let req = InputConfig::init(6, '\u{000A}');
+    let up = InputConfig::init(17, KeyCode::Char('j'));
+    let down = InputConfig::init(22, KeyCode::Char('k'));
+    let left = InputConfig::init(27, KeyCode::Char('h'));
+    let right = InputConfig::init(23, KeyCode::Char('l'));
+    let quit = InputConfig::init(5, KeyCode::Tab);
+    let req = InputConfig::init(6, KeyCode::Enter);
     let keys = [up, down, left, right, req, quit];
 	let mut input = Input::init(keys);
 

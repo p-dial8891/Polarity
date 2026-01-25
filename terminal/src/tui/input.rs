@@ -5,12 +5,12 @@ use crate::tui::app::Keys::{self, *};
 
 pub struct InputConfig {
 	pin : u8,
-	ch : char,
+	ch : KeyCode,
 }
 
 impl InputConfig {
 	
-	pub fn init(pin : u8, c : char) -> InputConfig {
+	pub fn init(pin : u8, c : KeyCode) -> InputConfig {
 		
 		InputConfig {
 			pin : pin,
@@ -22,11 +22,7 @@ impl InputConfig {
 	fn read(&mut self, e : &mut Option<Event>) -> bool {
 		match e {
 			Some(ev) => {
-				if *ev == Event::Key(KeyCode::Char(self.ch).into()) ||
-				   ( *ev == Event::Key(KeyCode::Enter.into()) && 
-					   self.ch == '\u{000A}' ) ||
-				   ( *ev == Event::Key(KeyCode::Tab.into()) &&
-					   self.ch == '\u{0009}' )   {
+				if *ev == Event::Key(self.ch.into())   {
 					eprintln!("Key {:?} captured", self.ch);
 					*e = None;
 					false
@@ -46,7 +42,7 @@ use rppal::gpio::{self, Gpio, InputPin, Level};
 #[cfg(feature = "enable-rppal")]
 pub struct InputInitialised {
 	pub pin : InputPin,
-	pub ch : char
+	pub ch : KeyCode
 }
 
 #[cfg(feature = "enable-rppal")]
@@ -60,11 +56,7 @@ impl InputInitialised {
 			Level::High => {
 				match e {
 					Some(ev) => {
-						if *ev == Event::Key(KeyCode::Char(self.ch).into()) ||
-                           ( *ev == Event::Key(KeyCode::Enter.into()) && 
-						       self.ch == '\u{000A}' ) ||
-                           ( *ev == Event::Key(KeyCode::Tab.into()) &&
-                               self.ch == '\u{0009}' )   {
+						if *ev == Event::Key(self.ch.into())  {
 							eprintln!("Key {:?} captured", self.ch);
 							*e = None;
 							Level::Low
