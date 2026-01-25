@@ -25,10 +25,10 @@ pub enum Keys {
 }
 
 pub async fn main() {
-    let up = InputConfig::init(17, KeyCode::Char('j'));
-    let down = InputConfig::init(22, KeyCode::Char('k'));
-    let left = InputConfig::init(27, KeyCode::Char('h'));
-    let right = InputConfig::init(23, KeyCode::Char('l'));
+    let up = InputConfig::init(17, KeyCode::Up);
+    let down = InputConfig::init(22, KeyCode::Down);
+    let left = InputConfig::init(27, KeyCode::Left);
+    let right = InputConfig::init(23, KeyCode::Right);
     let quit = InputConfig::init(5, KeyCode::Tab);
     let req = InputConfig::init(6, KeyCode::Enter);
     let keys = [up, down, left, right, req, quit];
