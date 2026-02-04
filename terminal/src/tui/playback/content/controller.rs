@@ -50,6 +50,16 @@ impl<'c> Compute<'c> for Controller {
 			return Output::Model(Model { cmd : ModelCommand::Init });
 		}
 
+ 		if input.read(UP_KEY) == false {
+			eprintln!("<Controller> : Up key pressed.");
+			return Output::Model(Model { cmd : ModelCommand::SelectPrevious });
+		}
+
+ 		if input.read(DOWN_KEY) == false {
+			eprintln!("<Controller> : Down key pressed.");
+			return Output::Model(Model { cmd : ModelCommand::SelectNext });
+		}
+
  		if input.read(REQ_KEY) == false {
 			eprintln!("<Controller> : Req key pressed.");
 			return Output::Model(Model { cmd : ModelCommand::Req });
@@ -83,7 +93,7 @@ pub fn render_list(
     list_state: &mut ListState,
 ) {
     let list =
-        List::new(["Skip"])
+        List::new(["Skip", "Pause"])
         //.highlight_style(SELECTED_STYLE);
         .highlight_style(Modifier::UNDERLINED);
     frame.render_stateful_widget(list, area, list_state);

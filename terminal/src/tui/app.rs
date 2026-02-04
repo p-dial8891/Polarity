@@ -43,6 +43,7 @@ pub async fn main() {
 
 	a.register("Main");
 	a.register("Playback");
+	let shutdown_screen = a.register("Shutdown");
 
 	let mut screen1 = Screen1::new();
 	let mut playback = Playback::new();
@@ -60,7 +61,7 @@ pub async fn main() {
 	};
 	
     let mut e3 = shutdown::Executor { 
-	    screen_names: vec![a.register("Shutdown")], 
+	    screen_names: vec![shutdown_screen], 
 		current_output: None, 
 		current_screen: Shutdown::new() 
 	};
@@ -90,7 +91,7 @@ pub async fn main() {
 				_          => {},
 			}
 			// Screen Initialisations - end
-		    i_previous = i_next.clone();
+		    i_previous = i_next;
 		}
 		
 		// Screen execution - start
@@ -103,7 +104,7 @@ pub async fn main() {
 		// Screen execution - end
 
 		if input.read(TAB_KEY) == false {
-		    i_previous = i_next.clone();
+		    i_previous = i_next;
 			i_next = Some(i.next());
 		}
 			

@@ -1,6 +1,6 @@
 use crate::tui;
 use crate::tui::playback::{content::controller::Controller, content::model::Model,
-    ViewCommand::{self, Init, Skip},
+    ViewCommand::{self, Init, Skip, Draw, Pause},
 	ControllerCommand::{self, Noop}
 };
 use crate::tui::{Components, Compute, IntoComponent, IntoComp, Render};
@@ -19,7 +19,12 @@ pub struct View {
     pub cmd : ViewCommand,
 }
 
-async fn sendRequestToPlayer() {
+enum PlayerRequest {
+    Skip,
+    Pause,
+}
+
+async fn sendRequestToPlayer(choice : PlayerRequest) {
     //init_tracing("Polarity example.");
     //println!("Polarity example");
 	let mut player_address = options::getPlayerAddress();
@@ -37,8 +42,17 @@ async fn sendRequestToPlayer() {
     cxt.deadline = Instant::now()
         .checked_add(Duration::from_secs(60 * 5))
         .unwrap();
-    let result = client.skip(cxt).await.unwrap();
-    //println!("{result}");
+
+    match choice {
+        PlayerRequest::Skip => {
+            let result = client.skip(cxt).await.unwrap();
+            //println!("{result}");
+        },
+        PlayerRequest::Pause => {
+            let result = client.pause(cxt).await.unwrap();
+            //println!("{result}");
+        },
+    }
 
     sleep(Duration::from_millis(10)).await;
 }
@@ -60,12 +74,23 @@ impl<'c> Compute<'c> for View {
 				Output::Controller(Controller { cmd : ControllerCommand::Noop,
                     redraw: true  } )
             },
-			
+
+            Draw => {
+                Output::Controller(Controller { cmd : ControllerCommand::Noop,
+                    redraw: true  } )
+            },
+
 			Skip => {
-				sendRequestToPlayer().await;
+				sendRequestToPlayer(PlayerRequest::Skip).await;
                 Output::Controller(Controller { cmd : ControllerCommand::Noop,
                     redraw: false  } )
 			},
+
+			Pause => {
+                sendRequestToPlayer(PlayerRequest::Pause).await;
+                Output::Controller(Controller { cmd : ControllerCommand::Noop,
+                    redraw: false  } )
+            },
 			
 			_ => {
                 Output::Controller(Controller { cmd : ControllerCommand::Noop,

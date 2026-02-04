@@ -188,7 +188,9 @@ pub enum ModelCommand {
 	
 	Noop,
 	Init,
-    Req,
+    SelectPrevious,
+    SelectNext,
+    Req
 }
 
 #[derive(Clone)]
@@ -196,7 +198,9 @@ pub enum ViewCommand {
 	
 	Noop,
     Init,
-	Skip
+	Skip,
+    Pause,
+    Draw
 }
 
 pub struct Executor {

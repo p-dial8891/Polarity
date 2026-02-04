@@ -136,6 +136,17 @@ impl Player for PlayerServer {
 		    self.sink.skip_one(); } );
 		Ok(())
 	}
+    
+    async fn pause(self, _: context::Context) -> Result<(),()> {
+        tokio::task::spawn( async move {
+            if self.sink.is_paused() {
+                self.sink.play();
+            } else {
+                self.sink.pause();
+            }
+        } );
+        Ok(())
+    }
 }
 
 async fn spawn(fut: impl Future<Output = ()> + Send + 'static) {

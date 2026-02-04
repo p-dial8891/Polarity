@@ -6,6 +6,7 @@ use tracing_subscriber::{fmt::format::FmtSpan, prelude::*};
 pub trait Player {
     async fn play(path: String) -> Result<(),()>;
 	async fn skip() -> Result<(),()>;
+    async fn pause() -> Result<(),()>;
 }
 
 /// Initializes an OpenTelemetry tracing subscriber with a OTLP backend.
