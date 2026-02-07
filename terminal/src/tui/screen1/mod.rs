@@ -7,8 +7,8 @@ use std::sync::mpsc::{channel};
 use ratatui::widgets::{ListState};
 use std::collections::VecDeque;
 
-mod background;
-mod foreground;
+pub mod background;
+pub mod foreground;
 
 use crate::tui::screen1::foreground::{
 	controllers::{
@@ -60,7 +60,11 @@ impl Screen1 {
 				toggle: false,
 				tx: tx.clone(),
 				tx_refresh: tx_refresh.clone(),
-				selection: ListState::default().with_selected(Some(0))
+				selection: ListState::default().with_selected(Some(0)),
+                playback: foreground::models::PlaybackState {
+                    start: true, 
+                    selection: ListState::default().with_selected(Some(0))
+                }
             }
         }
     }

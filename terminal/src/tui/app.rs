@@ -1,7 +1,7 @@
 use crate::tui::{Components, ExecutorForLayout1, ExecutorForLayout2, ExecutorForBackground};
 use crate::tui::{screen1, screen1::Screen1};
 use crate::tui::{shutdown, shutdown::Shutdown};
-use crate::tui::{playback, playback::{Playback,Executor}};
+use crate::tui::{playback, playback::{Executor}};
 use crate::tui::{App_List};
 use crate::tui::input::{Input, InputConfig};
 use std::{thread, time::Duration};
@@ -46,7 +46,6 @@ pub async fn main() {
 	let shutdown_screen = a.register("Shutdown");
 
 	let mut screen1 = Screen1::new();
-	let mut playback = Playback::new();
 
 	let mut e0 = screen1::ExecutorBG { 
 		controllers: None
@@ -97,7 +96,7 @@ pub async fn main() {
 		// Screen execution - start
 		match &next[..] {
 		    "Main"     => { e1.execute(&mut screen1.v, &mut t, &mut input).await;  },
-			"Playback" => {	e2.execute(&mut playback.v, &mut t, &mut input).await; },
+			"Playback" => {	e2.execute(&mut screen1.v, &mut t, &mut input).await; },
 			"Shutdown" => { e3.execute(next, &mut t, &mut input).await; },
 			_          => {},
 		}

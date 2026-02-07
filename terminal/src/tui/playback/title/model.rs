@@ -25,11 +25,6 @@ pub struct Model {
 
 }
 
-pub struct ComponentState {
-    pub start : bool,
-	pub selection : ListState
-}
-
 impl<'c> Compute<'c> for Model {
     type State = State;
     type Output = Output;

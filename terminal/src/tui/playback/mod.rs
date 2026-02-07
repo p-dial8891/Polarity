@@ -22,7 +22,7 @@ use crate::tui::playback::title::{
 		Controller as Controller1
 	}, 
 	model::{
-		Model as Model1, ComponentState
+		Model as Model1
 	}, 
 	view::{
 		View as View1
@@ -41,14 +41,16 @@ use crate::tui::playback::content::{
 	}
 };
 
+use crate::tui::screen1::foreground::models::ComponentState;
+/*
 pub struct Playback {
     pub v: State,
 }
-
+*/
 pub type State = ComponentState;
 pub type Output1 = tui::ComponentData<Model1, View1, Controller1>;
 pub type Output2 = tui::ComponentData<Model2, View2, Controller2>;
-
+/*
 impl<'c> Components<'c> for Playback {
     type Item = Playback;
     type Output = Output1;
@@ -82,7 +84,7 @@ impl<'c> Components<'c> for Playback {
 		)
     }
 }
-
+*/
 impl IntoComponent<Model1, View1, Controller1> for Output1 {
     fn unwrap_controller(self) -> Controller1 {
         match self {
@@ -220,10 +222,6 @@ impl ExecutorForLayout2 <
 > 
   for Executor
 {
-    //fn get_state(&mut self) -> &mut State {
-    //    &mut Rc::get_mut(&mut self.screen).unwrap().v
-    //}
-
     fn get_controllers(&self) -> (Output1, Output2) {
         (
             self.controllers.0.clone().unwrap(),

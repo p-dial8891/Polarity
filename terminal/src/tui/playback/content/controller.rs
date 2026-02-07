@@ -33,7 +33,7 @@ impl<'c> Compute<'c> for Controller {
         input: &mut Input,
     ) -> Output {
 		
-		let mut state_data = s;
+		let mut state_data = &mut s.playback;
 		
 		match self.cmd {
 			ControllerCommand::Init => {
@@ -104,7 +104,7 @@ impl Render<State> for Controller {
     fn renderer(state : &mut State) -> 
 	    impl FnOnce(&mut Frame, Rect) -> () {
 
-        move |f,r| { render_list( f, r, &mut state.selection ); }
+        move |f,r| { render_list( f, r, &mut state.playback.selection ); }
 		
     }
 	

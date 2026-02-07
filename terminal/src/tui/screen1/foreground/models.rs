@@ -39,6 +39,11 @@ pub struct Model2 {
 	pub cmd: ModelCommand
 }
 
+pub struct PlaybackState {
+    pub start : bool,
+	pub selection : ListState
+}
+
 pub struct ComponentState {
     pub start: bool,
 	pub task: Option<task::JoinHandle<()>>,
@@ -51,6 +56,7 @@ pub struct ComponentState {
 	pub tx : Sender<Option<task::JoinHandle<()>>>,
 	pub tx_refresh: Sender<()>,
 	pub selection: ListState,
+	pub playback: PlaybackState,
 }
 
 async fn getNextTrack(list: Rc<Vec<(String,String)>>, s: &VecDeque<usize>) -> String {

@@ -42,7 +42,7 @@ impl<'c> Compute<'c> for Model {
 			Init => { return Output::View(View { cmd : ViewInit } ) },
 			
             SelectPrevious => {
-				let i = match s.selection.selected() {
+				let i = match s.playback.selection.selected() {
 					Some(i) => {
 						if i == 0 {
 							1
@@ -52,13 +52,13 @@ impl<'c> Compute<'c> for Model {
 					}
 					None => 0,
 				};
-				s.selection.select(Some(i));
+				s.playback.selection.select(Some(i));
                 eprintln!("<Model> : previous selected.");
 			    return Self::Output::View(View { cmd : ViewCommand::Draw } );
 			},
 
 			SelectNext => {
-				let i = match s.selection.selected() {
+				let i = match s.playback.selection.selected() {
 					Some(i) => {
 						if i >= 1 {
 							0
@@ -68,13 +68,13 @@ impl<'c> Compute<'c> for Model {
 					}
 					None => 0,
 				};
-				s.selection.select(Some(i));
+				s.playback.selection.select(Some(i));
                 eprintln!("<Model> : next selected.");
 			    return Self::Output::View(View { cmd : ViewCommand::Draw } );
 			},
 
 			Req => {			
-			    match s.selection.selected() {
+			    match s.playback.selection.selected() {
 					Some(0) => {
 						eprintln!("<Model> : skip requested.");
 				        return Output::View(View { cmd : Skip } )
