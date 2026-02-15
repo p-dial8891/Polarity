@@ -8,7 +8,7 @@ The Polarity project aims to capture track enqueueing features that were present
 The software is divided into two executables - one that acts as the terminal and the other that plays the audio. The terminal has access to the Polaris server and downloads track info from it. The player also has Polaris access, using it to download songs and play them locally. The two components communicate with each other through a TCP connection. While both components can be placed in the same host and the command line options set to use the same host address, it can also be placed on separate hosts on a network. Although, placing them on different hosts is still an unstable feature.
 
 ## Usage
-The two executables need to be specified with an options file which contains the polaris hostname, a token to connect to the polaris server, the hostname or ip address of the host running the terminal (TUI) application and the hostname / ip address of the host running the player.
+The two executables need to be specified with an options file which contains the polaris hostname, a token to connect to the polaris server, the hostname / ip address of the host running the terminal (TUI) application and the hostname / ip address of the host running the player. Two certificates (.der files) were added in this repository and are required to be in the current working directory when running the programs. 
 ```
 # File name : options.file
 --host=www.mypolarisserver.com
@@ -16,12 +16,12 @@ The two executables need to be specified with an options file which contains the
 --player=192.168.1.1
 --tui=192.168.1.2
 ```
-Launching the programs are as below
+From the root of the repository, launching the programs is in the following manner:
 ```
-tui @options.file
+target/release/tui @options.file
 ```
 ```
-player @options.file
+player/target/release/player @options.file
 ```
 ## Screenshots
 Main Screen  
