@@ -23,6 +23,25 @@ target/release/tui @options.file
 ```
 player/target/release/player @options.file
 ```
+## Setup
+### Parts List
+With a few parts and the release binaries, a simple remote-controlled music player for Polaris can be made. The setup on which the releases were tested consisted of:  
+1. [Raspberry Pi Zero 2W](https://www.amazon.co.uk/TurboBit-Raspberry-Soldered-Headers-Color-Coded/dp/B0DJ7TCVKF/ref?th=1)
+2. [Pimoroni Audio DAC Shim (LIne out)](https://wholesale.pimoroni.com/products/audio-dac-shim-line-out)
+3. [IR Receiver VS/1838B](https://www.amazon.co.uk/dp/B016DA2FIK)
+4. [Geekworm X306 UPS](https://geekworm.com/products/x306)
+
+### System Overview
+The raspberry pi runs both the player and terminal binaries. The line out from the audio DAC is connected to a speaker. The raspberrypi OS can be setup to receive IR commands from any standard remote control. The scan codes from the remote control are converted to key codes and the terminal app responds to the keys and controls the playlist and the playback.
+
+Instead of running on the raspberry pi, the two binaries can be compiled for windows or linux and run on a PC. The application will respond to key presses of the keyboard. The keys to control the applcation are:
+1. Up - Scroll up
+2. Down - Scroll down
+3. Left - Dequeue a track
+4. Right - Enqueue a track
+5. Enter - OK / Autoplay tracks
+6. Tab - Move to next screen
+   
 ## Screenshots
 Main Screen  
 ![Main screen](https://github.com/user-attachments/assets/2b339683-0b5f-4a65-ad3e-5bb56167c118)  
