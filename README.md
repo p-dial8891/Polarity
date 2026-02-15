@@ -23,6 +23,9 @@ target/release/tui @options.file
 ```
 player/target/release/player @options.file
 ```
+Note that the binaries on the release page are compiled for the Raspberry Pi OS running on a Raspberry Pi Zero 2W.
+
+
 ## Setup
 ### Parts List
 With a few parts and the release binaries, a simple remote-controlled music player for Polaris can be made. The setup on which the releases were tested consisted of:  
