@@ -70,14 +70,14 @@ pub async fn main() {
 
 	const menu_1 : MenuLevel = MenuLevel::Level1("Main");
 	const menu_2 : MenuLevel = MenuLevel::Level2(
-		"Main",	KeyCode::Char('p'),	KeyCode::Char('e')
+		"Main",	KeyCode::Char('p'),	KeyCode::Esc
 	);
 	const menu_3 : MenuLevel = MenuLevel::Level1("Shutdown");
 	let menus = &[menu_1,menu_2,menu_3];
 	let mut menu_iter = MenuLevels {
 		c: menus.iter().cycle(),
 		size: 3,
-		input_set: &[KeyCode::Char('m'), KeyCode::Char('e'), KeyCode::Char('p')]
+		input_set: &[KeyCode::Tab, KeyCode::Esc, KeyCode::Char('p')]
 	};
     // Configuration - end
 

@@ -4,12 +4,6 @@ use crossterm::{
 use std::{slice, iter};
 use crate::tui::input::{Input};
 use crate::tui::app::Keys::{*};
-/*
-pub enum ActiveMenuLevel {
-    Level1(String),
-    Level2(String)
-}
-*/
 #[derive(Clone, PartialEq, Debug)]
 pub enum MenuLevel {
     Level1(&'static str),
@@ -22,11 +16,6 @@ pub struct MenuLevels<'a> {
     pub size : usize,
     pub input_set : &'a [KeyCode]
 }
-/*
-impl ActiveMenuLevel {
-
-}
-*/
 
 impl MenuLevel {
 
@@ -76,7 +65,7 @@ impl MenuLevels<'_> {
 
                 MenuLevel::Level1(t) => {
                     eprintln!("Loop menu is {:?}", i);
-                    if ( s != *t ) && ( k == KeyCode::Char('m') ) {
+                    if ( s != *t ) && ( k == KeyCode::Tab ) {
                         eprintln!("Count is {:?}", count);
                         self.c.nth(( if count < 1 {self.size-1} else {count - 1}));
                         return MenuLevel::Level1(t);
