@@ -9,7 +9,7 @@ use crate::tui::shutdown::{controller::Controller, view::View,
 		self,
 		Noop as ViewNoop,
 		Init as ViewInit,
-	}		
+	}
 };
 use crate::tui::{Components, Compute, IntoComponent, IntoComp};
 use ratatui::DefaultTerminal;

@@ -3,6 +3,7 @@ mod screen1;
 mod shutdown;
 mod playback;
 mod input;
+mod menu;
 
 use ratatui::{DefaultTerminal, Frame};
 use input::Input;

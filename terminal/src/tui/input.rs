@@ -33,7 +33,20 @@ impl InputConfig {
 			None => true
 		}
 	}
-	
+
+	fn peek(&self, e : &Option<Event>) -> bool {
+		match e {
+			Some(ev) => {
+				if *ev == Event::Key(self.ch.into())   {
+					eprintln!("Key {:?} captured", self.ch);
+					false
+				} else {
+					true
+				}
+			}
+			None => true
+		}
+	}
 }
 
 #[cfg(feature = "enable-rppal")]
@@ -74,7 +87,7 @@ impl InputInitialised {
 #[cfg(feature = "enable-rppal")]
 pub struct Input {
 	
-	pub keys : [InputInitialised; 6],
+	pub keys : [InputInitialised; 7],
 	pub ev : Option<Event>
 	
 }
@@ -82,7 +95,7 @@ pub struct Input {
 #[cfg(feature = "enable-rppal")]
 impl Input {
 	
-	pub fn init( k : [InputConfig;6] ) -> Input {
+	pub fn init( k : [InputConfig;7] ) -> Input {
 		
 		Input {
 			keys : {
@@ -104,7 +117,10 @@ impl Input {
 				    ch: k[REQ_KEY as usize].ch },
 				  InputInitialised { 
 				    pin: gpio.get(k[TAB_KEY as usize].pin).unwrap().into_input(), 
-				    ch: k[TAB_KEY as usize].ch } ]
+				    ch: k[TAB_KEY as usize].ch },
+				  InputInitialised { 
+				    pin: gpio.get(k[FIND_KEY as usize].pin).unwrap().into_input(), 
+				    ch: k[FIND_KEY as usize].ch } ]
 			},
 			ev : None
 		}
@@ -131,7 +147,7 @@ impl Input {
 #[cfg(not(feature = "enable-rppal"))]
 pub struct Input {
 	
-	pub keys : [InputConfig; 6],
+	pub keys : [InputConfig; 7],
 	pub ev : Option<Event>
 	
 }
@@ -139,7 +155,7 @@ pub struct Input {
 #[cfg(not(feature = "enable-rppal"))]
 impl Input {
 	
-	pub fn init( k : [InputConfig;6] ) -> Input {
+	pub fn init( k : [InputConfig;7] ) -> Input {
 		
 		Input {
 			keys : k,
@@ -158,4 +174,8 @@ impl Input {
 		self.keys[k as usize].read(&mut self.ev)
 	}
 
+	pub fn peek(&self, k : Keys) -> bool {
+		
+		self.keys[k as usize].peek(&self.ev)
+	}
 }
