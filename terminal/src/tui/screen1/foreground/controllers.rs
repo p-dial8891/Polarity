@@ -166,7 +166,7 @@ pub struct Controller2 {
 	pub redraw : bool,
 }
 
-impl<'c> Compute<'c> for Controller1 {
+impl Compute for Controller1 {
     type State = State;
     type Output = Output1;
 
@@ -228,7 +228,7 @@ impl<'c> Compute<'c> for Controller1 {
     }
 }
 
-impl<'c> Compute<'c> for Controller2 {
+impl Compute for Controller2 {
     type State = State;
     type Output = Output2;
 

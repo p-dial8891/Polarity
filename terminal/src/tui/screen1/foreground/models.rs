@@ -49,9 +49,9 @@ pub struct ComponentState {
 	pub task: Option<task::JoinHandle<()>>,
 	pub rx: Receiver<Option<task::JoinHandle<()>>>,
 	pub rx_refresh: Receiver<()>,
-    pub playlist: Rc<VecDeque<usize>>,
-	pub polaris_data : Rc<Vec<(String,String)>>,
-	pub list: Rc<Vec<String>>,
+    pub playlist: VecDeque<usize>,
+	pub polaris_data : Vec<(String,String)>,
+	pub list: Vec<String>,
 	pub toggle: bool,
 	pub tx : Sender<Option<task::JoinHandle<()>>>,
 	pub tx_refresh: Sender<()>,
@@ -59,13 +59,13 @@ pub struct ComponentState {
 	pub playback: PlaybackState,
 }
 
-async fn getNextTrack(list: Rc<Vec<(String,String)>>, s: &VecDeque<usize>) -> String {
+async fn getNextTrack(list: &Vec<(String,String)>, s: &VecDeque<usize>) -> String {
     //let mut list_polaris = polaris::getIterator(h).await;
     let index = s.get(0).unwrap();
     list.iter().nth(*index).unwrap().1.clone()
 }
 
-impl<'c> Compute<'c> for Model1 {
+impl Compute for Model1 {
     type State = State;
     type Output = Output1;
 
@@ -81,14 +81,14 @@ impl<'c> Compute<'c> for Model1 {
 		match self.cmd {
 			
 			Init => { 
-			    state_data.polaris_data = Rc::new(polaris::getIterator(self.data.clone())
+			    state_data.polaris_data = polaris::getIterator(self.data.clone())
                 .await
-                .collect::<Vec<(String,String)>>());
+                .collect::<Vec<(String,String)>>();
 				
-			    state_data.list = Rc::new(polaris::getIterator(self.data.clone())
+			    state_data.list = polaris::getIterator(self.data.clone())
                 .await
                 .map(|x| x.0)
-                .collect::<Vec<String>>());
+                .collect::<Vec<String>>();
 
                 eprintln!("<Model> : intialised.");
 			    return Self::Output::View(View1 {
@@ -139,9 +139,8 @@ impl<'c> Compute<'c> for Model1 {
 			},
 
             AddTrack => {
-				let mut p: &mut VecDeque<usize> = 
-				    Rc::get_mut(&mut state_data.playlist).unwrap();
-				p.push_back(state_data.selection.selected().unwrap());
+				state_data.playlist.push_back(
+					state_data.selection.selected().unwrap());
 
                 eprintln!("<Model> : New track added to playlist.");
 			    return Self::Output::View(View1 {
@@ -152,12 +151,10 @@ impl<'c> Compute<'c> for Model1 {
             },				
 
             RemoveTrack => {
-				let mut p: &mut VecDeque<usize> = 
-				    Rc::get_mut(&mut state_data.playlist).unwrap();
-				if let Some(i) = p.iter().position(
+				if let Some(i) = state_data.playlist.iter().position(
 				    |x| { *x == state_data.selection.selected().unwrap() } 
 				) {
-				    p.remove(i);
+				    state_data.playlist.remove(i);
 				}
 
                 eprintln!("<Model> : Track removed from playlist.");
@@ -188,7 +185,7 @@ impl<'c> Compute<'c> for Model1 {
     }
 }
 
-impl<'c> Compute<'c> for Model2 {
+impl Compute for Model2 {
     type State = State;
     type Output = Output2;
 
@@ -207,7 +204,7 @@ impl<'c> Compute<'c> for Model2 {
                 state_data.toggle = !state_data.toggle;
 
 				if state_data.toggle && !state_data.playlist.is_empty() {
-    				let next = getNextTrack(state_data.polaris_data.clone(), &state_data.playlist).await;
+    				let next = getNextTrack(&state_data.polaris_data, &state_data.playlist).await;
 					eprintln!("<Model> : Next track selected {}",next);
     				return Self::Output::View(View2 { 
 		    		        cmd : PlayTrack( next ) 

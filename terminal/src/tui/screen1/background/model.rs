@@ -21,13 +21,13 @@ pub struct Model {
 	pub cmd: ModelCommand
 }
 
-async fn getNextTrack(list: Rc<Vec<(String,String)>>, s: &VecDeque<usize>) -> String {
+async fn getNextTrack(list: &Vec<(String,String)>, s: &VecDeque<usize>) -> String {
     //let mut list_polaris = polaris::getIterator(h).await;
     let index = s.get(0).unwrap();
     list.iter().nth(*index).unwrap().1.clone()
 }
 
-impl<'c> Compute<'c> for Model {
+impl Compute for Model {
     type State = State;
     type Output = OutputBG;
 
@@ -43,12 +43,10 @@ impl<'c> Compute<'c> for Model {
 		match self.cmd {
 
 			PlaybackFinished => {
-				let mut p: &mut VecDeque<usize> = 
-			        Rc::get_mut(&mut state_data.playlist).unwrap();
-				p.pop_front();
+				state_data.playlist.pop_front();
 				
 				if state_data.toggle && !state_data.playlist.is_empty() {
-    				let next = getNextTrack(state_data.polaris_data.clone(), &state_data.playlist).await;
+    				let next = getNextTrack(&state_data.polaris_data, &state_data.playlist).await;
 					eprintln!("<Model> : Next track selected {}",next);
     				return Self::Output::View(View { 
 		    		    cmd : NextTrack(

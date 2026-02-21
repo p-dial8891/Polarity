@@ -14,6 +14,7 @@ use crossterm::{
     event::{KeyCode}
 };
 use crate::tui::menu::{MenuLevel, MenuLevels};
+use tokio::task::{spawn};
 //use futures::{future::FutureExt, select, StreamExt};
 
 pub enum Keys {
@@ -69,10 +70,9 @@ pub async fn main() {
 	};
 
 	const menu_1 : MenuLevel = MenuLevel::Level1("Main");
-	const menu_2 : MenuLevel = MenuLevel::Level2(
-		"Main",	KeyCode::Char('p'),	KeyCode::Esc
-	);
+	const menu_2 : MenuLevel = MenuLevel::Level1("Playback");
 	const menu_3 : MenuLevel = MenuLevel::Level1("Shutdown");
+
 	let menus = &[menu_1,menu_2,menu_3];
 	let mut menu_iter = MenuLevels {
 		c: menus.iter().cycle(),
@@ -82,42 +82,75 @@ pub async fn main() {
     // Configuration - end
 
 	let mut m = menu_1;
-	let mut m_prev = None;
 
 	e0.init().await;
 
-    loop {
-        if poll(Duration::from_millis(5)).unwrap() {
-		    input.set_event(read().unwrap());
-		}
-		
-		e0.execute(&mut screen1.v, &mut t, &mut input).await;
-		
-		m = m.visit(&mut menu_iter, &mut input);	
-
-        if m_prev.is_none() || m_prev.clone().unwrap() != m {
-			eprintln!("Menu is {:?}", m);
-			// Screen Initialisations - start
-			match m {
-			    menu_1    	=> { e1.init().await; },
-				menu_2		=> { e2.init().await; },
-				menu_3		=> { e3.init(&String::from("Shutdown")).await; },
-				_          	=> {},
-			}
-			// Screen Initialisations - end
-		    m_prev = Some(m.clone());
-		}
-		
-		// Screen execution - start
+	loop {
 		match m {
-			menu_1  => { e1.execute(&mut screen1.v, &mut t, &mut input).await; },
-			menu_2  => { e2.execute(&mut screen1.v, &mut t, &mut input).await; },
-			menu_3  => { e3.execute(&String::from("Shutdown"), &mut t, &mut input).await; },
-			_       => {},
+			menu_1 =>  {
+				(e0,m,menu_iter,e1,input,t,screen1) = spawn(async move {
+					e1.init().await;
+					loop {
+						
+						if poll(Duration::from_millis(5)).unwrap() {
+							input.set_event(read().unwrap());
+						}
+						e0.execute(&mut screen1.v, &mut t, &mut input).await;
+						m = m.visit(&mut menu_iter, &mut input);
+						if m == menu_1 {
+							e1.execute(&mut screen1.v, &mut t, &mut input).await;
+						}
+						else {
+							break;
+						}
+					}
+					(e0,m,menu_iter,e1,input,t,screen1)
+				}).await.unwrap();
+			},
 
+			menu_2 =>  {
+				(e0,m,menu_iter,e2,input,t,screen1) = spawn(async move {
+					e2.init().await;
+					loop {
+						
+						if poll(Duration::from_millis(5)).unwrap() {
+							input.set_event(read().unwrap());
+						}
+						e0.execute(&mut screen1.v, &mut t, &mut input).await;
+						m = m.visit(&mut menu_iter, &mut input);
+						if m == menu_2 {
+							e2.execute(&mut screen1.v, &mut t, &mut input).await;
+						}
+						else {
+							break;
+						}
+					}
+					(e0,m,menu_iter,e2,input,t,screen1)
+				}).await.unwrap();
+			},
+
+			menu_3 =>  {
+				(e0,m,menu_iter,e3,input,t,screen1) = spawn(async move {
+					e3.init(&String::from("Shutdown")).await;
+					loop {
+						
+						if poll(Duration::from_millis(5)).unwrap() {
+							input.set_event(read().unwrap());
+						}
+						e0.execute(&mut screen1.v, &mut t, &mut input).await;
+						m = m.visit(&mut menu_iter, &mut input);
+						if m == menu_3 {
+							e3.execute(&String::from("Shutdown"), &mut t, &mut input).await;
+						}
+						else {
+							break;
+						}
+					}
+					(e0,m,menu_iter,e3,input,t,screen1)
+				}).await.unwrap();
+			},
+
+			_ => { },
 		}
-		// Screen execution - end
-
-		thread::sleep(Duration::from_millis(100));
-    }
+	}
 }

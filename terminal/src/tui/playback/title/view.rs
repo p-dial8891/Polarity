@@ -19,7 +19,7 @@ pub struct View {
     pub cmd : ViewCommand,
 }
 
-impl<'c> Compute<'c> for View {
+impl Compute for View {
     type State = State;
     type Output = Output;
 

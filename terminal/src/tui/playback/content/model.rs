@@ -27,7 +27,7 @@ pub struct Model {
     pub cmd : ModelCommand,
 }
 
-impl<'c> Compute<'c> for Model {
+impl Compute for Model {
     type State = State;
     type Output = Output;
 

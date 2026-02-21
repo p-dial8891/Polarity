@@ -53,7 +53,7 @@ async fn listenerTask(listener : TcpListener) {
     socket.read(&mut buf).await.unwrap();
 }
 
-impl<'c> Compute<'c> for View {
+impl Compute for View {
     type State = State;
     type Output = OutputBG;
 

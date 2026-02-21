@@ -4,6 +4,7 @@ use crossterm::{
 use std::{slice, iter};
 use crate::tui::input::{Input};
 use crate::tui::app::Keys::{*};
+
 #[derive(Clone, PartialEq, Debug)]
 pub enum MenuLevel {
     Level1(&'static str),
