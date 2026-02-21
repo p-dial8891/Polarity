@@ -78,6 +78,7 @@ impl Compute for View {
             Draw => {
                 let mut state_data = s;
                 let _ = state_data.tx_refresh.send(());
+                eprintln!("<View><Background> : Refresh command sent.");
             },
             
             _ => {}

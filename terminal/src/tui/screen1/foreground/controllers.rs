@@ -198,8 +198,8 @@ impl Compute for Controller1 {
 			Ok(t_handle) => { 
 				eprintln!("<Controller> : Refresh command received.");
 				return Self::Output::Model(Model1 { data : self.data,
-			        cmd : ModelCommand::Refresh	}) }
-			_ => {}
+			        cmd : ModelCommand::Refresh	}) },
+			Err(e) => { /*eprintln!("{:?}",e)*/}
 		}
 
 		if input.read(UP_KEY) == false {

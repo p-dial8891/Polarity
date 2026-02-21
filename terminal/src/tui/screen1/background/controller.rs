@@ -30,7 +30,8 @@ impl Compute for Controller {
 		}
 		
 		match state_data.rx.try_recv() {
-			Ok(t_handle) => { state_data.task = t_handle; }
+			Ok(t_handle) => { eprintln!("<Controller><Background> Task handle received.");
+				state_data.task = t_handle; }
 			_ => {}
 		}
 		// should not matter what happens from here.	

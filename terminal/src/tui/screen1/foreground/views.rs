@@ -53,7 +53,12 @@ async fn sendRequestToPlayer(path: String) {
 async fn listenerTask(listener : TcpListener) {
     let (mut socket, _) = listener.accept().await.unwrap();
     let mut buf = [0; 1];
-    socket.read(&mut buf).await.unwrap();
+    if socket.read(&mut buf).await.is_ok() {
+		eprintln!("<View><Foreground> Msg from player received.");
+	}
+	else {
+		eprintln!("<View><Foreground> Msg from player NOT received.");
+	}
 }
 
 impl Compute for View1 {
