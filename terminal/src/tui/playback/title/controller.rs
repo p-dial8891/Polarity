@@ -20,7 +20,7 @@ pub struct Controller {
 	pub redraw : bool
 }
 
-impl Compute for Controller {
+impl<'c> Compute<'c> for Controller {
     type State = State;
     type Output = Output;
 

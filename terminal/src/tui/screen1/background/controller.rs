@@ -9,7 +9,7 @@ pub struct Controller {
 	pub cmd: ControllerCommand,
 }
 
-impl Compute for Controller {
+impl<'c> Compute<'c> for Controller {
     type State = State;
     type Output = OutputBG;
 

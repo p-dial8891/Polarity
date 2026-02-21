@@ -17,7 +17,7 @@ pub struct ControllerState {
 }
 
 
-impl Compute for Controller {
+impl<'c> Compute<'c> for Controller {
     type State = State;
     type Output = Output;
 

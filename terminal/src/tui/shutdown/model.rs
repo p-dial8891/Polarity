@@ -25,7 +25,7 @@ pub struct ModelState {
     pub _a : ()
 }
 
-impl Compute for Model {
+impl<'c> Compute<'c> for Model {
     type State = State;
     type Output = Output;
 
