@@ -11,11 +11,11 @@ use crossterm::{
 };
 use crate::tui::app::Keys::{*};
 use crossterm::{
-    event::{KeyCode}
+    event::{KeyCode, EventStream}
 };
 use crate::tui::menu::{MenuLevel, MenuLevels};
 use tokio::task::{spawn};
-//use futures::{future::FutureExt, select, StreamExt};
+use futures::{future::FutureExt, select, StreamExt};
 
 pub enum Keys {
 	UP_KEY = 0,
@@ -89,20 +89,30 @@ pub async fn main() {
 		match m {
 			menu_1 =>  {
 				(e0,m,menu_iter,e1,input,t,screen1) = spawn(async move {
+					let mut reader = EventStream::new();
 					e1.init().await;
 					loop {
-						
-						if poll(Duration::from_millis(5)).unwrap() {
-							input.set_event(read().unwrap());
-						}
 						e0.execute(&mut screen1.v, &mut t, &mut input).await;
 						m = m.visit(&mut menu_iter, &mut input);
 						if m == menu_1 {
+							let mut event = reader.next().fuse();
+							select! {
+								ev = event => { 
+									match ev {
+										Some(Ok(e)) => { input.set_event(e); },
+										_ => {}
+									}
+								},
+								_ = async {
+									tokio::time::sleep(Duration::from_millis(5)).await;
+								}.fuse() => {}
+							}
 							e1.execute(&mut screen1.v, &mut t, &mut input).await;
 						}
 						else {
 							break;
 						}
+						tokio::time::sleep(Duration::from_millis(100)).await;
 					}
 					(e0,m,menu_iter,e1,input,t,screen1)
 				}).await.unwrap();
@@ -110,20 +120,30 @@ pub async fn main() {
 
 			menu_2 =>  {
 				(e0,m,menu_iter,e2,input,t,screen1) = spawn(async move {
+					let mut reader = EventStream::new();
 					e2.init().await;
 					loop {
-						
-						if poll(Duration::from_millis(5)).unwrap() {
-							input.set_event(read().unwrap());
-						}
 						e0.execute(&mut screen1.v, &mut t, &mut input).await;
 						m = m.visit(&mut menu_iter, &mut input);
 						if m == menu_2 {
+							let mut event = reader.next().fuse();
+							select! {
+								ev = event => { 
+									match ev {
+										Some(Ok(e)) => { input.set_event(e); },
+										_ => {}
+									}
+								},
+								_ = async {
+									tokio::time::sleep(Duration::from_millis(5)).await;
+								}.fuse() => {}
+							}
 							e2.execute(&mut screen1.v, &mut t, &mut input).await;
 						}
 						else {
 							break;
 						}
+						tokio::time::sleep(Duration::from_millis(100)).await;
 					}
 					(e0,m,menu_iter,e2,input,t,screen1)
 				}).await.unwrap();
@@ -131,20 +151,30 @@ pub async fn main() {
 
 			menu_3 =>  {
 				(e0,m,menu_iter,e3,input,t,screen1) = spawn(async move {
+					let mut reader = EventStream::new();
 					e3.init(&String::from("Shutdown")).await;
 					loop {
-						
-						if poll(Duration::from_millis(5)).unwrap() {
-							input.set_event(read().unwrap());
-						}
 						e0.execute(&mut screen1.v, &mut t, &mut input).await;
 						m = m.visit(&mut menu_iter, &mut input);
 						if m == menu_3 {
+							let mut event = reader.next().fuse();
+							select! {
+								ev = event => { 
+									match ev {
+										Some(Ok(e)) => { input.set_event(e); },
+										_ => {}
+									}
+								},
+								_ = async {
+									tokio::time::sleep(Duration::from_millis(5)).await;
+								}.fuse() => {}
+							}
 							e3.execute(&String::from("Shutdown"), &mut t, &mut input).await;
 						}
 						else {
 							break;
 						}
+						tokio::time::sleep(Duration::from_millis(100)).await;
 					}
 					(e0,m,menu_iter,e3,input,t,screen1)
 				}).await.unwrap();
