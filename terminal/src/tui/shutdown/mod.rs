@@ -21,13 +21,13 @@ use crate::tui::shutdown::{
 
 pub type State = tui::ComponentData<ModelState, ViewState, ControllerState>;
 pub type Output = tui::ComponentData<Model, View, Controller>;
-pub type Executor<'c> = tui::Execute<'c, Shutdown>;
+pub type Executor = tui::Execute<Shutdown>;
 
 pub struct Shutdown {
     pub v : Vec<State>
 }
 
-impl<'c> Components<'c> for Shutdown {
+impl Components for Shutdown {
     type Item = Shutdown;
     type Output = Output;
 
@@ -128,7 +128,7 @@ pub enum ViewCommand {
     Init
 }
 
-impl<'c> Execute<'c,Shutdown> {
+impl Execute<Shutdown> {
 	pub async fn init(&mut self, handle: &String) {
 		if self.screen_names.iter().position(|x| { x == handle }).is_some() {
 		    self.current_output = Some(self.current_screen.start().await);

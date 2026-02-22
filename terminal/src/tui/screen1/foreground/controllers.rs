@@ -166,7 +166,7 @@ pub struct Controller2 {
 	pub redraw : bool,
 }
 
-impl<'c> Compute<'c> for Controller1 {
+impl Compute for Controller1 {
     type State = State;
     type Output = Output1;
 
@@ -198,8 +198,8 @@ impl<'c> Compute<'c> for Controller1 {
 			Ok(t_handle) => { 
 				eprintln!("<Controller> : Refresh command received.");
 				return Self::Output::Model(Model1 { data : self.data,
-			        cmd : ModelCommand::Refresh	}) }
-			_ => {}
+			        cmd : ModelCommand::Refresh	}) },
+			Err(e) => { /*eprintln!("{:?}",e)*/}
 		}
 
 		if input.read(UP_KEY) == false {
@@ -228,7 +228,7 @@ impl<'c> Compute<'c> for Controller1 {
     }
 }
 
-impl<'c> Compute<'c> for Controller2 {
+impl Compute for Controller2 {
     type State = State;
     type Output = Output2;
 

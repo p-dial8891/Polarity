@@ -17,7 +17,7 @@ enum ComponentData<M, V, C> {
     View(V),
 }
 
-trait Components<'c> {
+trait Components {
     type Item;
     type Output;
 
@@ -49,7 +49,7 @@ trait IntoComp<M, V, C> {
     fn unwrap_view(&mut self) -> &mut V;
 }
 
-trait Compute<'c> {
+trait Compute {
     type State;
     type Output;
 
@@ -61,17 +61,17 @@ trait Compute<'c> {
     ) -> Self::Output;
 }
 
-pub async fn run_screen<'c,S,T,C,M,V> (
+pub async fn run_screen<S,T,C,M,V> (
     c: T,
-	s: &'c mut S,
+	s: &mut S,
 	terminal: &mut DefaultTerminal,
 	gpio_pins: &mut Input,
 ) -> T
 where
     T: IntoComponent<M,V,C>,
-    C: Compute<'c, State=S, Output=T>,
-    M: Compute<'c, State=S, Output=T>,
-    V: Compute<'c, State=S, Output=T>,
+    C: Compute<State=S, Output=T>,
+    M: Compute<State=S, Output=T>,
+    V: Compute<State=S, Output=T>,
 {
 	c
     .unwrap_controller()
@@ -96,12 +96,12 @@ trait ExecutorForLayout1<S, T1, T2, M1, M2, V1, V2, C1, C2>
   where 
         T1 : IntoComponent<M1,V1,C1> + Clone,
         T2 : IntoComponent<M2,V2,C2> + Clone,
-        C1 : Render<S> + for<'c> Compute<'c, State=S, Output=T1>,
-        C2 : Render<S> + for<'c> Compute<'c, State=S, Output=T2>,
-        M1 : for<'c> Compute<'c, State=S, Output=T1>,
-        M2 : for<'c> Compute<'c, State=S, Output=T2>,
-        V1 : for<'c> Compute<'c, State=S, Output=T1>,
-        V2 : for<'c> Compute<'c, State=S, Output=T2>,
+        C1 : Render<S> + Compute<State=S, Output=T1>,
+        C2 : Render<S> + Compute<State=S, Output=T2>,
+        M1 : Compute<State=S, Output=T1>,
+        M2 : Compute<State=S, Output=T2>,
+        V1 : Compute<State=S, Output=T1>,
+        V2 : Compute<State=S, Output=T2>,
 {
 
     fn get_controllers(&self) -> (T1, T2);
@@ -153,12 +153,12 @@ trait ExecutorForLayout2<S, T1, T2, M1, M2, V1, V2, C1, C2>
   where 
         T1 : IntoComponent<M1,V1,C1> + Clone,
         T2 : IntoComponent<M2,V2,C2> + Clone,
-        C1 : Render<S> + for<'c> Compute<'c, State=S, Output=T1>,
-        C2 : Render<S> + for<'c> Compute<'c, State=S, Output=T2>,
-        M1 : for<'c> Compute<'c, State=S, Output=T1>,
-        M2 : for<'c> Compute<'c, State=S, Output=T2>,
-        V1 : for<'c> Compute<'c, State=S, Output=T1>,
-        V2 : for<'c> Compute<'c, State=S, Output=T2>,
+        C1 : Render<S> + Compute<State=S, Output=T1>,
+        C2 : Render<S> + Compute<State=S, Output=T2>,
+        M1 : Compute<State=S, Output=T1>,
+        M2 : Compute<State=S, Output=T2>,
+        V1 : Compute<State=S, Output=T1>,
+        V2 : Compute<State=S, Output=T2>,
 {
 
     fn get_controllers(&self) -> (T1, T2);
@@ -210,9 +210,9 @@ trait ExecutorForLayout2<S, T1, T2, M1, M2, V1, V2, C1, C2>
 trait ExecutorForBackground<S, T, M, V, C> 
   where 
         T : IntoComponent<M,V,C> + Clone,
-        C : for<'c> Compute<'c, State=S, Output=T>,
-        M : for<'c> Compute<'c, State=S, Output=T>,
-        V : for<'c> Compute<'c, State=S, Output=T>,
+        C : Compute<State=S, Output=T>,
+        M : Compute<State=S, Output=T>,
+        V : Compute<State=S, Output=T>,
 {
 
     fn get_controller(&self) -> T;
@@ -238,7 +238,7 @@ trait ExecutorForBackground<S, T, M, V, C>
 
 }
 
-struct Execute<'c, S : Components<'c>> {
+struct Execute<S : Components> {
 	
 	screen_names : Vec<String>,
 	current_output : Option<S::Output>,

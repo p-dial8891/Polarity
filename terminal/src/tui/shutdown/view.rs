@@ -62,7 +62,7 @@ pub fn render_top(frame: &mut Frame, area: Rect) {
     frame.render_widget(text, area);
 }
 
-impl<'c> Compute<'c> for View {
+impl Compute for View {
     type State = State;
     type Output = Output;
 

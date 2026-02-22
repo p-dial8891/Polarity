@@ -53,7 +53,7 @@ async fn listenerTask(listener : TcpListener) {
     socket.read(&mut buf).await.unwrap();
 }
 
-impl<'c> Compute<'c> for View {
+impl Compute for View {
     type State = State;
     type Output = OutputBG;
 
@@ -78,6 +78,7 @@ impl<'c> Compute<'c> for View {
             Draw => {
                 let mut state_data = s;
                 let _ = state_data.tx_refresh.send(());
+                eprintln!("<View><Background> : Refresh command sent.");
             },
             
             _ => {}

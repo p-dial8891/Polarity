@@ -57,7 +57,7 @@ async fn sendRequestToPlayer(choice : PlayerRequest) {
     sleep(Duration::from_millis(10)).await;
 }
 
-impl<'c> Compute<'c> for View {
+impl Compute for View {
     type State = State;
     type Output = Output;
 
