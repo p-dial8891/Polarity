@@ -1,7 +1,12 @@
 use crossterm::{
-    event::{poll, read, Event, KeyCode}
+    event::{poll, read, Event, KeyCode, EventStream}
 };
 use crate::tui::app::Keys::{self, *};
+use futures::{StreamExt, FutureExt};
+use embedded_io_async::{Read, ErrorType, ErrorKind, Error};
+use tokio::{time};
+use std::time::Duration;
+use std::convert::Infallible;
 
 pub struct InputConfig {
 	pin : u8,
@@ -148,7 +153,8 @@ impl Input {
 pub struct Input {
 	
 	pub keys : [InputConfig; 7],
-	pub ev : Option<Event>
+	pub ev : Option<Event>,
+	pub reader : EventStream
 	
 }
 
@@ -159,7 +165,8 @@ impl Input {
 		
 		Input {
 			keys : k,
-			ev : None
+			ev : None,
+			reader : EventStream::new()
 		}
 	}
 	
@@ -177,5 +184,43 @@ impl Input {
 	pub fn peek(&self, k : Keys) -> bool {
 		
 		self.keys[k as usize].peek(&self.ev)
+	}
+}
+
+impl ErrorType for Input {
+	type Error = std::io::Error;
+
+	// fn kind(&self) -> ErrorKind {
+	// 	ErrorKind::Other
+	// }
+}
+
+impl Read for Input {
+
+
+	async fn read(&mut self, buf: &mut [u8]) -> Result<usize, Self::Error> {
+		loop {
+			match self.reader.next().fuse().await {
+				Some(Ok(e)) => {
+					match e {
+						Event::Key(k) => {
+							match k.code {
+								KeyCode::Char(c) => {
+									buf[0] = c as u8;
+									return Ok(1)
+								}
+								_ => { return Err(std::io::ErrorKind::InvalidInput.into()) } 
+							}
+						}
+						_ => { return Err(std::io::ErrorKind::InvalidInput.into()) }
+					}
+				},
+				Some(Err(_)) => { return Err(std::io::ErrorKind::InvalidInput.into()) },
+				None => {
+					time::sleep(Duration::from_millis(50)).await;
+					continue;
+				}
+			}
+		}
 	}
 }

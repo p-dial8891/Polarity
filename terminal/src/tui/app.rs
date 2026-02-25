@@ -70,8 +70,9 @@ pub async fn main() {
 	};
 
 	const menu_1 : MenuLevel = MenuLevel::Level1("Main");
-	const menu_2 : MenuLevel = MenuLevel::Level1("Playback");
-	const menu_3 : MenuLevel = MenuLevel::Level1("Shutdown");
+	const menu_2 : MenuLevel = MenuLevel::Level2("Search", KeyCode::Char('f'), KeyCode::Esc);
+	const menu_3 : MenuLevel = MenuLevel::Level1("Playback");
+	const menu_4 : MenuLevel = MenuLevel::Level1("Shutdown");
 
 	let menus = &[menu_1,menu_2,menu_3];
 	let mut menu_iter = MenuLevels {
@@ -119,6 +120,37 @@ pub async fn main() {
 			},
 
 			menu_2 =>  {
+				(e0,m,menu_iter,e1,input,t,screen1) = spawn(async move {
+					let mut reader = EventStream::new();
+					e1.init().await;
+					loop {
+						e0.execute(&mut screen1.v, &mut t, &mut input).await;
+						m = m.visit(&mut menu_iter, &mut input);
+						if m == menu_2 {
+							let mut event = reader.next().fuse();
+							select! {
+								ev = event => { 
+									match ev {
+										Some(Ok(e)) => { input.set_event(e); },
+										_ => {}
+									}
+								},
+								_ = async {
+									tokio::time::sleep(Duration::from_millis(5)).await;
+								}.fuse() => {}
+							}
+							e1.execute(&mut screen1.v, &mut t, &mut input).await;
+						}
+						else {
+							break;
+						}
+						tokio::time::sleep(Duration::from_millis(100)).await;
+					}
+					(e0,m,menu_iter,e1,input,t,screen1)
+				}).await.unwrap();
+			},
+
+			menu_3 =>  {
 				(e0,m,menu_iter,e2,input,t,screen1) = spawn(async move {
 					let mut reader = EventStream::new();
 					e2.init().await;
@@ -149,7 +181,7 @@ pub async fn main() {
 				}).await.unwrap();
 			},
 
-			menu_3 =>  {
+			menu_4 =>  {
 				(e0,m,menu_iter,e3,input,t,screen1) = spawn(async move {
 					let mut reader = EventStream::new();
 					e3.init(&String::from("Shutdown")).await;
