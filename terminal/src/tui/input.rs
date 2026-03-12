@@ -2,11 +2,12 @@ use crossterm::{
     event::{poll, read, Event, KeyCode, EventStream}
 };
 use crate::tui::app::Keys::{self, *};
-use futures::{StreamExt, FutureExt};
+use futures::{StreamExt, FutureExt, select};
 use embedded_io_async::{Read, ErrorType, ErrorKind, Error};
 use tokio::{time};
 use std::time::Duration;
 use std::convert::Infallible;
+use std::io::ErrorKind::InvalidInput;
 
 pub struct InputConfig {
 	pin : u8,
@@ -197,30 +198,54 @@ impl ErrorType for Input {
 
 impl Read for Input {
 
-
 	async fn read(&mut self, buf: &mut [u8]) -> Result<usize, Self::Error> {
+
 		loop {
 			match self.reader.next().fuse().await {
-				Some(Ok(e)) => {
-					match e {
-						Event::Key(k) => {
-							match k.code {
-								KeyCode::Char(c) => {
-									buf[0] = c as u8;
-									return Ok(1)
-								}
-								_ => { return Err(std::io::ErrorKind::InvalidInput.into()) } 
-							}
+				Some(Ok(Event::Key(k))) => {
+					match k.code {
+						KeyCode::Char(c) => {
+							buf[0] = c as u8;
+							return Ok(1)
 						}
-						_ => { return Err(std::io::ErrorKind::InvalidInput.into()) }
+						_ => { return Err(std::io::ErrorKind::InvalidInput.into()) } 
 					}
 				},
-				Some(Err(_)) => { return Err(std::io::ErrorKind::InvalidInput.into()) },
 				None => {
 					time::sleep(Duration::from_millis(50)).await;
 					continue;
 				}
+				_ => { return Err(std::io::ErrorKind::InvalidInput.into()) },
 			}
 		}
+/*
+		let mut used = 0;
+		loop {
+			let mut event = self.reader.next().fuse();
+			select! {
+				ev = event => {
+					match ev {
+						Some(Ok(Event::Key(k))) => {
+							match k.code {
+								KeyCode::Char(c) => {
+									self.set_event(Event::Key(KeyCode::Char(c).into()));
+									buf[used] = c as u8;
+									used += 1;
+									continue;
+								}
+								_ => { return Err(InvalidInput.into()) } 
+							}
+						},
+						None => { continue; }
+						_ => { return Err(InvalidInput.into()) } 
+					}
+				},
+				_ = async {
+					tokio::time::sleep(Duration::from_millis(5)).await;
+				}.fuse() => { break; }
+			}
+		}
+		Ok(used)
+*/
 	}
 }
