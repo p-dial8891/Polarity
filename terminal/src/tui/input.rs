@@ -222,7 +222,7 @@ impl Input {
 				},
 				_ = async {
 					tokio::time::sleep(Duration::from_millis(5)).await;
-				}.fuse() => { break; }
+				}.fuse() => { continue; }
 			}
 		}
 		Ok(used)

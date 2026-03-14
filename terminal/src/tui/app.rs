@@ -129,6 +129,7 @@ pub async fn main() {
 					let mut reader = EventStream::new();
 					let mut buffer = [0u8; 128];
 					let mut edit_len : i16 = 0;
+					let mut cursor = true;
 
 					e2.init().await;
 					t.clear();
@@ -136,16 +137,35 @@ pub async fn main() {
 					loop {
 						e0.execute(&mut screen1.v, &mut t, &mut input).await;
 						m = m.visit(&mut menu_iter, &mut input);
-						if m == menu_2 {
-							edit_len +=	input
-								.read_edit(&mut buffer[<i16 as TryInto<usize>>::try_into(edit_len).unwrap()..])
-								.await
-								.unwrap();
-							edit_len = if edit_len < 0 { 0 } else { edit_len };
-							edit_len = if edit_len > 128 { 128 } else { edit_len };
-							let ascii_buf = &buffer[..<i16 as TryInto<usize>>::try_into(edit_len).unwrap()]
-								.iter().map(|c| { *c as char })
-								.collect::<String>();
+ 						if m == menu_2 {
+							let mut ascii_buf;
+							select!{
+								_ = async {
+									edit_len +=	input
+										.read_edit(&mut buffer[<i16 as TryInto<usize>>::try_into(edit_len).unwrap()..])
+										.await
+										.unwrap();
+									edit_len = if edit_len < 0 { 0 } else { edit_len };
+									edit_len = if edit_len > 128 { 128 } else { edit_len };
+								}.fuse() => {
+									ascii_buf = buffer[..<i16 as TryInto<usize>>::try_into(edit_len).unwrap()]
+										.iter().map(|c| { *c as char })
+										.collect::<String>();
+									ascii_buf.extend(["_"]);
+									cursor = false;					
+								},
+								_ = async {
+									tokio::time::sleep(Duration::from_millis(500)).await;
+								}.fuse() => {
+									ascii_buf = buffer[..<i16 as TryInto<usize>>::try_into(edit_len).unwrap()]
+										.iter().map(|c| { *c as char })
+										.collect::<String>();									
+									if cursor == true {
+										ascii_buf.extend(["_"])
+									}
+									cursor = !cursor;									
+								}
+							}
 							eprint!("\x1b[2K{}\r", ascii_buf);
 						}
 						else {
