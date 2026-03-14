@@ -16,7 +16,6 @@ use crossterm::{
 use crate::tui::menu::{MenuLevel, MenuLevels};
 use tokio::task::{spawn};
 use futures::{future::FutureExt, select, StreamExt};
-use embedded_io_async::{Read};
 
 pub enum Keys {
 	UP_KEY = 0,
@@ -128,15 +127,26 @@ pub async fn main() {
 			menu_2 =>  {
 				(e0,m,menu_iter,e2,input,t,screen1) = spawn(async move {
 					let mut reader = EventStream::new();
+					let mut buffer = [0u8; 128];
+					let mut edit_len : i16 = 0;
+
 					e2.init().await;
+					t.clear();
+
 					loop {
 						e0.execute(&mut screen1.v, &mut t, &mut input).await;
 						m = m.visit(&mut menu_iter, &mut input);
 						if m == menu_2 {
-							let mut buf : [u8;5] = [0;5];
-							Read::read(&mut input, &mut buf).await;
-							input.set_event(Event::Key(KeyCode::Char(buf[0] as char).into()));
-							eprint!("{}",buf[0]);
+							edit_len +=	input
+								.read_edit(&mut buffer[<i16 as TryInto<usize>>::try_into(edit_len).unwrap()..])
+								.await
+								.unwrap();
+							edit_len = if edit_len < 0 { 0 } else { edit_len };
+							edit_len = if edit_len > 128 { 128 } else { edit_len };
+							let ascii_buf = &buffer[..<i16 as TryInto<usize>>::try_into(edit_len).unwrap()]
+								.iter().map(|c| { *c as char })
+								.collect::<String>();
+							eprint!("\x1b[2K{}\r", ascii_buf);
 						}
 						else {
 							break;

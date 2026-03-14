@@ -3,7 +3,6 @@ use crossterm::{
 };
 use crate::tui::app::Keys::{self, *};
 use futures::{StreamExt, FutureExt, select};
-use embedded_io_async::{Read, ErrorType, ErrorKind, Error};
 use tokio::{time};
 use std::time::Duration;
 use std::convert::Infallible;
@@ -155,8 +154,8 @@ pub struct Input {
 	
 	pub keys : [InputConfig; 7],
 	pub ev : Option<Event>,
-	pub reader : EventStream
-	
+	pub reader : EventStream,
+
 }
 
 #[cfg(not(feature = "enable-rppal"))]
@@ -186,39 +185,8 @@ impl Input {
 		
 		self.keys[k as usize].peek(&self.ev)
 	}
-}
 
-impl ErrorType for Input {
-	type Error = std::io::Error;
-
-	// fn kind(&self) -> ErrorKind {
-	// 	ErrorKind::Other
-	// }
-}
-
-impl Read for Input {
-
-	async fn read(&mut self, buf: &mut [u8]) -> Result<usize, Self::Error> {
-
-		loop {
-			match self.reader.next().fuse().await {
-				Some(Ok(Event::Key(k))) => {
-					match k.code {
-						KeyCode::Char(c) => {
-							buf[0] = c as u8;
-							return Ok(1)
-						}
-						_ => { return Err(std::io::ErrorKind::InvalidInput.into()) } 
-					}
-				},
-				None => {
-					time::sleep(Duration::from_millis(50)).await;
-					continue;
-				}
-				_ => { return Err(std::io::ErrorKind::InvalidInput.into()) },
-			}
-		}
-/*
+	pub async fn read_edit(&mut self, buf: &mut [u8]) -> Result<i16, std::io::ErrorKind> {
 		let mut used = 0;
 		loop {
 			let mut event = self.reader.next().fuse();
@@ -226,12 +194,24 @@ impl Read for Input {
 				ev = event => {
 					match ev {
 						Some(Ok(Event::Key(k))) => {
+							if !k.is_press() {
+								continue; 
+							}
 							match k.code {
+								KeyCode::Tab | KeyCode::Esc => {
+									self.set_event(Event::Key(k));
+									break;
+								}
 								KeyCode::Char(c) => {
-									self.set_event(Event::Key(KeyCode::Char(c).into()));
-									buf[used] = c as u8;
+									self.set_event(Event::Key(k));
+									buf[<i16 as TryInto<usize>>::try_into(used).unwrap()] = c as u8;
 									used += 1;
-									continue;
+									break;
+								}
+								KeyCode::Backspace => {
+									self.set_event(Event::Key(k));
+									used -= 1;
+									break;
 								}
 								_ => { return Err(InvalidInput.into()) } 
 							}
@@ -246,6 +226,6 @@ impl Read for Input {
 			}
 		}
 		Ok(used)
-*/
 	}
 }
+
