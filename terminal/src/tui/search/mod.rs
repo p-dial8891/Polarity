@@ -93,7 +93,8 @@ pub enum ModelCommand {
 	AddTrack,
 	RemoveTrack,
 	TogglePlay,
-    Refresh
+    Refresh,
+    SearchUpdate
 	
 }
 

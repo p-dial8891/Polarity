@@ -57,10 +57,12 @@ pub struct ComponentState {
 	pub tx_refresh: Sender<()>,
 	pub selection: ListState,
 	pub playback: PlaybackState,
+	pub filtered_list : Vec<(usize, String)>,
 	pub edit_len: i16,
 	pub buffer: [u8;128],
 	pub cursor: bool,
-	pub ascii_buf: String
+	pub ascii_buf: String,
+	pub ascii_buf_with_cursor: String
 }
 
 async fn getNextTrack(list: &Vec<(String,String)>, s: &VecDeque<usize>) -> String {

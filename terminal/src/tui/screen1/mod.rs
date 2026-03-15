@@ -65,10 +65,12 @@ impl Screen1 {
                     start: true, 
                     selection: ListState::default().with_selected(Some(0))
                 },
+                filtered_list : Vec::new().into_iter().enumerate().collect::<Vec<(usize,String)>>(),
                 edit_len : 0,
 		        buffer : [0u8;128],
 		        cursor : false,
-                ascii_buf : String::new()
+                ascii_buf : String::new(),
+                ascii_buf_with_cursor : String::new()
             }
         }
     }

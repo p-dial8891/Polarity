@@ -78,7 +78,7 @@ pub fn render_bottom(
         false => { " " },
         true => { "A" }
     };
-	let curr_selection = list_state.selected().unwrap();
+	let curr_selection = list_state.selected().unwrap_or(0);
 	q_pos = match l_playlist.iter().position( |x| { x == &curr_selection } ) {
 		Some(i) => i+1,
 		None => 0

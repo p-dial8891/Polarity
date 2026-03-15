@@ -44,17 +44,16 @@ pub fn render_list(
     frame: &mut Frame,
     area: Rect,
     list_state: &mut ListState,
-    list_model: &Vec<String>,
+    list_model: &Vec<(usize,String)>,
     l_playlist: &VecDeque<usize>,
 ) {
     let list =
-        List::new(list_model.into_iter().map(|x| x.as_str()).enumerate().map(
-            |(i, x)| {
+        List::new(list_model.iter().map( |(i, x)| {
                 //if l_playlist.iter().position( |x| { x == &i } ).is_some() {
 				if l_playlist.contains(&i) {
-                    ListItem::new(x).yellow()
+                    ListItem::new(x.as_str()).yellow()
                 } else {
-                    ListItem::new(x).white()
+                    ListItem::new(x.as_str()).white()
                 }
             },
         ))
@@ -80,7 +79,7 @@ pub fn render_bottom(
         false => { " " },
         true => { "A" }
     };
-	let curr_selection = list_state.selected().unwrap();
+	let curr_selection = list_state.selected().unwrap_or(0);
 	q_pos = match l_playlist.iter().position( |x| { x == &curr_selection } ) {
 		Some(i) => i+1,
 		None => 0
@@ -131,7 +130,7 @@ impl Render<State> for Controller1 {
 	    impl FnOnce(&mut Frame, Rect) -> () {
 
         |f,r| { render_list( f, r, &mut state.selection, 
-		                        &state.list, &state.playlist ); }
+		    &state.filtered_list, &state.playlist ); }
 		
     }
 
@@ -146,7 +145,7 @@ impl Render<State> for Controller2 {
 	    impl FnOnce(&mut Frame, Rect) -> () {
 
         |f,r| { render_bottom( f, r, state.toggle, 
-			&state.playlist, &mut state.selection, &state.ascii_buf ); }
+			&state.playlist, &mut state.selection, &state.ascii_buf_with_cursor ); }
 		
     }
 
@@ -194,7 +193,8 @@ impl Compute for Controller1 {
 					state_data.buffer[..<i16 as TryInto<usize>>::try_into(state_data.edit_len).unwrap()]
 					.iter().map(|c| { *c as char })
 					.collect::<String>();
-				state_data.ascii_buf.extend(["_"]);
+				state_data.ascii_buf_with_cursor.clear();
+				state_data.ascii_buf_with_cursor.extend([&state_data.ascii_buf, "_"]);
 				state_data.cursor = false;	
 				if input.read(UP_KEY) == false {
 					eprintln!("<Controller> : Up key pressed.");
@@ -217,7 +217,7 @@ impl Compute for Controller1 {
 						cmd : ModelCommand::AddTrack	});
 				}
 				return Self::Output::Model(Model1 { data : self.data,
-			        cmd : ModelCommand::Refresh	});
+			        cmd : ModelCommand::SearchUpdate});
 			},
 			_ = async {
 				tokio::time::sleep(Duration::from_millis(500)).await;
@@ -225,9 +225,12 @@ impl Compute for Controller1 {
 				state_data.ascii_buf = 
 					state_data.buffer[..<i16 as TryInto<usize>>::try_into(state_data.edit_len).unwrap()]
 					.iter().map(|c| { *c as char })
-					.collect::<String>();									
+					.collect::<String>();
+				state_data.ascii_buf_with_cursor.clear();													
 				if state_data.cursor == true {
-					state_data.ascii_buf.extend(["_"])
+					state_data.ascii_buf_with_cursor.extend([&state_data.ascii_buf, "_"]);
+				} else {
+					state_data.ascii_buf_with_cursor.extend([&state_data.ascii_buf, ""]);
 				}
 				state_data.cursor = !state_data.cursor;
 				return Self::Output::Model(Model1 { data : self.data,

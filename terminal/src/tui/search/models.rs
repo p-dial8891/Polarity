@@ -7,7 +7,8 @@ use crate::tui::search::{views::{View1,View2},
 		AddTrack,
 		RemoveTrack,
 		TogglePlay,
-		Refresh 
+		Refresh,
+		SearchUpdate
 	},
 	ViewCommand::{
 		Noop as ViewNoop,
@@ -125,7 +126,10 @@ impl Compute for Model1 {
 
             AddTrack => {
 				state_data.playlist.push_back(
-					state_data.selection.selected().unwrap());
+					state_data.filtered_list.get(
+						state_data.selection.selected().unwrap()
+					).unwrap().0 // index
+				);
 
                 eprintln!("<Model> : New track added to playlist.");
 			    return Self::Output::View(View1 {
@@ -137,7 +141,9 @@ impl Compute for Model1 {
 
             RemoveTrack => {
 				if let Some(i) = state_data.playlist.iter().position(
-				    |x| { *x == state_data.selection.selected().unwrap() } 
+				    |x| { *x == (state_data.filtered_list.get(
+							state_data.selection.selected().unwrap()
+						).unwrap().0) } 
 				) {
 				    state_data.playlist.remove(i);
 				}
@@ -158,6 +164,21 @@ impl Compute for Model1 {
 					} 
 				);
 			},
+
+			SearchUpdate => {
+				// let numbered_list = state_data.list.iter().map(|x| x.as_str()).enumerate();
+				eprintln!("<Model> : Filtering list.");
+				state_data.filtered_list = state_data.list.clone()
+					.into_iter().enumerate()
+					.filter(|(i,x)| { x.contains(&state_data.ascii_buf) })
+					.collect::<Vec<(usize,String)>>();
+
+				return Self::Output::View(View1 {
+                        data : self.data,
+			            cmd : Draw 
+					} 
+				);
+			}
 			_ => {	
                 //eprintln!("<Model> : Noop.");			
 			    return Self::Output::View(View1 {

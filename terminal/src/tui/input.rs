@@ -199,7 +199,8 @@ impl Input {
 							}
 							match k.code {
 								KeyCode::Tab | KeyCode::Esc | KeyCode::Up |
-								KeyCode::Down | KeyCode::Left | KeyCode::Right => {
+								KeyCode::Down | KeyCode::Left | KeyCode::Right |
+								KeyCode::Enter => {
 									self.set_event(Event::Key(k));
 									break;
 								}
