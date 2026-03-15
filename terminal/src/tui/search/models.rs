@@ -1,4 +1,4 @@
-use crate::tui::screen1::{foreground::views::{View1,View2}, 
+use crate::tui::search::{views::{View1,View2}, 
     ModelCommand::{
 		self, 
 		Init,
@@ -8,18 +8,18 @@ use crate::tui::screen1::{foreground::views::{View1,View2},
 		RemoveTrack,
 		TogglePlay,
 		Refresh 
-	}, 
+	},
 	ViewCommand::{
 		Noop as ViewNoop,
 		Init as ViewInit,
 		PlayTrack,
 		Draw,
-	}		
+	}
 };
-use crate::tui::{Components, Compute,};
+use crate::tui::{Components, Compute};
 use ratatui::DefaultTerminal;
 use crate::tui::input::Input;
-use crate::tui::screen1::{State, Output1, Output2};
+use crate::tui::search::{State, Output1, Output2};
 use crate::polaris::{self, polarisHandle};
 use std::rc::Rc;
 use std::sync::mpsc::{Sender, Receiver};
@@ -42,25 +42,6 @@ pub struct Model2 {
 pub struct PlaybackState {
     pub start : bool,
 	pub selection : ListState
-}
-
-pub struct ComponentState {
-    pub start: bool,
-	pub task: Option<task::JoinHandle<()>>,
-	pub rx: Receiver<Option<task::JoinHandle<()>>>,
-	pub rx_refresh: Receiver<()>,
-    pub playlist: VecDeque<usize>,
-	pub polaris_data : Vec<(String,String)>,
-	pub list: Vec<String>,
-	pub toggle: bool,
-	pub tx : Sender<Option<task::JoinHandle<()>>>,
-	pub tx_refresh: Sender<()>,
-	pub selection: ListState,
-	pub playback: PlaybackState,
-	pub edit_len: i16,
-	pub buffer: [u8;128],
-	pub cursor: bool,
-	pub ascii_buf: String
 }
 
 async fn getNextTrack(list: &Vec<(String,String)>, s: &VecDeque<usize>) -> String {
@@ -86,13 +67,13 @@ impl Compute for Model1 {
 			
 			Init => { 
 			    state_data.polaris_data = polaris::getIterator(self.data.clone())
-                .await
-                .collect::<Vec<(String,String)>>();
+					.await
+					.collect::<Vec<(String,String)>>();
 				
 			    state_data.list = polaris::getIterator(self.data.clone())
-                .await
-                .map(|x| x.0)
-                .collect::<Vec<String>>();
+					.await
+					.map(|x| x.0)
+					.collect::<Vec<String>>();
 
                 eprintln!("<Model> : intialised.");
 			    return Self::Output::View(View1 {

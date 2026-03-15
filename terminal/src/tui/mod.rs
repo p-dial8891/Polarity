@@ -4,6 +4,7 @@ mod shutdown;
 mod playback;
 mod input;
 mod menu;
+mod search;
 
 use ratatui::{DefaultTerminal, Frame};
 use input::Input;
