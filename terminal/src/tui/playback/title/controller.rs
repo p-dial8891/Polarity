@@ -61,7 +61,7 @@ impl Controller {
 /// Render a bottom-to-top list.
 pub fn render_top<'a>(frame: &mut Frame<'a>, area: Rect) {
 
-    let text = Paragraph::new(String::from("  Playback\n"));
+    let text = Paragraph::new(String::from("\nPlayback")).centered();
     frame.render_widget(text, area);
 }
 

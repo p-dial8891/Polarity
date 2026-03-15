@@ -125,6 +125,9 @@ impl ExecutorForLayout1 <
 > 
   for Executor
 {
+    fn get_title(&self) -> &'static str {
+        "Search"
+    }
 
     fn get_controllers(&self) -> (Output1, Output2) {
         (

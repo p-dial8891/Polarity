@@ -10,6 +10,7 @@ use ratatui::{DefaultTerminal, Frame};
 use input::Input;
 use std::rc::Rc;
 use ratatui::layout::{Constraint, Layout, Rect};
+use ratatui::widgets::{Paragraph};
 
 #[derive(Clone)]
 enum ComponentData<M, V, C> {
@@ -105,6 +106,10 @@ trait ExecutorForLayout1<S, T1, T2, M1, M2, V1, V2, C1, C2>
         V2 : Compute<State=S, Output=T2>,
 {
 
+    fn get_title(&self) -> &'static str {
+        "Main"
+    }
+
     fn get_controllers(&self) -> (T1, T2);
 
     fn set_controllers(&mut self, controllers : (T1, T2));
@@ -136,12 +141,17 @@ trait ExecutorForLayout1<S, T1, T2, M1, M2, V1, V2, C1, C2>
 
         terminal.draw( |frame| {
             use Constraint::{Fill, Length, Min};
-            let vertical = Layout::vertical([Fill(1), Length(2)]);
-            let [top, bottom] = vertical.areas(frame.area());
+            let vertical = Layout::vertical([Length(2),Fill(1), Length(2)]);
+            let [top, middle, bottom] = vertical.areas(frame.area());
+
+            let mut text = String::from("\n");
+            text.extend([self.get_title()]);
+            let text = Paragraph::new(text).centered();
+            frame.render_widget(text, top);
 
             //render_top(frame, top);
             let r = C1::renderer(state);
-            r(frame, top);
+            r(frame, middle);
             //render_list(frame, bottom, &mut self.screen.v.selection);
             let r = C2::renderer(state);
             r(frame, bottom);
@@ -161,6 +171,10 @@ trait ExecutorForLayout2<S, T1, T2, M1, M2, V1, V2, C1, C2>
         V1 : Compute<State=S, Output=T1>,
         V2 : Compute<State=S, Output=T2>,
 {
+
+    fn get_title(&self) -> &'static str {
+        "Main"
+    }
 
     fn get_controllers(&self) -> (T1, T2);
 

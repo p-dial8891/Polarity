@@ -58,7 +58,7 @@ pub fn render_list(
 /// Render a bottom-to-top list.
 pub fn render_top(frame: &mut Frame, area: Rect) {
 
-    let text = Paragraph::new(String::from("\n\n Shutdown ?\n\n"));
+    let text = Paragraph::new(String::from("\nShutdown ?")).centered();
     frame.render_widget(text, area);
 }
 
