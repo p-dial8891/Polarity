@@ -7,7 +7,9 @@ use crate::tui::screen1::{foreground::views::{View1,View2},
 		AddTrack,
 		RemoveTrack,
 		TogglePlay,
-		Refresh 
+		Refresh,
+		PageUp,
+		PageDown
 	}, 
 	ViewCommand::{
 		Noop as ViewNoop,
@@ -78,7 +80,7 @@ impl Compute for Model1 {
     async fn compute(
 	    mut self, 
 		s: &mut State, 
-		_: &mut DefaultTerminal, 
+		t: &mut DefaultTerminal, 
 		_: &mut Input,
 	) -> Self::Output {
 		
@@ -88,13 +90,13 @@ impl Compute for Model1 {
 			
 			Init => { 
 			    state_data.polaris_data = polaris::getIterator(self.data.clone())
-                .await
-                .collect::<Vec<(String,String)>>();
+					.await
+					.collect::<Vec<(String,String)>>();
 				
 			    state_data.list = polaris::getIterator(self.data.clone())
-                .await
-                .map(|x| x.0)
-                .collect::<Vec<String>>();
+					.await
+					.map(|x| x.0)
+					.collect::<Vec<String>>();
 
                 eprintln!("<Model> : intialised.");
 			    return Self::Output::View(View1 {
@@ -117,6 +119,48 @@ impl Compute for Model1 {
 				};
 				state_data.selection.select(Some(i));
                 eprintln!("<Model> : next track selected.");
+			    return Self::Output::View(View1 {
+                        data : self.data,
+			            cmd : Draw
+					} 
+				);
+			},
+
+			PageDown => {
+				let i = match state_data.selection.selected() {
+					Some(i) => {
+						let j = i + ( (t.size().unwrap().height / 2 ) as usize) - 1;
+						if j >= ( state_data.list.len() - 1 ) {
+							0
+						} else {
+							j
+						}
+					}
+					None => 0,
+				};
+				state_data.selection.select(Some(i));
+                eprintln!("<Model> : next track selected.");
+			    return Self::Output::View(View1 {
+                        data : self.data,
+			            cmd : Draw
+					} 
+				);
+			},
+
+			PageUp => {
+				let i = match state_data.selection.selected() {
+					Some(i) => {
+						if i < ( ( ( t.size().unwrap().height / 2 ) - 1 ) as usize ) {
+							state_data.list.len() - 1
+						}
+						else {
+							i - ( ( ( t.size().unwrap().height / 2 ) - 1 ) as usize )
+						}
+					}
+					None => 0,
+				};
+				state_data.selection.select(Some(i));
+                eprintln!("<Model> : previous track selected.");
 			    return Self::Output::View(View1 {
                         data : self.data,
 			            cmd : Draw

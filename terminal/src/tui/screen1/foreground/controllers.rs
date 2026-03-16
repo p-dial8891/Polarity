@@ -18,6 +18,7 @@ use std::{time::Duration, time::Instant};
 use tarpc::{client, context, tokio_serde::formats::Json};
 use tokio::io::AsyncReadExt;
 use tokio::{task, net::TcpListener, time::sleep};
+use crossterm::event::{Event, KeyCode};
 
 /// Render the UI with various lists.
 fn render(
@@ -83,12 +84,12 @@ pub fn render_bottom(
 		Some(i) => i+1,
 		None => 0
 	};	
-	let mut final_text = String::from("\n           ");
+	let mut final_text = String::from("\n");
 	final_text.extend([
 		autoplay, " ", 
 		&format!("{:>3}", l_playlist.len()), " ", 
 		&format!("{:>3}", q_pos)]);
-    let text = Paragraph::new(final_text);
+    let text = Paragraph::new(final_text).centered();
     frame.render_widget(text, area);
 }
 
@@ -221,6 +222,18 @@ impl Compute for Controller1 {
 			eprintln!("<Controller> : Right key pressed.");
 			return Self::Output::Model(Model1 { data : self.data,
 			    cmd : ModelCommand::AddTrack	});
+		}
+		if let Some(Event::Key(e)) = input.ev {
+			if e == KeyCode::PageUp.into() && e.is_press() {
+				return Self::Output::Model(Model1 { data : self.data,
+			    	cmd : ModelCommand::PageUp	});
+			}
+		}
+		if let Some(Event::Key(e)) = input.ev {
+			if e == KeyCode::PageDown.into() && e.is_press() {
+				return Self::Output::Model(Model1 { data : self.data,
+			    	cmd : ModelCommand::PageDown	});
+			}
 		}
 		// should not matter what happens from here.	
         Self::Output::Model(Model1 { data : self.data,

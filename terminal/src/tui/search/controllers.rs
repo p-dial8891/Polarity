@@ -89,7 +89,7 @@ pub fn render_bottom(
 		autoplay, " ", 
 		&format!("{:>3}", l_playlist.len()), " ", 
 		&format!("{:>3}", q_pos)]);
-    let text = Paragraph::new(final_text);
+    let text = Paragraph::new(final_text).centered();
     frame.render_widget(text, area);
 }
 

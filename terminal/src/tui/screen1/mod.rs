@@ -164,8 +164,9 @@ pub enum ModelCommand {
 	AddTrack,
 	RemoveTrack,
 	TogglePlay,
-    Refresh
-	
+    Refresh,
+	PageUp,
+    PageDown
 }
 
 #[derive(Clone)]
