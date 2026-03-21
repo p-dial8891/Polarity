@@ -36,7 +36,7 @@ pub async fn main() {
     let quit = InputConfig::init(5, KeyCode::Tab);
     let req = InputConfig::init(6, KeyCode::Enter);
 	let find = InputConfig::init(0, KeyCode::Char('f'));
-    let keys = [up, down, left, right, req, quit, find];
+	let keys = [up, down, left, right, req, quit, find];
 	let mut input = Input::init(keys);
 
     let mut t = ratatui::init();

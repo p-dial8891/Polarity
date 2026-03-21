@@ -73,6 +73,8 @@ pub fn render_bottom(
 	list_state: &mut ListState,
 	info_field: &String
 ) {
+	use Constraint::{Length, Fill};
+
     let autoplay;
     let q_pos;
     autoplay = match auto_play {
@@ -83,14 +85,23 @@ pub fn render_bottom(
 	q_pos = match l_playlist.iter().position( |x| { x == &curr_selection } ) {
 		Some(i) => i+1,
 		None => 0
-	};	
-	let mut final_text = String::new();
-	final_text.extend([info_field, "\n",
-		autoplay, " ", 
+	};
+
+	let vertical = Layout::vertical([Length(1), Fill(1)]);
+	let [top, bottom] = vertical.areas(area);
+
+	let mut final_text_1 = String::new();
+	final_text_1.extend([info_field,""]);
+	let text_1 = Paragraph::new(final_text_1);
+	
+	let mut final_text_2 = String::new();
+	final_text_2.extend([autoplay, " ", 
 		&format!("{:>3}", l_playlist.len()), " ", 
 		&format!("{:>3}", q_pos)]);
-    let text = Paragraph::new(final_text).centered();
-    frame.render_widget(text, area);
+    let text_2 = Paragraph::new(final_text_2).centered();
+
+	frame.render_widget(text_1, top);
+	frame.render_widget(text_2, bottom);
 }
 
 
