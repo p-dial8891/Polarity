@@ -1,9 +1,9 @@
-use crate::tui::search::{models::{Model1, Model2}, ModelCommand, ControllerCommand};
+use crate::tui::home::{foreground::models::{Model1, Model2}, ModelCommand, ControllerCommand};
 use crate::tui::{Components, Compute, Render};
 use ratatui::{DefaultTerminal, Frame};
 use crate::tui::input::Input;
 use crate::polaris::{self, polarisHandle};
-use crate::tui::search::{State, Output1, Output2};
+use crate::tui::home::{State, Output1, Output2};
 use crate::tui::app::Keys::{*};
 
 use ratatui::layout::{Constraint, Layout, Rect};
@@ -18,7 +18,24 @@ use std::{time::Duration, time::Instant};
 use tarpc::{client, context, tokio_serde::formats::Json};
 use tokio::io::AsyncReadExt;
 use tokio::{task, net::TcpListener, time::sleep};
-use futures::{future::FutureExt, select, StreamExt};
+use crossterm::event::{Event, KeyCode};
+
+/// Render the UI with various lists.
+fn render(
+    frame: &mut Frame,
+    list_state: &mut ListState,
+    list_model: &Vec<String>,
+    toggle_play: bool,
+    l_playlist: &VecDeque<usize>,
+) {
+    use Constraint::{Fill, Length};
+
+    let vertical = Layout::vertical([Fill(1), Length(2)]);
+    let [top, bottom] = vertical.areas(frame.area());
+
+    render_list(frame, top, list_state, list_model, l_playlist);
+    render_bottom(frame, bottom, toggle_play, l_playlist, list_state);
+}
 
 const SELECTED_STYLE: Style = Style::new().add_modifier(Modifier::BOLD);
 
@@ -27,16 +44,17 @@ pub fn render_list(
     frame: &mut Frame,
     area: Rect,
     list_state: &mut ListState,
-    list_model: &Vec<(usize,String)>,
+    list_model: &Vec<String>,
     l_playlist: &VecDeque<usize>,
 ) {
     let list =
-        List::new(list_model.iter().map( |(i, x)| {
+        List::new(list_model.into_iter().map(|x| x.as_str()).enumerate().map(
+            |(i, x)| {
                 //if l_playlist.iter().position( |x| { x == &i } ).is_some() {
 				if l_playlist.contains(&i) {
-                    ListItem::new(x.as_str()).yellow()
+                    ListItem::new(x).yellow()
                 } else {
-                    ListItem::new(x.as_str()).white()
+                    ListItem::new(x).white()
                 }
             },
         ))
@@ -54,10 +72,7 @@ pub fn render_bottom(
 	auto_play: bool, 
 	l_playlist: &VecDeque<usize>,
 	list_state: &mut ListState,
-	info_field: &String
 ) {
-	use Constraint::{Length, Fill};
-
     let autoplay;
     let q_pos;
     autoplay = match auto_play {
@@ -68,23 +83,14 @@ pub fn render_bottom(
 	q_pos = match l_playlist.iter().position( |x| { x == &curr_selection } ) {
 		Some(i) => i+1,
 		None => 0
-	};
-
-	let vertical = Layout::vertical([Length(1), Fill(1)]);
-	let [top, bottom] = vertical.areas(area);
-
-	let mut final_text_1 = String::new();
-	final_text_1.extend([info_field,""]);
-	let text_1 = Paragraph::new(final_text_1);
-	
-	let mut final_text_2 = String::new();
-	final_text_2.extend([autoplay, " ", 
+	};	
+	let mut final_text = String::from("\n");
+	final_text.extend([
+		autoplay, " ", 
 		&format!("{:>3}", l_playlist.len()), " ", 
 		&format!("{:>3}", q_pos)]);
-    let text_2 = Paragraph::new(final_text_2).centered();
-
-	frame.render_widget(text_1, top);
-	frame.render_widget(text_2, bottom);
+    let text = Paragraph::new(final_text).centered();
+    frame.render_widget(text, area);
 }
 
 
@@ -124,7 +130,7 @@ impl Render<State> for Controller1 {
 	    impl FnOnce(&mut Frame, Rect) -> () {
 
         |f,r| { render_list( f, r, &mut state.selection, 
-		    &state.filtered_list, &state.playlist ); }
+		                        &state.list, &state.playlist ); }
 		
     }
 
@@ -139,7 +145,7 @@ impl Render<State> for Controller2 {
 	    impl FnOnce(&mut Frame, Rect) -> () {
 
         |f,r| { render_bottom( f, r, state.toggle, 
-			&state.playlist, &mut state.selection, &state.ascii_buf_with_cursor ); }
+			&state.playlist, &mut state.selection ); }
 		
     }
 
@@ -172,75 +178,7 @@ impl Compute for Controller1 {
         input: &mut Input,
     ) -> Self::Output {
 
-		let mut state_data = s;
-
-		select!{
-			_ = async {
-				state_data.edit_len +=	input
-					.read_edit(&mut state_data.buffer[
-						<i16 as TryInto<usize>>::try_into(state_data.edit_len).unwrap()..])
-					.await
-					.unwrap();
-				state_data.edit_len = if state_data.edit_len < 0 { 
-					0 
-				} else { 
-					state_data.edit_len 
-				};
-				state_data.edit_len = if state_data.edit_len > 128 { 
-					128 
-				} else { 
-					state_data.edit_len 
-				};
-			}.fuse() => {
-				state_data.ascii_buf = 
-					state_data.buffer[..<i16 as TryInto<usize>>::try_into(state_data.edit_len).unwrap()]
-					.iter().map(|c| { *c as char })
-					.collect::<String>();
-				state_data.ascii_buf_with_cursor.clear();
-				state_data.ascii_buf_with_cursor.extend([&state_data.ascii_buf, "_"]);
-				state_data.cursor = false;	
-				if input.read(UP_KEY) == false {
-					eprintln!("<Controller> : Up key pressed.");
-					return Self::Output::Model(Model1 { data : self.data,
-						cmd : ModelCommand::SelectPrevious	});
-				}
-				if input.read(DOWN_KEY) == false {
-					eprintln!("<Controller> : Down key pressed.");
-					return Self::Output::Model(Model1 { data : self.data,
-						cmd : ModelCommand::SelectNext	});
-				}
-				if input.read(LEFT_KEY) == false {
-					eprintln!("<Controller> : Left key pressed.");
-					return Self::Output::Model(Model1 { data : self.data,
-						cmd : ModelCommand::RemoveTrack	});
-				}
-				if input.read(RIGHT_KEY) == false {
-					eprintln!("<Controller> : Right key pressed.");
-					return Self::Output::Model(Model1 { data : self.data,
-						cmd : ModelCommand::AddTrack	});
-				}
-				return Self::Output::Model(Model1 { data : self.data,
-			        cmd : ModelCommand::SearchUpdate});
-			},
-			_ = async {
-				tokio::time::sleep(Duration::from_millis(500)).await;
-			}.fuse() => {
-				state_data.ascii_buf = 
-					state_data.buffer[..<i16 as TryInto<usize>>::try_into(state_data.edit_len).unwrap()]
-					.iter().map(|c| { *c as char })
-					.collect::<String>();
-				state_data.ascii_buf_with_cursor.clear();													
-				if state_data.cursor == true {
-					state_data.ascii_buf_with_cursor.extend([&state_data.ascii_buf, "_"]);
-				} else {
-					state_data.ascii_buf_with_cursor.extend([&state_data.ascii_buf, ""]);
-				}
-				state_data.cursor = !state_data.cursor;
-				return Self::Output::Model(Model1 { data : self.data,
-			        cmd : ModelCommand::Refresh	});				
-			}
-		}
-		// eprint!("\x1b[2K{}\r", state_data.ascii_buf);
+		let state_data = s;
 
 		match self.cmd {
 			ControllerCommand::Init => { 
@@ -265,6 +203,38 @@ impl Compute for Controller1 {
 			Err(e) => { /*eprintln!("{:?}",e)*/}
 		}
 
+		if input.read(UP_KEY) == false {
+			eprintln!("<Controller> : Up key pressed.");
+			return Self::Output::Model(Model1 { data : self.data,
+			    cmd : ModelCommand::SelectPrevious	});
+		}
+		if input.read(DOWN_KEY) == false {
+			eprintln!("<Controller> : Down key pressed.");
+			return Self::Output::Model(Model1 { data : self.data,
+			    cmd : ModelCommand::SelectNext	});
+		}
+		if input.read(LEFT_KEY) == false {
+			eprintln!("<Controller> : Left key pressed.");
+			return Self::Output::Model(Model1 { data : self.data,
+			    cmd : ModelCommand::RemoveTrack	});
+		}
+		if input.read(RIGHT_KEY) == false {
+			eprintln!("<Controller> : Right key pressed.");
+			return Self::Output::Model(Model1 { data : self.data,
+			    cmd : ModelCommand::AddTrack	});
+		}
+		if let Some(Event::Key(e)) = input.ev {
+			if e == KeyCode::PageUp.into() && e.is_press() {
+				return Self::Output::Model(Model1 { data : self.data,
+			    	cmd : ModelCommand::PageUp	});
+			}
+		}
+		if let Some(Event::Key(e)) = input.ev {
+			if e == KeyCode::PageDown.into() && e.is_press() {
+				return Self::Output::Model(Model1 { data : self.data,
+			    	cmd : ModelCommand::PageDown	});
+			}
+		}
 		// should not matter what happens from here.	
         Self::Output::Model(Model1 { data : self.data,
 			cmd : ModelCommand::Noop	})

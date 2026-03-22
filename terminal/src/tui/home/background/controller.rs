@@ -1,8 +1,8 @@
-use crate::tui::screen1::{background::model::Model, ModelCommand, ControllerCommand};
+use crate::tui::home::{background::model::Model, ModelCommand, ControllerCommand};
 use crate::tui::{Compute};
 use ratatui::DefaultTerminal;
 use crate::tui::input::Input;
-use crate::tui::screen1::{State, OutputBG};
+use crate::tui::home::{State, OutputBG};
 
 #[derive(Clone)]
 pub struct Controller {

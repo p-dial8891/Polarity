@@ -1,3 +1,8 @@
+
+pub mod controllers;
+pub mod models;
+pub mod views;
+
 use crate::tui;
 use crate::tui::{Components, Compute, IntoComponent, IntoComp, ExecutorForLayout1, ExecutorForBackground};
 use ratatui::DefaultTerminal;
@@ -6,75 +11,23 @@ use std::rc::Rc;
 use std::sync::mpsc::{channel};
 use ratatui::widgets::{ListState};
 use std::collections::VecDeque;
+use crate::tui::home::foreground::models::ComponentState;
 
-pub mod background;
-pub mod foreground;
-
-use crate::tui::screen1::foreground::{
+use crate::tui::playlist::{
 	controllers::{
 		Controller1, Controller2
 	}, 
 	models::{
-		Model1, Model2, ComponentState
+		Model1, Model2
 	}, 
 	views::{
 		View1, View2
 	}
 };
 
-use crate::tui::screen1::background::{
-	controller::{
-		Controller as ControllerBG, 
-	}, 
-	model::{
-		Model as ModelBG, 
-	}, 
-	view::{
-		View as ViewBG, 
-	}
-};
-
 pub type State = ComponentState;
 pub type Output1 = tui::ComponentData<Model1, View1, Controller1>;
 pub type Output2 = tui::ComponentData<Model2, View2, Controller2>;
-pub type OutputBG = tui::ComponentData<ModelBG, ViewBG, ControllerBG>;
-
-pub struct Screen1 {
-    pub v: State,
-}
-
-impl Screen1 {
-	
-    pub fn new() -> Self {
-		let (tx, rx) = channel();
-        let (tx_refresh, rx_refresh) = channel();
-        Screen1 {
-            v: ComponentState { 
-				start: true, 
-				task: None,
-				rx: rx,
-				rx_refresh: rx_refresh,
-				playlist: VecDeque::new(), 
-				polaris_data: Vec::new(),
-				list: Vec::new(), 
-				toggle: false,
-				tx: tx.clone(),
-				tx_refresh: tx_refresh.clone(),
-				selection: ListState::default().with_selected(Some(0)),
-                playback: foreground::models::PlaybackState {
-                    start: true, 
-                    selection: ListState::default().with_selected(Some(0))
-                },
-                filtered_list : Vec::new().into_iter().enumerate().collect::<Vec<(usize,String)>>(),
-                edit_len : 0,
-		        buffer : [0u8;128],
-		        cursor : false,
-                ascii_buf : String::new(),
-                ascii_buf_with_cursor : String::new()
-            }
-        }
-    }
-}
 
 impl IntoComponent<Model1, View1, Controller1> for Output1 {
     fn unwrap_controller(self) -> Controller1 {
@@ -122,29 +75,6 @@ impl IntoComponent<Model2, View2, Controller2> for Output2 {
     }
 }
 
-impl IntoComponent<ModelBG, ViewBG, ControllerBG> for OutputBG {
-    fn unwrap_controller(self) -> ControllerBG {
-        match self {
-            OutputBG::Controller(c) => c,
-            _ => panic!("Wrong type"),
-        }
-    }
-
-    fn unwrap_model(self) -> ModelBG {
-        match self {
-            OutputBG::Model(m) => m,
-            _ => panic!("Wrong type"),
-        }
-    }
-
-    fn unwrap_view(self) -> ViewBG {
-        match self {
-            OutputBG::View(v) => v,
-            _ => panic!("Wrong type"),
-        }
-    }
-}
-
 #[derive(Clone)]
 pub enum ControllerCommand {
 	
@@ -165,6 +95,7 @@ pub enum ModelCommand {
 	RemoveTrack,
 	TogglePlay,
     Refresh,
+    SearchUpdate,
 	PageUp,
     PageDown
 }
@@ -183,10 +114,6 @@ pub struct Executor {
 	pub controllers: (Option<Output1>, Option<Output2>),
 }
 
-pub struct ExecutorBG {
-	pub controllers: Option<OutputBG>,
-}
-
 impl ExecutorForLayout1 <
     State, 
     Output1, 
@@ -200,6 +127,9 @@ impl ExecutorForLayout1 <
 > 
   for Executor
 {
+    fn get_title(&self) -> &'static str {
+        "Playlist"
+    }
 
     fn get_controllers(&self) -> (Output1, Output2) {
         (
@@ -219,31 +149,5 @@ impl ExecutorForLayout1 <
             Output2::Controller( Controller2::new().await )
         ));    
     }
-
-}
-
-impl ExecutorForBackground <
-	State, 
-	OutputBG, 
-	ModelBG, 
-	ViewBG, 
-	ControllerBG
-> 
-  for ExecutorBG
-{
-
-	fn get_controller(&self) -> OutputBG {
-		self.controllers.clone().unwrap()
-	}
-
-	fn set_controller(&mut self, controller : OutputBG) {
-		self.controllers = Some(controller);
-	}
-
-	async fn init(&mut self) {
-		self.set_controller(
-			OutputBG::Controller( ControllerBG::new().await )
-		);    
-	}
 
 }

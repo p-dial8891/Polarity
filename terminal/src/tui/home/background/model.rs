@@ -1,4 +1,4 @@
-use crate::tui::screen1::{background::view::View, 
+use crate::tui::home::{background::view::View, 
     ModelCommand::{
 		self, 
 		PlaybackFinished,
@@ -12,7 +12,7 @@ use crate::tui::screen1::{background::view::View,
 use crate::tui::{Compute};
 use ratatui::DefaultTerminal;
 use crate::tui::input::Input;
-use crate::tui::screen1::{State, OutputBG};
+use crate::tui::home::{State, OutputBG};
 use std::rc::Rc;
 use std::collections::VecDeque;
 

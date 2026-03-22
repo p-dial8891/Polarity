@@ -1,9 +1,9 @@
-use crate::tui::screen1::{foreground::models::{Model1, Model2}, ModelCommand, ControllerCommand};
+use crate::tui::playlist::{models::{Model1, Model2}, ModelCommand, ControllerCommand};
 use crate::tui::{Components, Compute, Render};
 use ratatui::{DefaultTerminal, Frame};
 use crate::tui::input::Input;
 use crate::polaris::{self, polarisHandle};
-use crate::tui::screen1::{State, Output1, Output2};
+use crate::tui::playlist::{State, Output1, Output2};
 use crate::tui::app::Keys::{*};
 
 use ratatui::layout::{Constraint, Layout, Rect};
@@ -47,19 +47,15 @@ pub fn render_list(
     list_model: &Vec<String>,
     l_playlist: &VecDeque<usize>,
 ) {
+/*	
     let list =
-        List::new(list_model.into_iter().map(|x| x.as_str()).enumerate().map(
-            |(i, x)| {
-                //if l_playlist.iter().position( |x| { x == &i } ).is_some() {
-				if l_playlist.contains(&i) {
-                    ListItem::new(x).yellow()
-                } else {
-                    ListItem::new(x).white()
-                }
-            },
-        ))
+        List::new(list_model.into_iter().enumerate().filter(
+            |(i, x)| {l_playlist.contains(&i)},
+        ).map(|(u,x)| x.as_str()))*/
+	let list =
+		List::new(l_playlist.into_iter().map(|i| list_model[*i].as_str()))
         //.highlight_style(SELECTED_STYLE);
-		.scroll_padding(2)
+		.scroll_padding(2) 
         .highlight_style(Modifier::UNDERLINED);
     frame.render_stateful_widget(list, area, list_state);
 	

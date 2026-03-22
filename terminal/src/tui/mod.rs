@@ -1,6 +1,7 @@
 pub mod app;
-mod screen1;
+mod home;
 mod shutdown;
+mod playlist;
 mod playback;
 mod input;
 mod menu;

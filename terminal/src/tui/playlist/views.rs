@@ -1,10 +1,10 @@
-use crate::tui::screen1::{foreground::controllers::{Controller1, Controller2},
+use crate::tui::playlist::{controllers::{Controller1, Controller2},
     ViewCommand::{self, Init, Draw, PlayTrack},
     ControllerCommand::{self}
 };
 use crate::tui::{Components, Compute, Render};
 use crate::tui::input::Input;
-use crate::tui::screen1::{State, Output1, Output2};
+use crate::tui::playlist::{State, Output1, Output2};
 use crate::polaris::{self, polarisHandle};
 use ratatui::{DefaultTerminal};
 use crate::options;

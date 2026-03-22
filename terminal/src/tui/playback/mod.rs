@@ -41,7 +41,7 @@ use crate::tui::playback::content::{
 	}
 };
 
-use crate::tui::screen1::foreground::models::ComponentState;
+use crate::tui::home::foreground::models::ComponentState;
 /*
 pub struct Playback {
     pub v: State,

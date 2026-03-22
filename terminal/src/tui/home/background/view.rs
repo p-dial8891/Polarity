@@ -1,10 +1,10 @@
-use crate::tui::screen1::{background::controller::Controller,
+use crate::tui::home::{background::controller::Controller,
     ViewCommand::{self, Draw, NextTrack},
     ControllerCommand::{self}
 };
 use crate::tui::{Components, Compute,};
 use crate::tui::input::Input;
-use crate::tui::screen1::{State, OutputBG};
+use crate::tui::home::{State, OutputBG};
 use crate::options;
 use std::collections::VecDeque;
 use ratatui::layout::{Constraint, Layout, Rect};
