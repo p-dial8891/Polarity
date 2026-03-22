@@ -17,7 +17,6 @@ use tokio::{task, net::TcpListener, time::sleep};
 
 #[derive(Clone)]
 pub struct View1 {
-    pub data: polarisHandle,
 	pub cmd: ViewCommand,
 }
 
@@ -78,14 +77,12 @@ impl Compute for View1 {
 			    terminal.clear();
 				Self::Output::Controller(Controller1 { 
 					cmd : ControllerCommand::Noop,
-					data : self.data,
 				    redraw : true	})
 			},
 
 			Draw => {
 				Self::Output::Controller(Controller1 { 
 					cmd : ControllerCommand::Noop,
-					data : self.data,
 				    redraw : true	})
             },
 
@@ -97,14 +94,12 @@ impl Compute for View1 {
 				sendRequestToPlayer(name).await;
 				Self::Output::Controller(Controller1 { 
 					cmd : ControllerCommand::Noop,
-					data : self.data,
 				    redraw : false	})
 			},
 			
             _ => {
 				Self::Output::Controller(Controller1 { 
 					cmd : ControllerCommand::Noop,
-					data : self.data,
 				    redraw : false	})
 			}			
 		}

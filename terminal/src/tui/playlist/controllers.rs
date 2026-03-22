@@ -153,7 +153,6 @@ impl Render<State> for Controller2 {
 #[derive(Clone)]
 pub struct Controller1 {
 	pub cmd: ControllerCommand,
-    pub data: polarisHandle,
 	pub redraw : bool,
 }
 
@@ -179,7 +178,7 @@ impl Compute for Controller1 {
 		match self.cmd {
 			ControllerCommand::Init => { 
 			   state_data.start = false;
-			   return Self::Output::Model(Model1 { data : self.data,
+			   return Self::Output::Model(Model1 {
 			    cmd : ModelCommand::Init	}) },
 			_ => {},
 		}
@@ -187,52 +186,52 @@ impl Compute for Controller1 {
 		if state_data.start == true {
             state_data.start = false;
 			eprintln!("<Controller> : Initialised.");
-			return Self::Output::Model(Model1 { data : self.data,
+			return Self::Output::Model(Model1 {
 			    cmd : ModelCommand::Init	});
 		}
 
 		match state_data.rx_refresh.try_recv() {
 			Ok(t_handle) => { 
 				eprintln!("<Controller> : Refresh command received.");
-				return Self::Output::Model(Model1 { data : self.data,
+				return Self::Output::Model(Model1 {
 			        cmd : ModelCommand::Refresh	}) },
 			Err(e) => { /*eprintln!("{:?}",e)*/}
 		}
 
 		if input.read(UP_KEY) == false {
 			eprintln!("<Controller> : Up key pressed.");
-			return Self::Output::Model(Model1 { data : self.data,
+			return Self::Output::Model(Model1 {
 			    cmd : ModelCommand::SelectPrevious	});
 		}
 		if input.read(DOWN_KEY) == false {
 			eprintln!("<Controller> : Down key pressed.");
-			return Self::Output::Model(Model1 { data : self.data,
+			return Self::Output::Model(Model1 {
 			    cmd : ModelCommand::SelectNext	});
 		}
 		if input.read(LEFT_KEY) == false {
 			eprintln!("<Controller> : Left key pressed.");
-			return Self::Output::Model(Model1 { data : self.data,
+			return Self::Output::Model(Model1 {
 			    cmd : ModelCommand::RemoveTrack	});
 		}
 		if input.read(RIGHT_KEY) == false {
 			eprintln!("<Controller> : Right key pressed.");
-			return Self::Output::Model(Model1 { data : self.data,
+			return Self::Output::Model(Model1 { 
 			    cmd : ModelCommand::AddTrack	});
 		}
 		if let Some(Event::Key(e)) = input.ev {
 			if e == KeyCode::PageUp.into() && e.is_press() {
-				return Self::Output::Model(Model1 { data : self.data,
+				return Self::Output::Model(Model1 {
 			    	cmd : ModelCommand::PageUp	});
 			}
 		}
 		if let Some(Event::Key(e)) = input.ev {
 			if e == KeyCode::PageDown.into() && e.is_press() {
-				return Self::Output::Model(Model1 { data : self.data,
+				return Self::Output::Model(Model1 { 
 			    	cmd : ModelCommand::PageDown	});
 			}
 		}
 		// should not matter what happens from here.	
-        Self::Output::Model(Model1 { data : self.data,
+        Self::Output::Model(Model1 {
 			cmd : ModelCommand::Noop	})
     }
 }
@@ -275,7 +274,6 @@ impl Controller1 {
 		
 		Controller1 {
 			cmd : ControllerCommand::Init,
-		    data : polaris::getBody().await.unwrap(),
 			redraw : true,
 		}
 		

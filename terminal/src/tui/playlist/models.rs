@@ -31,7 +31,6 @@ use tokio::task;
 
 #[derive(Clone)]
 pub struct Model1 {
-    pub data: polarisHandle,
 	pub cmd: ModelCommand
 }
 
@@ -68,18 +67,8 @@ impl Compute for Model1 {
 		match self.cmd {
 			
 			Init => { 
-			    state_data.polaris_data = polaris::getIterator(self.data.clone())
-					.await
-					.collect::<Vec<(String,String)>>();
-				
-			    state_data.list = polaris::getIterator(self.data.clone())
-					.await
-					.map(|x| x.0)
-					.collect::<Vec<String>>();
-
                 eprintln!("<Model> : intialised.");
 			    return Self::Output::View(View1 {
-                        data : self.data,
 			            cmd : ViewInit
 					} 
 				);
@@ -99,7 +88,6 @@ impl Compute for Model1 {
 				state_data.selection.select(Some(i));
                 eprintln!("<Model> : next track selected.");
 			    return Self::Output::View(View1 {
-                        data : self.data,
 			            cmd : Draw
 					} 
 				);
@@ -120,7 +108,6 @@ impl Compute for Model1 {
 				state_data.selection.select(Some(i));
                 eprintln!("<Model> : next track selected.");
 			    return Self::Output::View(View1 {
-                        data : self.data,
 			            cmd : Draw
 					} 
 				);
@@ -141,7 +128,6 @@ impl Compute for Model1 {
 				state_data.selection.select(Some(i));
                 eprintln!("<Model> : previous track selected.");
 			    return Self::Output::View(View1 {
-                        data : self.data,
 			            cmd : Draw
 					} 
 				);
@@ -161,7 +147,6 @@ impl Compute for Model1 {
 				state_data.selection.select(Some(i));
                 eprintln!("<Model> : previous track selected.");
 			    return Self::Output::View(View1 {
-                        data : self.data,
 			            cmd : Draw
 					} 
 				);
@@ -173,7 +158,6 @@ impl Compute for Model1 {
 
                 eprintln!("<Model> : New track added to playlist.");
 			    return Self::Output::View(View1 {
-                        data : self.data,
 			            cmd : Draw
 					} 
 				);				
@@ -188,7 +172,6 @@ impl Compute for Model1 {
 
                 eprintln!("<Model> : Track removed from playlist.");
 			    return Self::Output::View(View1 {
-                        data : self.data,
 			            cmd : Draw
 					} 
 				);				
@@ -197,7 +180,6 @@ impl Compute for Model1 {
 			Refresh => {
 				eprintln!("<Model> : Refreshing view.");
 			    return Self::Output::View(View1 {
-                        data : self.data,
 			            cmd : Draw 
 					} 
 				);
@@ -205,7 +187,6 @@ impl Compute for Model1 {
 			_ => {	
                 //eprintln!("<Model> : Noop.");			
 			    return Self::Output::View(View1 {
-                        data : self.data,
 			            cmd : ViewNoop 
 					} 
 				);		
