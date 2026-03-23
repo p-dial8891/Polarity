@@ -174,7 +174,7 @@ trait ExecutorForLayout2<S, T1, T2, M1, M2, V1, V2, C1, C2>
 {
 
     fn get_title(&self) -> &'static str {
-        "Main"
+        "Home"
     }
 
     fn get_controllers(&self) -> (T1, T2);
