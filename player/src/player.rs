@@ -35,6 +35,14 @@ use rustls_pki_types::CertificateDer;
 use webpki_roots::TLS_SERVER_ROOTS;
 use tokio::task::spawn_blocking;
 
+use reqwest::blocking::{Client as SyncClient, Response as SyncResponse};
+use std::io::Result as SyncResult;
+use std::io::{Read as SyncRead, Write as SyncWrite};
+use std::io::{Seek as SyncSeek, SeekFrom as SyncSeekFrom};
+use std::io::ErrorKind::NotSeekable as SyncNotSeekable;
+use std::fs::File as SyncFile;
+// use std::vec::Vec;
+
 use rodio::{Decoder, OutputStream, source::Source, Sink};
 
 use bytes::Bytes;
@@ -51,33 +59,67 @@ struct PlayerServer {
 	sink : Arc<Sink>
 }
 
-async fn getBody(path: String) -> Bytes {
-    //env_logger::init_from_env(env_logger::Env::new().default_filter_or("info"));
+pub struct StreamingAdapter {
+    response : SyncResponse,
+    file : Option<SyncFile>
+}
 
-    // Read certificate 2
-    let mut cert_file2 = tokio::fs::File::open("4267304690.der")
-        .await
+impl StreamingAdapter {
+    fn from(r : SyncResponse) -> Self {
+        StreamingAdapter {
+            response : r,
+            file : None
+        }
+    }
+    fn from_stream(r : SyncResponse, path : &str) -> Self {
+        StreamingAdapter {
+            response : r,
+            file : Some(SyncFile::create(path).unwrap())
+        }
+    }
+}
+
+impl SyncRead for StreamingAdapter {    
+    fn read(&mut self, buf: &mut [u8]) -> SyncResult<usize> {
+        let ret = self.response.read(buf);
+        match self.file {
+            Some(ref mut f) => {
+                f.write_all(&buf[..*(ret.as_ref().unwrap())]);
+            },
+            None => {}
+        }
+        ret
+    }
+}
+
+impl SyncSeek for StreamingAdapter {
+    // Required method
+    fn seek(&mut self, pos: SyncSeekFrom) -> SyncResult<u64> {
+        Err(SyncNotSeekable.into())
+    }
+}
+
+pub fn getResponse(path: String) -> SyncResponse {
+
+    let mut cert_file2 = SyncFile::open("4267304690.der")
         .expect("Failed to open cert 2 file");
     let mut data_buf2 = Vec::new();
     let cert_byte_count2 = cert_file2
         .read_to_end(&mut data_buf2)
-        .await
         .expect("Failed to read cert 2 file");
     println!("Certificate 2 bytes read: {}", cert_byte_count2);
 
     // Read certificate 3
-    let mut cert_file3 = tokio::fs::File::open("4256644734.der")
-        .await
+    let mut cert_file3 = SyncFile::open("4256644734.der")
         .expect("Failed to open cert 3 file");
     let mut data_buf3 = Vec::new();
     let cert_byte_count3 = cert_file3
         .read_to_end(&mut data_buf3)
-        .await
         .expect("Failed to read cert 3 file");
     println!("Certificate 3 bytes read: {}", cert_byte_count3);
-	
+
     // Build reqwest client
-    let client = Client::builder()
+    let client = SyncClient::builder()
 		.use_rustls_tls()
         .add_root_certificate(reqwest::tls::Certificate::from_der(&data_buf2).unwrap())
         .add_root_certificate(reqwest::tls::Certificate::from_der(&data_buf3).unwrap())
@@ -89,7 +131,6 @@ async fn getBody(path: String) -> Bytes {
 	base_url.extend(["/api/audio/", path.as_str()]);
 	println!("Url : {}", &base_url);
     let url = Url::parse(
-//        "https://www.emstreamer.online/api/audio/AwsMusic/Music/Cannons/Desire - Single/01 Desire.m4a"
         &base_url
     )
     .expect("Invalid URL");
@@ -97,36 +138,87 @@ async fn getBody(path: String) -> Bytes {
     // Send request with Bearer token
     let mut response = client
         .get(url)
-        .bearer_auth(options::getToken()) // your token variable here
+        .bearer_auth(options::getToken())
         .send()
-        .await
         .expect("HTTP request failed");
 
-    // Read the body
-    println!("Status: {}", response.status());
-
-    // Read the body
-    let body = response.bytes().await.expect("Error downloading.");
-    println!("Downloaded: {}", body.len());
-	
-    body
+    response
 }
+
+// async fn getBody(path: String) -> Bytes {
+//     //env_logger::init_from_env(env_logger::Env::new().default_filter_or("info"));
+
+//     // Read certificate 2
+//     let mut cert_file2 = tokio::fs::File::open("4267304690.der")
+//         .await
+//         .expect("Failed to open cert 2 file");
+//     let mut data_buf2 = Vec::new();
+//     let cert_byte_count2 = cert_file2
+//         .read_to_end(&mut data_buf2)
+//         .await
+//         .expect("Failed to read cert 2 file");
+//     println!("Certificate 2 bytes read: {}", cert_byte_count2);
+
+//     // Read certificate 3
+//     let mut cert_file3 = tokio::fs::File::open("4256644734.der")
+//         .await
+//         .expect("Failed to open cert 3 file");
+//     let mut data_buf3 = Vec::new();
+//     let cert_byte_count3 = cert_file3
+//         .read_to_end(&mut data_buf3)
+//         .await
+//         .expect("Failed to read cert 3 file");
+//     println!("Certificate 3 bytes read: {}", cert_byte_count3);
+	
+//     // Build reqwest client
+//     let client = Client::builder()
+// 		.use_rustls_tls()
+//         .add_root_certificate(reqwest::tls::Certificate::from_der(&data_buf2).unwrap())
+//         .add_root_certificate(reqwest::tls::Certificate::from_der(&data_buf3).unwrap())
+//         .build()
+//         .expect("Failed to build reqwest client");
+
+//     // Target URL
+// 	let mut base_url = options::getHost();
+// 	base_url.extend(["/api/audio/", path.as_str()]);
+// 	println!("Url : {}", &base_url);
+//     let url = Url::parse(
+// //        "https://www.emstreamer.online/api/audio/AwsMusic/Music/Cannons/Desire - Single/01 Desire.m4a"
+//         &base_url
+//     )
+//     .expect("Invalid URL");
+
+//     // Send request with Bearer token
+//     let mut response = client
+//         .get(url)
+//         .bearer_auth(options::getToken()) // your token variable here
+//         .send()
+//         .await
+//         .expect("HTTP request failed");
+
+//     // Read the body
+//     println!("Status: {}", response.status());
+
+//     // Read the body
+//     let body = response.bytes().await.expect("Error downloading.");
+//     println!("Downloaded: {}", body.len());
+	
+//     body
+// }
 
 impl Player for PlayerServer {
     async fn play(self, _: context::Context, path: String) -> Result<(),()> {
 		println!("Path recvd: {}", path);
-		let root_path = Path::new("music");
-		let temp_path = root_path.join(&path);
-		let final_path = &temp_path;
-		println!("Final path: {}", final_path.display());
-		if !final_path.try_exists().unwrap()
-		{
-    	  let data = getBody(path).await;
-		  tokio::fs::create_dir_all(final_path.parent().unwrap()).await.unwrap();
-		  write(final_path, data).await.unwrap();
-		}
-		tokio::task::spawn( async move {
-		    audio::play(temp_path.as_path().to_str().unwrap(), self.sink).await; 
+		// let root_path = Path::new("music");
+		// let temp_path = root_path.join(&path);
+		// let final_path = &temp_path;
+		// println!("Final path: {}", final_path.display());
+        // let mut temp_path = String::from("music/");
+        // temp_path.extend([&path,""]);
+		// println!("Temp path: {}", temp_path);
+        tokio::task::spawn_blocking( move || {
+		    // audio::play(temp_path.as_path().to_str().unwrap(), self.sink); 
+		    audio::play(&path, self.sink); 
 		} );
 		Ok(())
     }
