@@ -224,12 +224,14 @@ impl Compute for Controller1 {
 			    cmd : ModelCommand::AddTrack	});
 		}
 		if let Some(Event::Key(e)) = input.ev {
+			input.ev = None;
 			if e == KeyCode::PageUp.into() && e.is_press() {
 				return Self::Output::Model(Model1 { data : self.data,
 			    	cmd : ModelCommand::PageUp	});
 			}
 		}
 		if let Some(Event::Key(e)) = input.ev {
+			input.ev = None;
 			if e == KeyCode::PageDown.into() && e.is_press() {
 				return Self::Output::Model(Model1 { data : self.data,
 			    	cmd : ModelCommand::PageDown	});
