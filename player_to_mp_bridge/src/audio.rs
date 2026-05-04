@@ -1,12 +1,12 @@
 // use tokio::fs::File;
 // use std::fs::File;
-// use rodio::{Decoder, OutputStream, source::Source, Sink};
+use rodio::{Decoder, OutputStream, source::Source, Sink};
 // use tokio::net::TcpStream;
 // use std::net::TcpStream;
 // use std::io::prelude::*;
 use crate::options;
 use crate as player;
-// use std::sync::{Arc,Mutex};
+use std::sync::{Arc,Mutex};
 // use tokio::time::{Duration, sleep};
 // use tokio::io::{AsyncWriteExt};
 // use std::time::{Duration};
@@ -61,8 +61,9 @@ pub fn play(path: &str, sink: Arc<Sink>)
 	let path_s = Path::new(&temp_path);
 	if path_s.try_exists().unwrap()
 	{
-		let input = File::open(path_s).unwrap();
-		let mut stream = TcpStream::connect("192.168.1.105:1234").unwrap();
+		let mut input = File::open(path_s).unwrap();
+		let address = options::getMicroPolarityAddress();
+		let mut stream = TcpStream::connect(address.as_str()).unwrap();
 		let mut buffer = [0u8; 90112/(2)];
 
 		let mut retry_count = 5;

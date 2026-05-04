@@ -10,7 +10,9 @@ struct Flags {
 	#[arg(long)]
 	player: String,
 	#[arg(long)]
-	tui: String
+	tui: String,
+	#[arg(long)]
+	micropolarity: String
 }
 
 pub fn getHost() -> String {
@@ -53,4 +55,14 @@ pub fn getTuiAddress() -> String {
 	let matches = Flags::parse_from(args);
 
 	matches.tui
+}
+
+pub fn getMicroPolarityAddress() -> String {
+	let args = argfile::expand_args(
+		argfile::parse_fromfile,
+		argfile::PREFIX,
+	).unwrap();
+	let matches = Flags::parse_from(args);
+
+	matches.micropolarity
 }
