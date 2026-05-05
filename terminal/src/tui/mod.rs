@@ -142,8 +142,10 @@ trait ExecutorForLayout1<S, T1, T2, M1, M2, V1, V2, C1, C2>
 
         terminal.draw( |frame| {
             use Constraint::{Fill, Length, Min};
-            let vertical = Layout::vertical([Length(2),Fill(1), Length(2)]);
-            let [top, middle, bottom] = vertical.areas(frame.area());
+            let vertical = Layout::vertical([Length(2),Fill(1), Length(2), Length(2)]);
+            let [top, middle, touch, bottom] = vertical.areas(frame.area());
+            let horizontal = Layout::horizontal([Fill(1), Fill(1), Fill(1), Fill(1)]);
+            let [U, D, L, R] = horizontal.areas(touch);
 
             let mut text = String::from("\n");
             text.extend([self.get_title()]);
@@ -153,7 +155,20 @@ trait ExecutorForLayout1<S, T1, T2, M1, M2, V1, V2, C1, C2>
             //render_top(frame, top);
             let r = C1::renderer(state);
             r(frame, middle);
-            //render_list(frame, bottom, &mut self.screen.v.selection);
+
+            let mut text = String::from("\nU");
+            let text = Paragraph::new(text).centered();
+            frame.render_widget(text, U);
+            let mut text = String::from("\nD");
+            let text = Paragraph::new(text).centered();
+            frame.render_widget(text, D);
+            let mut text = String::from("\nL");
+            let text = Paragraph::new(text).centered();
+            frame.render_widget(text, L);
+            let mut text = String::from("\nR");
+            let text = Paragraph::new(text).centered();
+            frame.render_widget(text, R);
+            
             let r = C2::renderer(state);
             r(frame, bottom);
 		}).unwrap();
