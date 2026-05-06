@@ -142,10 +142,14 @@ trait ExecutorForLayout1<S, T1, T2, M1, M2, V1, V2, C1, C2>
 
         terminal.draw( |frame| {
             use Constraint::{Fill, Length, Min};
-            let vertical = Layout::vertical([Length(2),Fill(1), Length(2), Length(2)]);
+            let vertical = Layout::vertical([Length(2),Fill(1), Length(4), Length(2)]);
             let [top, middle, touch, bottom] = vertical.areas(frame.area());
+            let vertical = Layout::vertical([Fill(1),Fill(1)]);
+            let [touch_dir, touch_action] = vertical.areas(touch);
             let horizontal = Layout::horizontal([Fill(1), Fill(1), Fill(1), Fill(1)]);
-            let [U, D, L, R] = horizontal.areas(touch);
+            let [U, D, L, R] = horizontal.areas(touch_dir);
+            let horizontal = Layout::horizontal([Fill(1), Fill(1)]);
+            let [E, T] = horizontal.areas(touch_action);
 
             let mut text = String::from("\n");
             text.extend([self.get_title()]);
@@ -156,16 +160,23 @@ trait ExecutorForLayout1<S, T1, T2, M1, M2, V1, V2, C1, C2>
             let r = C1::renderer(state);
             r(frame, middle);
 
-            let mut text = String::from("\nU");
+            let mut text = String::from("\nEnter");
+            let text = Paragraph::new(text).centered();
+            frame.render_widget(text, E);
+            let mut text = String::from("\nTab");
+            let text = Paragraph::new(text).centered();
+            frame.render_widget(text, T);
+
+            let mut text = String::from("\nUp");
             let text = Paragraph::new(text).centered();
             frame.render_widget(text, U);
-            let mut text = String::from("\nD");
+            let mut text = String::from("\nDown");
             let text = Paragraph::new(text).centered();
             frame.render_widget(text, D);
-            let mut text = String::from("\nL");
+            let mut text = String::from("\nLeft");
             let text = Paragraph::new(text).centered();
             frame.render_widget(text, L);
-            let mut text = String::from("\nR");
+            let mut text = String::from("\nRight");
             let text = Paragraph::new(text).centered();
             frame.render_widget(text, R);
             

@@ -42,6 +42,8 @@ pub async fn main() {
 
     let mut t = ratatui::init();
     t.clear();
+	let size = t.size().unwrap();
+	eprintln!("<App> : Terminal size is {} X {}", size.width, size.height);
 	
 	let mut a = App_List(Vec::new());
 
