@@ -1,3 +1,4 @@
 terminal/src/polaris/auth.rs
 player/src/auth.rs
+options.*
 

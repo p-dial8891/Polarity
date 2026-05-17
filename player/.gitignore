@@ -1,3 +1,4 @@
 src/auth.rs
 Cargo.lock
-
+target/
+options.args
