@@ -12,7 +12,7 @@ use crate::tui::shutdown::{controller::Controller, view::View,
 	}
 };
 use crate::tui::{Components, Compute, IntoComponent, IntoComp};
-use ratatui::DefaultTerminal;
+use crate::tui::output::Terminal as DefaultTerminal;
 use crate::tui::shutdown::{State, Output};
 use crate::tui::input::Input;
 

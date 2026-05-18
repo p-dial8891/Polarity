@@ -17,7 +17,7 @@ use crate::tui::playback::{content::controller::Controller, content::view::View,
 	}		
 };
 use crate::tui::{Components, Compute, IntoComponent, IntoComp};
-use ratatui::DefaultTerminal;
+use crate::tui::output::Terminal as DefaultTerminal;
 use crate::tui::playback::{State, Output2 as Output};
 use crate::tui::input::Input;
 use ratatui::widgets::{ListState};

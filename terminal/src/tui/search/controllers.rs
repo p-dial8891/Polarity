@@ -1,6 +1,7 @@
 use crate::tui::search::{models::{Model1, Model2}, ModelCommand, ControllerCommand};
 use crate::tui::{Components, Compute, Render};
-use ratatui::{DefaultTerminal, Frame};
+use ratatui::{Frame};
+use crate::tui::output::Terminal as DefaultTerminal;
 use crate::tui::input::Input;
 use crate::polaris::{self, polarisHandle};
 use crate::tui::search::{State, Output1, Output2};

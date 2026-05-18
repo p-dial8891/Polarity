@@ -1,13 +1,19 @@
 use crate::tui;
 use crate::tui::{Components, Compute, IntoComponent, IntoComp, Execute};
 use crate::tui::output::Terminal as DefaultTerminal;
+use rppal::gpio::{self, InputPin};
 use crate::tui::input::Input;
+use crate::polaris;
+use std::rc::Rc;
+use std::sync::mpsc::{Sender, Receiver, channel};
+use ratatui::widgets::{List, ListDirection, ListItem, ListState, Paragraph};
+use std::collections::HashSet;
 
 mod controller;
 mod model;
 mod view;
 
-use crate::tui::shutdown::{
+use crate::tui::screen1::{
 	controller::{
 		Controller, ControllerState
 	}, 
@@ -21,23 +27,31 @@ use crate::tui::shutdown::{
 
 pub type State = tui::ComponentData<ModelState, ViewState, ControllerState>;
 pub type Output = tui::ComponentData<Model, View, Controller>;
-pub type Executor = tui::Execute<Shutdown>;
+pub type Executor<'c> = tui::Execute<'c, Screen1>;
 
-pub struct Shutdown {
-    pub v : Vec<State>
+pub struct Screen1 {
+    pub v: Vec<State>,
 }
 
-impl Components for Shutdown {
-    type Item = Shutdown;
+impl<'c> Components<'c> for Screen1 {
+    type Item = Screen1;
     type Output = Output;
 
-    fn new() -> Shutdown {
-        Shutdown {
+    fn new() -> Screen1 {
+		let (tx, rx) = channel();
+        Screen1 {
             v: Vec::from([
                 State::Controller(ControllerState { 
-				    start: true}),
-                State::Model(ModelState	{_a:()}),
-                State::View(ViewState {_a:()}),
+				    start: true, 
+					task: None,
+					rx: rx }),
+                State::Model(ModelState	{ 
+				    playlist: Rc::new(HashSet::new()), 
+				    selection : ListState::default().with_selected(    Some(0)),
+					list: Rc::new(Vec::new()), 
+					toggle: false,
+				    tx: tx.clone() }),
+                State::View(ViewState { s: 0, b: 0, tx: tx.clone() }),
             ])
         }
     }
@@ -112,25 +126,38 @@ impl IntoComp<ModelState, ViewState, ControllerState> for State {
 
 #[derive(Clone)]
 pub enum ControllerCommand {
-    Noop,
-    Init
+	
+	Noop,
+	Init,
+	
 }
 
 #[derive(Clone)]
 pub enum ModelCommand {
-    Noop,
-    Init
+	
+	Noop,
+	Init,
+	PlaybackFinished,
+	SelectNext,
+	SelectPrevious,
+	AddTrack,
+	RemoveTrack,
+	TogglePlay,
+	
 }
 
 #[derive(Clone)]
 pub enum ViewCommand {
-    Noop,
-    Init
+	
+	Noop,
+	Init(Rc<Vec<String>>, ListState, Rc<HashSet<usize>>, bool),
+    PlayTrack(String, Rc<Vec<String>>, ListState, Rc<HashSet<usize>>, bool),
+	Draw(Rc<Vec<String>>, ListState, Rc<HashSet<usize>>, bool),
 }
 
-impl Execute<Shutdown> {
+impl<'c> Execute<'c,Screen1> {
 	pub async fn init(&mut self, handle: &String) {
-		if self.screen_names.iter().position(|x| { x == handle }).is_some() {
+		if handle == &self.screen_name {
 		    self.current_output = Some(self.current_screen.start().await);
 		}
 	}
@@ -141,7 +168,7 @@ impl Execute<Shutdown> {
 		terminal: &mut DefaultTerminal,
         gpio_pins: &mut Input
 	) {
-		if self.screen_names.iter().position(|x| { x == handle }).is_some() {
+		if handle == &self.screen_name {
 		    self.current_output = Some(
 			    self.current_screen.run(self.current_output.clone().unwrap(), 
 				terminal, gpio_pins).await

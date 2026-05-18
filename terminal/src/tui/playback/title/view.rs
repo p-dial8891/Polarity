@@ -6,7 +6,7 @@ use crate::tui::playback::{title::controller::Controller, title::model::Model,
 use crate::tui::{Components, Compute, IntoComponent, IntoComp, Render};
 use crate::tui::playback::{State, Output1 as Output};
 use crate::options;
-use ratatui::DefaultTerminal;
+use crate::tui::output::Terminal as DefaultTerminal;
 use crate::tui::input::Input;
 
 use tarpc::{client, context, tokio_serde::formats::Json};

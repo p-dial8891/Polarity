@@ -5,7 +5,7 @@ pub mod views;
 
 use crate::tui;
 use crate::tui::{Components, Compute, IntoComponent, IntoComp, ExecutorForLayout1, ExecutorForBackground};
-use ratatui::DefaultTerminal;
+use crate::tui::output::Terminal as DefaultTerminal;
 use crate::tui::input::Input;
 use std::rc::Rc;
 use std::sync::mpsc::{channel};

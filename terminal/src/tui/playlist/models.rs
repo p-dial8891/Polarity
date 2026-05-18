@@ -19,7 +19,7 @@ use crate::tui::playlist::{views::{View1,View2},
 	}		
 };
 use crate::tui::{Components, Compute,};
-use ratatui::DefaultTerminal;
+use crate::tui::output::Terminal as DefaultTerminal;
 use crate::tui::input::Input;
 use crate::tui::playlist::{State, Output1, Output2};
 use crate::polaris::{self, polarisHandle};

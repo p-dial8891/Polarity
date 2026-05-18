@@ -6,11 +6,13 @@ use crate::tui::{Components, Compute,};
 use crate::tui::input::Input;
 use crate::tui::home::{State, OutputBG};
 use crate::options;
+
 use std::collections::VecDeque;
 use ratatui::layout::{Constraint, Layout, Rect};
 use ratatui::style::{Modifier, Style, Stylize};
 use ratatui::widgets::{List, ListItem, ListState, Paragraph};
-use ratatui::{DefaultTerminal, Frame};
+use ratatui::{Frame};
+use crate::tui::output::Terminal as DefaultTerminal;
 
 use service::{PlayerClient};
 use std::{time::Duration, time::Instant};

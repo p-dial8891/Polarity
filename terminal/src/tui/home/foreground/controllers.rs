@@ -1,7 +1,8 @@
 use crate::tui::home::{foreground::models::{Model1, Model2}, ModelCommand, ControllerCommand};
 use crate::tui::{Components, Compute, Render};
-use ratatui::{DefaultTerminal, Frame};
+use ratatui::{Frame};
 use crate::tui::input::Input;
+use crate::tui::output::Terminal as DefaultTerminal;
 use crate::polaris::{self, polarisHandle};
 use crate::tui::home::{State, Output1, Output2};
 use crate::tui::app::Keys::{*};

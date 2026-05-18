@@ -4,10 +4,12 @@ mod shutdown;
 mod playlist;
 mod playback;
 mod input;
+mod output;
 mod menu;
 mod search;
 
-use ratatui::{DefaultTerminal, Frame};
+use ratatui::{Frame};
+use output::Terminal as DefaultTerminal;
 use input::Input;
 use std::rc::Rc;
 use ratatui::layout::{Constraint, Layout, Rect};

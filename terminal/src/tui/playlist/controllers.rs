@@ -1,6 +1,7 @@
 use crate::tui::playlist::{models::{Model1, Model2}, ModelCommand, ControllerCommand};
 use crate::tui::{Components, Compute, Render};
-use ratatui::{DefaultTerminal, Frame};
+use ratatui::{Frame};
+use crate::tui::output::Terminal as DefaultTerminal;
 use crate::tui::input::Input;
 use crate::polaris::{self, polarisHandle};
 use crate::tui::playlist::{State, Output1, Output2};
@@ -193,6 +194,14 @@ impl Compute for Controller1 {
 		match state_data.rx_refresh.try_recv() {
 			Ok(t_handle) => { 
 				eprintln!("<Controller> : Refresh command received.");
+				return Self::Output::Model(Model1 {
+			        cmd : ModelCommand::Refresh	}) },
+			Err(e) => { /*eprintln!("{:?}",e)*/}
+		}
+
+		match state_data.display_rx_refresh.try_recv() {
+			Ok(t_handle) => { 
+				eprintln!("<Controller> : Display refresh command received.");
 				return Self::Output::Model(Model1 {
 			        cmd : ModelCommand::Refresh	}) },
 			Err(e) => { /*eprintln!("{:?}",e)*/}

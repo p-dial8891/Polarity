@@ -6,7 +6,7 @@ use crate::tui::{Components, Compute, Render};
 use crate::tui::input::Input;
 use crate::tui::playlist::{State, Output1, Output2};
 use crate::polaris::{self, polarisHandle};
-use ratatui::{DefaultTerminal};
+use crate::tui::output::Terminal as DefaultTerminal;
 use crate::options;
 
 use service::{PlayerClient};

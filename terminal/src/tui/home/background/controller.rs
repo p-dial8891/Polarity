@@ -1,6 +1,6 @@
 use crate::tui::home::{background::model::Model, ModelCommand, ControllerCommand};
 use crate::tui::{Compute};
-use ratatui::DefaultTerminal;
+use crate::tui::output::Terminal as DefaultTerminal;
 use crate::tui::input::Input;
 use crate::tui::home::{State, OutputBG};
 

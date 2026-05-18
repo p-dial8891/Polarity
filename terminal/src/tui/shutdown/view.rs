@@ -12,7 +12,8 @@ use ratatui::layout::{Constraint, Layout, Rect};
 use ratatui::style::{Color, Modifier, Style, Stylize};
 use ratatui::text::{Line, Span, Text};
 use ratatui::widgets::{List, ListDirection, ListItem, ListState, Paragraph};
-use ratatui::{DefaultTerminal, Frame};
+use ratatui::{Frame};
+use crate::tui::output::Terminal as DefaultTerminal;
 use crate::tui::input::Input;
 
 #[derive(Clone)]

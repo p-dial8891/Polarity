@@ -10,7 +10,7 @@ use crate::tui::home::{background::view::View,
 	}		
 };
 use crate::tui::{Compute};
-use ratatui::DefaultTerminal;
+use crate::tui::output::Terminal as DefaultTerminal;
 use crate::tui::input::Input;
 use crate::tui::home::{State, OutputBG};
 use std::rc::Rc;

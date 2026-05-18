@@ -19,7 +19,7 @@ use crate::tui::home::{foreground::views::{View1,View2},
 	}		
 };
 use crate::tui::{Components, Compute,};
-use ratatui::DefaultTerminal;
+use crate::tui::output::Terminal as DefaultTerminal;
 use crate::tui::input::Input;
 use crate::tui::home::{State, Output1, Output2};
 use crate::polaris::{self, polarisHandle};
@@ -51,12 +51,14 @@ pub struct ComponentState {
 	pub task: Option<task::JoinHandle<()>>,
 	pub rx: Receiver<Option<task::JoinHandle<()>>>,
 	pub rx_refresh: Receiver<()>,
+	pub display_rx_refresh: Receiver<()>,	
     pub playlist: VecDeque<usize>,
 	pub polaris_data : Vec<(String,String)>,
 	pub list: Vec<String>,
 	pub toggle: bool,
 	pub tx : Sender<Option<task::JoinHandle<()>>>,
 	pub tx_refresh: Sender<()>,
+	pub display_tx_refresh: Sender<()>,
 	pub selection: ListState,
 	pub playback: PlaybackState,
 	pub filtered_list : Vec<(usize, String)>,

@@ -1,7 +1,7 @@
 use crate::tui;
 use crate::tui::shutdown::{model::Model, view::View, ModelCommand, ControllerCommand};
 use crate::tui::{Components, Compute, IntoComponent, IntoComp};
-use ratatui::DefaultTerminal;
+use crate::tui::output::Terminal as DefaultTerminal;
 use crate::tui::input::Input;
 use crate::tui::shutdown::{State, Output};
 use crate::tui::app::Keys::{self, *};
