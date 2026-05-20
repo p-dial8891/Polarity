@@ -210,11 +210,11 @@ impl Compute for Controller1 {
 			    cmd : ModelCommand::SelectNext	});
 		}
 
-		// if state_data.display_refresh {
-		// 	eprintln!("<Controller> : Display refresh command received.");
-		// 	state_data.display_refresh = false;
-		// 	return Self::Output::Model(Model1 {cmd : ModelCommand::Refresh	});
-		// }
+		if state_data.display_refresh {
+			eprintln!("<Controller> : Display refresh command received.");
+			state_data.display_refresh = false;
+			return Self::Output::Model(Model1 {cmd : ModelCommand::Refresh	});
+		}
 
 		if input.read(LEFT_KEY) == false {
 			eprintln!("<Controller> : Left key pressed.");

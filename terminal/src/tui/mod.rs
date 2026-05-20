@@ -202,12 +202,11 @@ trait Executor2ForLayout1<S, T1, T2, M1, M2, V1, V2, C1, C2>
         gpio_pins: &mut Input,
     ) {
  
-        let controllers = self.get_controllers();
-
         state.swap_selection(self.get_local_store());
+
+        let controllers = self.get_controllers();
         let c1 = run_screen(controllers.0, state, terminal, gpio_pins).await;
         let c2 = run_screen(controllers.1, state, terminal, gpio_pins).await;
-        state.swap_selection(self.get_local_store());
 
         self.set_controllers((c1,c2));
 
@@ -217,6 +216,7 @@ trait Executor2ForLayout1<S, T1, T2, M1, M2, V1, V2, C1, C2>
         let r_bottom = controllers.1.unwrap_controller().redraw();
 
         if !r_top && !r_bottom {
+            state.swap_selection(self.get_local_store());            
             return;
         }
 
@@ -237,6 +237,9 @@ trait Executor2ForLayout1<S, T1, T2, M1, M2, V1, V2, C1, C2>
             let r = C2::renderer(state);
             r(frame, bottom);
 		}).unwrap();
+
+        state.swap_selection(self.get_local_store());
+
     }
 
 }
