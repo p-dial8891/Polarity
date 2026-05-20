@@ -199,14 +199,6 @@ impl Compute for Controller1 {
 			Err(e) => { /*eprintln!("{:?}",e)*/}
 		}
 
-		match state_data.display_rx_refresh.try_recv() {
-			Ok(t_handle) => { 
-				eprintln!("<Controller> : Display refresh command received.");
-				return Self::Output::Model(Model1 {
-			        cmd : ModelCommand::Refresh	}) },
-			Err(e) => { /*eprintln!("{:?}",e)*/}
-		}
-
 		if input.read(UP_KEY) == false {
 			eprintln!("<Controller> : Up key pressed.");
 			return Self::Output::Model(Model1 {
@@ -217,6 +209,13 @@ impl Compute for Controller1 {
 			return Self::Output::Model(Model1 {
 			    cmd : ModelCommand::SelectNext	});
 		}
+
+		// if state_data.display_refresh {
+		// 	eprintln!("<Controller> : Display refresh command received.");
+		// 	state_data.display_refresh = false;
+		// 	return Self::Output::Model(Model1 {cmd : ModelCommand::Refresh	});
+		// }
+
 		if input.read(LEFT_KEY) == false {
 			eprintln!("<Controller> : Left key pressed.");
 			return Self::Output::Model(Model1 {

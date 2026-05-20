@@ -48,21 +48,19 @@ impl Home {
     pub fn new() -> Self {
 		let (tx, rx) = channel();
         let (tx_refresh, rx_refresh) = channel();
-        let (display_tx_refresh, display_rx_refresh) = channel();
         Home {
             v: ComponentState { 
 				start: true, 
 				task: None,
 				rx: rx,
 				rx_refresh: rx_refresh,
-                display_rx_refresh: display_rx_refresh,
 				playlist: VecDeque::new(), 
 				polaris_data: Vec::new(),
 				list: Vec::new(), 
 				toggle: false,
 				tx: tx.clone(),
 				tx_refresh: tx_refresh.clone(),
-                display_tx_refresh: display_tx_refresh.clone(),
+                display_refresh: false,
 				selection: ListState::default().with_selected(Some(0)),
                 playback: foreground::models::PlaybackState {
                     start: true, 

@@ -4,7 +4,15 @@ pub mod models;
 pub mod views;
 
 use crate::tui;
-use crate::tui::{Components, Compute, IntoComponent, IntoComp, ExecutorForLayout1, ExecutorForBackground};
+use crate::tui::{
+    Components,
+    Compute,
+    IntoComponent,
+    IntoComp,
+    ExecutorForLayout1,
+    Executor2ForLayout1,
+    ExecutorForBackground
+};
 use crate::tui::output::Terminal as DefaultTerminal;
 use crate::tui::input::Input;
 use std::rc::Rc;
@@ -112,9 +120,10 @@ pub enum ViewCommand {
 
 pub struct Executor {
 	pub controllers: (Option<Output1>, Option<Output2>),
+    pub selection : ListState
 }
 
-impl ExecutorForLayout1 <
+impl Executor2ForLayout1 <
     State, 
     Output1, 
     Output2, 
@@ -141,6 +150,10 @@ impl ExecutorForLayout1 <
     fn set_controllers(&mut self, controllers : (Output1, Output2)) {
         self.controllers.0 = Some(controllers.0);
         self.controllers.1 = Some(controllers.1);
+    }
+
+    fn get_local_store(&mut self) -> &mut ListState {
+        &mut self.selection
     }
 
     async fn init(&mut self) {

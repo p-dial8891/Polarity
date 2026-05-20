@@ -13,7 +13,7 @@ use output::Terminal as DefaultTerminal;
 use input::Input;
 use std::rc::Rc;
 use ratatui::layout::{Constraint, Layout, Rect};
-use ratatui::widgets::{Paragraph};
+use ratatui::widgets::{Paragraph, ListState};
 
 #[derive(Clone)]
 enum ComponentData<M, V, C> {
@@ -97,6 +97,12 @@ trait Render<S> {
     }
 }
 
+trait SwapStore {
+
+    fn swap_selection(&mut self, other : &mut ListState);
+
+}
+
 trait ExecutorForLayout1<S, T1, T2, M1, M2, V1, V2, C1, C2> 
   where 
         T1 : IntoComponent<M1,V1,C1> + Clone,
@@ -162,6 +168,79 @@ trait ExecutorForLayout1<S, T1, T2, M1, M2, V1, V2, C1, C2>
     }
 
 }
+
+
+trait Executor2ForLayout1<S, T1, T2, M1, M2, V1, V2, C1, C2> 
+  where 
+        T1 : IntoComponent<M1,V1,C1> + Clone,
+        T2 : IntoComponent<M2,V2,C2> + Clone,
+        C1 : Render<S> + Compute<State=S, Output=T1>,
+        C2 : Render<S> + Compute<State=S, Output=T2>,
+        M1 : Compute<State=S, Output=T1>,
+        M2 : Compute<State=S, Output=T2>,
+        V1 : Compute<State=S, Output=T1>,
+        V2 : Compute<State=S, Output=T2>,
+        S  : SwapStore
+{
+
+    fn get_title(&self) -> &'static str {
+        "Main"
+    }
+
+    fn get_controllers(&self) -> (T1, T2);
+
+    fn set_controllers(&mut self, controllers : (T1, T2));
+
+    fn get_local_store(&mut self) -> &mut ListState;
+
+    async fn init(&mut self);
+
+    async fn execute(
+        &mut self,
+        state: &mut S,
+        terminal: &mut DefaultTerminal,
+        gpio_pins: &mut Input,
+    ) {
+ 
+        let controllers = self.get_controllers();
+
+        state.swap_selection(self.get_local_store());
+        let c1 = run_screen(controllers.0, state, terminal, gpio_pins).await;
+        let c2 = run_screen(controllers.1, state, terminal, gpio_pins).await;
+        state.swap_selection(self.get_local_store());
+
+        self.set_controllers((c1,c2));
+
+        let controllers = self.get_controllers();
+
+        let r_top = controllers.0.unwrap_controller().redraw();
+        let r_bottom = controllers.1.unwrap_controller().redraw();
+
+        if !r_top && !r_bottom {
+            return;
+        }
+
+        terminal.draw( |frame| {
+            use Constraint::{Fill, Length, Min};
+            let vertical = Layout::vertical([Length(2),Fill(1), Length(2)]);
+            let [top, middle, bottom] = vertical.areas(frame.area());
+
+            let mut text = String::from("\n");
+            text.extend([self.get_title()]);
+            let text = Paragraph::new(text).centered();
+            frame.render_widget(text, top);
+
+            //render_top(frame, top);
+            let r = C1::renderer(state);
+            r(frame, middle);
+            //render_list(frame, bottom, &mut self.screen.v.selection);
+            let r = C2::renderer(state);
+            r(frame, bottom);
+		}).unwrap();
+    }
+
+}
+
 
 trait ExecutorForLayout2<S, T1, T2, M1, M2, V1, V2, C1, C2> 
   where 

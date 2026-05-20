@@ -1,4 +1,10 @@
-use crate::tui::{Components, ExecutorForLayout1, ExecutorForLayout2, ExecutorForBackground};
+use crate::tui::{
+	Components, 
+	ExecutorForLayout1, 
+	Executor2ForLayout1, 
+	ExecutorForLayout2, 
+	ExecutorForBackground,
+};
 use crate::tui::{home, home::Home};
 use crate::tui::{search};
 use crate::tui::{shutdown, shutdown::Shutdown};
@@ -13,10 +19,7 @@ use crossterm::{
 	terminal::{EnterAlternateScreen, LeaveAlternateScreen, disable_raw_mode, enable_raw_mode},
     event::{poll, read, Event, KeyCode, EventStream},
 };
-// use ratatui::{
-// 	Terminal,
-// 	backend::CrosstermBackend
-// };
+use ratatui::widgets::ListState;
 use std::{thread, time::Duration, rc::Rc, io::Write};
 use tokio::task::{spawn};
 use tokio::fs::File;
@@ -75,11 +78,13 @@ pub async fn main() {
 	};
 
 	let mut e3_display = playlist::Executor { 
-		controllers: (None,None), 
+		controllers: (None,None),
+		selection: ListState::default().with_selected(Some(0))
 	};
 
 	let mut e3_console = playlist::Executor { 
 		controllers: (None,None), 
+		selection: ListState::default().with_selected(Some(0))
 	};
 
 	let mut e4 = playback::Executor { 
@@ -130,7 +135,6 @@ pub async fn main() {
 								ev = event => { 
 									match ev {
 										Some(Ok(e)) => { 
-											let _ = home.v.display_tx_refresh.send(());
 											input.set_event(e); 
 										},
 										_ => {}
@@ -139,7 +143,7 @@ pub async fn main() {
 								_ = async {
 									tokio::time::sleep(Duration::from_millis(5)).await;
 								}.fuse() => {}
-							}
+							}							
 							e1.execute(&mut home.v, &mut t_console, &mut input).await;
 							e3_display.execute(&mut home.v, &mut t_display, &mut input).await;
 						}
@@ -187,7 +191,6 @@ pub async fn main() {
 								ev = event => { 
 									match ev {
 										Some(Ok(e)) => { 
-											let _ = home.v.display_tx_refresh.send(());
 											input.set_event(e); 
 										},
 										_ => {}
@@ -223,7 +226,6 @@ pub async fn main() {
 								ev = event => { 
 									match ev {
 										Some(Ok(e)) => { 
-											let _ = home.v.display_tx_refresh.send(());
 											input.set_event(e); 
 										},
 										_ => {}
@@ -259,7 +261,6 @@ pub async fn main() {
 								ev = event => { 
 									match ev {
 										Some(Ok(e)) => { 
-											let _ = home.v.display_tx_refresh.send(());
 											input.set_event(e); 
 										},
 										_ => {}

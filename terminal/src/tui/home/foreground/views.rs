@@ -75,6 +75,7 @@ impl Compute for View1 {
 
 		match self.cmd {
 			Init => {
+				state_data.display_refresh = true;
 			    terminal.clear();
 				Self::Output::Controller(Controller1 { 
 					cmd : ControllerCommand::Noop,
@@ -83,6 +84,7 @@ impl Compute for View1 {
 			},
 
 			Draw => {
+				state_data.display_refresh = true;
 				Self::Output::Controller(Controller1 { 
 					cmd : ControllerCommand::Noop,
 					data : self.data,
