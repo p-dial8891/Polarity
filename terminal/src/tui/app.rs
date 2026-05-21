@@ -111,9 +111,9 @@ pub async fn main() {
 	};
     // Configuration - end
     
-	// enable_raw_mode().unwrap();
-	// output::getDisplayFd().await.execute(EnterAlternateScreen);
-	t_display.clear();
+	enable_raw_mode().unwrap();
+	output::getDisplayFd().await.execute(EnterAlternateScreen);
+	// t_display.clear();
 
 	let mut m = menu_1;
 
@@ -286,6 +286,6 @@ pub async fn main() {
 		}
 	}
 
-	// output::getDisplayFd().await.execute(LeaveAlternateScreen).unwrap();
-	// disable_raw_mode().unwrap();
+	output::getDisplayFd().await.execute(LeaveAlternateScreen).unwrap();
+	disable_raw_mode().unwrap();
 }

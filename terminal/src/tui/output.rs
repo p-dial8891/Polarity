@@ -4,7 +4,7 @@ use ratatui::{
 	backend::CrosstermBackend,
     CompletedFrame,
     backend::Backend,
-    prelude::Size
+    prelude::{Size, Rect}
 };
 use std::io::{Stdout, Write, IsTerminal};
 use std::fs::{File};
@@ -36,12 +36,17 @@ pub enum Terminal {
 
 impl Terminal {
     pub fn new_console() -> Self {
-        Console(ratatui::init())
+        let mut t_console = ratatui::init();
+        t_console.autoresize().unwrap();
+        eprintln!("<APP> Console terminal size is {:?}", t_console.size().unwrap());
+        Console(t_console)
     }
 
     pub async fn new_display() -> Self {
         let mut backend = CrosstermBackend::new(getDisplayFd().await);
-        let mut t_display = ratTerminal::new(backend).expect("Could not create display terminal.");       
+        let mut t_display = ratTerminal::new(backend).expect("Could not create display terminal.");
+        t_display.resize(Rect::new(0,0,52,20)).unwrap();
+        eprintln!("<APP> Display terminal size is {:?}", t_display.size().unwrap());
         Display(t_display)
     }
 
