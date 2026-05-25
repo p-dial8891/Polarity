@@ -52,7 +52,7 @@ use std::io::Write;
 
 pub fn play(path: &str, sink: Arc<Sink>)
 {
-	const RETRY_COUNT : i8 = 16;
+	const RETRY_COUNT : i8 = 64;
 	let mut tui_address = options::getTuiAddress();
 	tui_address.extend([":9000"]);
 	let mut stream_tui = TcpStream::connect(&tui_address).unwrap();
