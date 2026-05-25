@@ -109,11 +109,11 @@ pub fn play(path: &str, sink: Arc<Sink>)
 					}
 				
 					println!("Shutting down.");
-					stream.shutdown(Shutdown::Both).expect("Shutdown failed.");
-					// println!("Waiting for connection reset.");
-					// while let Ok(_) = stream.read(&mut ready_buffer) {
-					// 	sleep(Duration::from_millis(500));
-					// }
+					stream.shutdown(Shutdown::Write).expect("Shutdown failed.");
+					println!("Waiting for connection reset.");
+					while let Ok(_) = stream.read(&mut ready_buffer) {
+						sleep(Duration::from_millis(500));
+					}
 
 					break;
 				},
