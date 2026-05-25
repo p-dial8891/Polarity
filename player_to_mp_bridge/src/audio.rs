@@ -117,8 +117,10 @@ pub fn play(path: &str, sink: Arc<Sink>)
 					break;
 				},
 
-				Err(_) => {
+				Err(e) => {
+					println!("Error connecting. {:?}", e);
 					sleep(Duration::from_millis(500));
+					println!("Retrying the new connection. Attempt {}", -1 * retry_count);
 					retry_count -= 1;
 					continue;
 				}
