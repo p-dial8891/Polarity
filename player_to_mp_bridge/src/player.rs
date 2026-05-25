@@ -99,51 +99,51 @@ impl SyncSeek for StreamingAdapter {
     }
 }
 
-// pub fn getResponse(path: String) -> SyncResponse {
+pub fn getResponse(path: String) -> SyncResponse {
 
-//     let mut cert_file2 = SyncFile::open("4267304690.der")
-//         .expect("Failed to open cert 2 file");
-//     let mut data_buf2 = Vec::new();
-//     let cert_byte_count2 = cert_file2
-//         .read_to_end(&mut data_buf2)
-//         .expect("Failed to read cert 2 file");
-//     println!("Certificate 2 bytes read: {}", cert_byte_count2);
+    let mut cert_file2 = SyncFile::open("4267304690.der")
+        .expect("Failed to open cert 2 file");
+    let mut data_buf2 = Vec::new();
+    let cert_byte_count2 = cert_file2
+        .read_to_end(&mut data_buf2)
+        .expect("Failed to read cert 2 file");
+    println!("Certificate 2 bytes read: {}", cert_byte_count2);
 
-//     // Read certificate 3
-//     let mut cert_file3 = SyncFile::open("4256644734.der")
-//         .expect("Failed to open cert 3 file");
-//     let mut data_buf3 = Vec::new();
-//     let cert_byte_count3 = cert_file3
-//         .read_to_end(&mut data_buf3)
-//         .expect("Failed to read cert 3 file");
-//     println!("Certificate 3 bytes read: {}", cert_byte_count3);
+    // Read certificate 3
+    let mut cert_file3 = SyncFile::open("4256644734.der")
+        .expect("Failed to open cert 3 file");
+    let mut data_buf3 = Vec::new();
+    let cert_byte_count3 = cert_file3
+        .read_to_end(&mut data_buf3)
+        .expect("Failed to read cert 3 file");
+    println!("Certificate 3 bytes read: {}", cert_byte_count3);
 
-//     // Build reqwest client
-//     let client = SyncClient::builder()
-// 		.use_rustls_tls()
-//         .add_root_certificate(reqwest::tls::Certificate::from_der(&data_buf2).unwrap())
-//         .add_root_certificate(reqwest::tls::Certificate::from_der(&data_buf3).unwrap())
-//         .build()
-//         .expect("Failed to build reqwest client");
+    // Build reqwest client
+    let client = SyncClient::builder()
+		.use_rustls_tls()
+        .add_root_certificate(reqwest::tls::Certificate::from_der(&data_buf2).unwrap())
+        .add_root_certificate(reqwest::tls::Certificate::from_der(&data_buf3).unwrap())
+        .build()
+        .expect("Failed to build reqwest client");
 
-//     // Target URL
-// 	let mut base_url = options::getHost();
-// 	base_url.extend(["/api/audio/", path.as_str()]);
-// 	println!("Url : {}", &base_url);
-//     let url = Url::parse(
-//         &base_url
-//     )
-//     .expect("Invalid URL");
+    // Target URL
+	let mut base_url = options::getHost();
+	base_url.extend(["/api/audio/", path.as_str()]);
+	println!("Url : {}", &base_url);
+    let url = Url::parse(
+        &base_url
+    )
+    .expect("Invalid URL");
 
-//     // Send request with Bearer token
-//     let mut response = client
-//         .get(url)
-//         .bearer_auth(options::getToken())
-//         .send()
-//         .expect("HTTP request failed");
+    // Send request with Bearer token
+    let mut response = client
+        .get(url)
+        .bearer_auth(options::getToken())
+        .send()
+        .expect("HTTP request failed");
 
-//     response
-// }
+    response
+}
 
 // async fn getBody(path: String) -> Bytes {
 //     //env_logger::init_from_env(env_logger::Env::new().default_filter_or("info"));
