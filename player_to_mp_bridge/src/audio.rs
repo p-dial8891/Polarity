@@ -52,6 +52,7 @@ use std::io::Write;
 
 pub fn play(path: &str, sink: Arc<Sink>)
 {
+	const RETRY_COUNT : i8 = 16;
 	let mut tui_address = options::getTuiAddress();
 	tui_address.extend([":9000"]);
 	let mut stream_tui = TcpStream::connect(&tui_address).unwrap();
@@ -65,7 +66,7 @@ pub fn play(path: &str, sink: Arc<Sink>)
 		let mut buffer = [0u8; 90112/(2)];
 		let mut ready_buffer = [0];
 
-		let mut retry_count = 8;
+		let mut retry_count = RETRY_COUNT;
 		let mut profile_count = 4;
 		let mut offset = 0;
 		let mut written = 0;
@@ -135,7 +136,7 @@ pub fn play(path: &str, sink: Arc<Sink>)
 		let mut buffer = [0u8; 90112/(2)];
 		let mut ready_buffer = [0];
 
-		let mut retry_count = 8;
+		let mut retry_count = RETRY_COUNT;
 		let mut profile_count = 4;
 		let mut offset = 0;
 		let mut written = 0;
