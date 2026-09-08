@@ -15,8 +15,8 @@ use ratatui::{DefaultTerminal, Frame};
 use service::{PlayerClient};
 use std::{time::Duration, time::Instant};
 use tarpc::{client, context, tokio_serde::formats::Json};
-use tokio::io::AsyncReadExt;
-use tokio::{net::TcpListener, task, time::sleep};
+use tokio::io::{AsyncReadExt, AsyncWriteExt};
+use tokio::{net::{TcpListener, TcpStream}, task, time::sleep};
 
 #[derive(Clone)]
 pub struct View {
@@ -46,11 +46,27 @@ async fn sendRequestToPlayer(path: String) {
 
     sleep(Duration::from_millis(10)).await;
 }
-
-async fn listenerTask(listener : TcpListener) {
-    let (mut socket, _) = listener.accept().await.unwrap();
+async fn playbackTask(mut stream : TcpStream, name : String) {
+    // let (mut socket, _) = listener.accept().await.unwrap();
     let mut buf = [0; 1];
-    socket.read(&mut buf).await.unwrap();
+    if name.as_str().starts_with("AwsMusic/Music/") {
+        let mut extracted_name = String::from(&name["AwsMusic/Music/".len()..]);
+		extracted_name.extend(["\r"]);
+        eprintln!("Sending \"{}\" to micropolarity", extracted_name);
+        stream.write_all(extracted_name.as_bytes()).await;
+    } else {
+        eprintln!("Track name did not start with the right prefix location.");
+        return;
+    }
+    loop {
+        match stream.read(&mut buf).await {
+            Ok(0) => { break; },
+            _     => { 
+                eprintln!("Received unexpected end of stream data.");
+                break;
+            },
+        };
+    }
 }
 
 impl Compute for View {
@@ -66,13 +82,13 @@ impl Compute for View {
 		
 		match self.cmd {
 			NextTrack(name) => {
-				let mut tui_address = options::getTuiAddress();
-				tui_address.extend([":9000"]);
+				let mut mp_address = options::getMicroPolarityAddress();
+				// mp_address.extend([":1234"]);
                 let mut state_data = s;
-				let listener = TcpListener::bind(&tui_address).await.unwrap();
-				let _ = state_data.tx.send(Some(task::spawn(listenerTask(listener))));
+				let stream = TcpStream::connect(&mp_address).await.unwrap();
+				let _ = state_data.tx.send(Some(task::spawn(playbackTask(stream, name))));
 				let _ = state_data.tx_refresh.send(());
-                sendRequestToPlayer(name).await;
+                // sendRequestToPlayer(name).await;
             },
 
             Draw => {

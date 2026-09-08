@@ -12,8 +12,8 @@ use crate::options;
 use service::{PlayerClient};
 use std::{time::Duration, time::Instant};
 use tarpc::{client, context, tokio_serde::formats::Json};
-use tokio::io::AsyncReadExt;
-use tokio::{task, net::TcpListener, time::sleep};
+use tokio::io::{AsyncReadExt, AsyncWriteExt};
+use tokio::{task, net::{TcpListener, TcpStream}, time::sleep};
 
 #[derive(Clone)]
 pub struct View1 {
@@ -50,15 +50,28 @@ async fn sendRequestToPlayer(path: String) {
     sleep(Duration::from_millis(10)).await;
 }
 
-async fn listenerTask(listener : TcpListener) {
-    let (mut socket, _) = listener.accept().await.unwrap();
+
+async fn playbackTask(mut stream : TcpStream, name : String) {
+    // let (mut socket, _) = listener.accept().await.unwrap();
     let mut buf = [0; 1];
-    if socket.read(&mut buf).await.is_ok() {
-		eprintln!("<View><Foreground> Msg from player received.");
-	}
-	else {
-		eprintln!("<View><Foreground> Msg from player NOT received.");
-	}
+    if name.as_str().starts_with("AwsMusic/Music/") {
+        let mut extracted_name = String::from(&name["AwsMusic/Music/".len()..]);
+		extracted_name.extend(["\r"]);
+        eprintln!("Sending \"{}\" to micropolarity", extracted_name);
+        stream.write_all(extracted_name.as_bytes()).await;
+    } else {
+        eprintln!("Track name did not start with the right prefix location.");
+        return;
+    }
+    loop {
+        match stream.read(&mut buf).await {
+            Ok(0) => { break; },
+            _     => { 
+                eprintln!("Received unexpected end of stream data.");
+                break;
+            },
+        };
+    }
 }
 
 impl Compute for View1 {
@@ -90,11 +103,11 @@ impl Compute for View1 {
             },
 
 		    PlayTrack(name) => {
-				let mut tui_address = options::getTuiAddress();
-				tui_address.extend([":9000"]);
-				let listener = TcpListener::bind(&tui_address).await.unwrap();
-				let _ = state_data.tx.send(Some(task::spawn(listenerTask(listener))));
-				sendRequestToPlayer(name).await;
+				let mut mp_address = options::getMicroPolarityAddress();
+				// mp_address.extend([":1234"]);
+				let stream = TcpStream::connect(&mp_address).await.unwrap();
+				let _ = state_data.tx.send(Some(task::spawn(playbackTask(stream, name))));
+				let _ = state_data.tx_refresh.send(());
 				Self::Output::Controller(Controller1 { 
 					cmd : ControllerCommand::Noop,
 					data : self.data,
@@ -137,11 +150,11 @@ impl Compute for View2 {
 				    redraw : true	})
             },
 		    PlayTrack(name) => {
-				let mut tui_address = options::getTuiAddress();
-				tui_address.extend([":9000"]);
-				let listener = TcpListener::bind(&tui_address).await.unwrap();
-				let _ = state_data.tx.send(Some(task::spawn(listenerTask(listener))));
-				sendRequestToPlayer(name).await;
+				let mut mp_address = options::getMicroPolarityAddress();
+				// mp_address.extend([":1234"]);
+				let stream = TcpStream::connect(&mp_address).await.unwrap();
+				let _ = state_data.tx.send(Some(task::spawn(playbackTask(stream, name))));
+				let _ = state_data.tx_refresh.send(());
 
 				Self::Output::Controller(Controller2 { 
 					cmd : ControllerCommand::Noop,
