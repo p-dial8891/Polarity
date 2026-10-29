@@ -1,5 +1,5 @@
 # Polarity
-A terminal interface to the Polaris music streaming server made for a raspberry pi zero device
+A terminal interface to the Polaris music streaming server made for a raspberry pi zero device. See [Micropolarity](https://github.com/p-dial8891/micropolarity) for a bare-metal device.
 
 ## Introduction
 The Polarity project aims to capture track enqueueing features that were present in popular players like Winamp and combines that with music downloading through the [Polaris](https://github.com/agersant/polaris) music server. It has been developed on a raspberry pi zero 2 W with a 1.3in TFT bonnet from Adafruit.
