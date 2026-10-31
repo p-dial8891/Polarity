@@ -170,7 +170,7 @@ impl Compute for Model1 {
 				eprintln!("<Model> : Filtering list.");
 				state_data.filtered_list = state_data.list.clone()
 					.into_iter().enumerate()
-					.filter(|(i,x)| { x.contains(&state_data.ascii_buf) })
+					.filter(|(i,x)| { x.to_lowercase().contains(&state_data.ascii_buf.to_lowercase()) })
 					.collect::<Vec<(usize,String)>>();
 
 				return Self::Output::View(View1 {
