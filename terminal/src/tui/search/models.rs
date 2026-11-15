@@ -175,9 +175,10 @@ impl Compute for Model1 {
 
 			SearchUpdate => {
 				eprintln!("<Model> : Filtering list.");
-				search_store.filtered_list = state_data.list.clone()
-					.into_iter().enumerate()
+				search_store.filtered_list = state_data.list
+					.iter().enumerate()
 					.filter(|(i,x)| { x.to_lowercase().contains(&search_store.ascii_buf.to_lowercase()) })
+					.map(|(i,x)| {(i,x.clone())})
 					.collect::<Vec<(usize,String)>>();
 
 				return Self::Output::View(View1 {
