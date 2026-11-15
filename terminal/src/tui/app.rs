@@ -5,7 +5,8 @@ use crate::tui::{
 	ExecutorForLayout2, 
 	ExecutorForBackground,
 };
-use crate::tui::{home, home::Home};
+use crate::tui::{home};
+use crate::tui::data::{Data, ComponentStore};
 use crate::tui::{search};
 use crate::tui::{shutdown, shutdown::Shutdown};
 use crate::tui::{playback, playback::{Executor}};
@@ -21,6 +22,7 @@ use crossterm::{
 };
 use ratatui::widgets::ListState;
 use std::{thread, time::Duration, rc::Rc, io::Write};
+use std::sync::Arc;
 use tokio::task::{spawn};
 use tokio::fs::File;
 use futures::{future::FutureExt, select, StreamExt};
@@ -63,7 +65,7 @@ pub async fn main() {
 	a.register("Playback");
 	let shutdown_screen = a.register("Shutdown");
 
-	let mut home = Home::new();
+	let mut data = Data::new();
 
 	let mut e0 = home::ExecutorBG { 
 		controllers: None
@@ -79,12 +81,12 @@ pub async fn main() {
 
 	let mut e3_display = playlist::Executor { 
 		controllers: (None,None),
-		selection: ListState::default().with_selected(Some(0))
+		local_store: Arc::new(ComponentStore::new_playlist())
 	};
 
 	let mut e3_console = playlist::Executor { 
 		controllers: (None,None), 
-		selection: ListState::default().with_selected(Some(0))
+		local_store: Arc::new(ComponentStore::new_playlist())
 	};
 
 	let mut e4 = playback::Executor { 
@@ -122,12 +124,12 @@ pub async fn main() {
 	loop {
 		match m {
 			menu_1 =>  {
-				(e0,m,menu_iter,e1,e3_display,input,t_console,t_display,home) = spawn(async move {
+				(e0,m,menu_iter,e1,e3_display,input,t_console,t_display,data) = spawn(async move {
 					let mut reader = EventStream::new();
 					e1.init().await;
 					e3_display.init().await;
 					loop {
-						e0.execute(&mut home.v, &mut t_console, &mut input).await;
+						e0.execute(&mut data.v, &mut t_console, &mut input).await;
 						m = m.visit(&mut menu_iter, &mut input);
 						if m == menu_1 {
 							let mut event = reader.next().fuse();
@@ -144,46 +146,46 @@ pub async fn main() {
 									tokio::time::sleep(Duration::from_millis(5)).await;
 								}.fuse() => {}
 							}							
-							e1.execute(&mut home.v, &mut t_console, &mut input).await;
-							e3_display.execute(&mut home.v, &mut t_display, &mut input).await;
+							e1.execute(&mut data.v, &mut t_console, &mut input).await;
+							e3_display.execute(&mut data.v, &mut t_display, &mut input).await;
 						}
 						else {
 							break;
 						}
 						tokio::time::sleep(Duration::from_millis(100)).await;
 					}
-					(e0,m,menu_iter,e1,e3_display,input,t_console,t_display,home)
+					(e0,m,menu_iter,e1,e3_display,input,t_console,t_display,data)
 				}).await.unwrap();
 			},
 
 			menu_2 =>  {
-				(e0,m,menu_iter,e2,e3_display,input,t_console,t_display,home) = spawn(async move {
+				(e0,m,menu_iter,e2,e3_display,input,t_console,t_display,data) = spawn(async move {
 					e2.init().await;
 					e3_display.init().await;
 					t_console.clear();
 					loop {
-						e0.execute(&mut home.v, &mut t_console, &mut input).await;
+						e0.execute(&mut data.v, &mut t_console, &mut input).await;
 						m = m.visit(&mut menu_iter, &mut input);
  						if m == menu_2 {
-							e2.execute(&mut home.v, &mut t_console, &mut input).await;
-							e3_display.execute(&mut home.v, &mut t_display, &mut input).await;
+							e2.execute(&mut data.v, &mut t_console, &mut input).await;
+							e3_display.execute(&mut data.v, &mut t_display, &mut input).await;
 						}
 						else {
 							break;
 						}
 						// tokio::time::sleep(Duration::from_millis(100)).await;
 					}
-					(e0,m,menu_iter,e2,e3_display,input,t_console,t_display,home)
+					(e0,m,menu_iter,e2,e3_display,input,t_console,t_display,data)
 				}).await.unwrap();
 			},
 
 			menu_3 =>  {
-				(e0,m,menu_iter,e3_console,e3_display,input,t_console,t_display,home) = spawn(async move {
+				(e0,m,menu_iter,e3_console,e3_display,input,t_console,t_display,data) = spawn(async move {
 					let mut reader = EventStream::new();
 					e3_console.init().await;
 					e3_display.init().await;
 					loop {
-						e0.execute(&mut home.v, &mut t_console, &mut input).await;
+						e0.execute(&mut data.v, &mut t_console, &mut input).await;
 						m = m.visit(&mut menu_iter, &mut input);
 						if m == menu_3 {
 							let mut event = reader.next().fuse();
@@ -200,25 +202,25 @@ pub async fn main() {
 									tokio::time::sleep(Duration::from_millis(5)).await;
 								}.fuse() => {}
 							}
-							e3_console.execute(&mut home.v, &mut t_console, &mut input).await;
-							e3_display.execute(&mut home.v, &mut t_display, &mut input).await;
+							e3_console.execute(&mut data.v, &mut t_console, &mut input).await;
+							e3_display.execute(&mut data.v, &mut t_display, &mut input).await;
 						}
 						else {
 							break;
 						}
 						tokio::time::sleep(Duration::from_millis(100)).await;
 					}
-					(e0,m,menu_iter,e3_console,e3_display,input,t_console,t_display,home)
+					(e0,m,menu_iter,e3_console,e3_display,input,t_console,t_display,data)
 				}).await.unwrap();
 			},
 
 			menu_4 =>  {
-				(e0,m,menu_iter,e4,e3_display,input,t_console,t_display,home) = spawn(async move {
+				(e0,m,menu_iter,e4,e3_display,input,t_console,t_display,data) = spawn(async move {
 					let mut reader = EventStream::new();
 					e4.init().await;
 					e3_display.init().await;
 					loop {
-						e0.execute(&mut home.v, &mut t_console, &mut input).await;
+						e0.execute(&mut data.v, &mut t_console, &mut input).await;
 						m = m.visit(&mut menu_iter, &mut input);
 						if m == menu_4 {
 							let mut event = reader.next().fuse();
@@ -235,25 +237,25 @@ pub async fn main() {
 									tokio::time::sleep(Duration::from_millis(5)).await;
 								}.fuse() => {}
 							}
-							e4.execute(&mut home.v, &mut t_console, &mut input).await;
-							e3_display.execute(&mut home.v, &mut t_display, &mut input).await;
+							e4.execute(&mut data.v, &mut t_console, &mut input).await;
+							e3_display.execute(&mut data.v, &mut t_display, &mut input).await;
 						}
 						else {
 							break;
 						}
 						tokio::time::sleep(Duration::from_millis(100)).await;
 					}
-					(e0,m,menu_iter,e4,e3_display,input,t_console,t_display,home)
+					(e0,m,menu_iter,e4,e3_display,input,t_console,t_display,data)
 				}).await.unwrap();
 			},
 
 			menu_5 =>  {
-				(e0,m,menu_iter,e5,e3_display,input,t_console,t_display,home) = spawn(async move {
+				(e0,m,menu_iter,e5,e3_display,input,t_console,t_display,data) = spawn(async move {
 					let mut reader = EventStream::new();
 					e5.init(&String::from("Shutdown")).await;
 					e3_display.init().await;
 					loop {
-						e0.execute(&mut home.v, &mut t_console, &mut input).await;
+						e0.execute(&mut data.v, &mut t_console, &mut input).await;
 						m = m.visit(&mut menu_iter, &mut input);
 						if m == menu_5 {
 							let mut event = reader.next().fuse();
@@ -271,14 +273,14 @@ pub async fn main() {
 								}.fuse() => {}
 							}
 							e5.execute(&String::from("Shutdown"), &mut t_console, &mut input).await;
-							e3_display.execute(&mut home.v, &mut t_display, &mut input).await;
+							e3_display.execute(&mut data.v, &mut t_display, &mut input).await;
 						}
 						else {
 							break;
 						}
 						tokio::time::sleep(Duration::from_millis(100)).await;
 					}
-					(e0,m,menu_iter,e5,e3_display,input,t_console,t_display,home)
+					(e0,m,menu_iter,e5,e3_display,input,t_console,t_display,data)
 				}).await.unwrap();
 			},
 

@@ -5,7 +5,7 @@ use crate::tui::output::Terminal as DefaultTerminal;
 use crate::tui::input::Input;
 use crate::tui::shutdown::{State, Output};
 use crate::tui::app::Keys::{self, *};
-use std::process::Command;
+use std::process::{Command, exit};
 
 #[derive(Clone)]
 pub struct Controller {
@@ -47,12 +47,15 @@ impl Compute for Controller {
 		
  		if input.read(REQ_KEY) == false {
 			eprintln!("<Controller> : Quit key pressed.");
+			#[cfg(target_os="linux")]
             let _ = Command::new("sudo")
                 .arg("shutdown")
                 .arg("-h")
                 .arg("0")
                 .output()
                 .expect("Unable to shutdown.");
+			#[cfg(any(target_os="android",target_os="windows"))]
+			exit(0);
 			return Output::Model(Model { cmd : ModelCommand::Noop	});
 		}
 		

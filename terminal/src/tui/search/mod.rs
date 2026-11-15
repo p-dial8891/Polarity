@@ -10,7 +10,6 @@ use std::rc::Rc;
 use std::sync::mpsc::{channel};
 use ratatui::widgets::{ListState};
 use std::collections::VecDeque;
-use crate::tui::home::foreground::models::ComponentState;
 
 use crate::tui::search::{
 	controllers::{
@@ -24,7 +23,7 @@ use crate::tui::search::{
 	}
 };
 
-pub type State = ComponentState;
+pub type State = crate::tui::data::State;
 pub type Output1 = tui::ComponentData<Model1, View1, Controller1>;
 pub type Output2 = tui::ComponentData<Model2, View2, Controller2>;
 

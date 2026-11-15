@@ -3,7 +3,6 @@ use crate::tui::{Components, Compute, IntoComponent, IntoComp, ExecutorForLayout
 use crate::tui::output::Terminal as DefaultTerminal;
 use crate::tui::input::Input;
 use std::rc::Rc;
-use std::sync::mpsc::{channel};
 use ratatui::widgets::{ListState};
 use std::collections::VecDeque;
 
@@ -15,7 +14,7 @@ use crate::tui::home::foreground::{
 		Controller1, Controller2
 	}, 
 	models::{
-		Model1, Model2, ComponentState
+		Model1, Model2
 	}, 
 	views::{
 		View1, View2
@@ -34,48 +33,10 @@ use crate::tui::home::background::{
 	}
 };
 
-pub type State = ComponentState;
+pub type State = crate::tui::data::State;
 pub type Output1 = tui::ComponentData<Model1, View1, Controller1>;
 pub type Output2 = tui::ComponentData<Model2, View2, Controller2>;
 pub type OutputBG = tui::ComponentData<ModelBG, ViewBG, ControllerBG>;
-
-pub struct Home {
-    pub v: State,
-}
-
-impl Home {
-	
-    pub fn new() -> Self {
-		let (tx, rx) = channel();
-        let (tx_refresh, rx_refresh) = channel();
-        Home {
-            v: ComponentState { 
-				start: true, 
-				task: None,
-				rx: rx,
-				rx_refresh: rx_refresh,
-				playlist: VecDeque::new(), 
-				polaris_data: Vec::new(),
-				list: Vec::new(), 
-				toggle: false,
-				tx: tx.clone(),
-				tx_refresh: tx_refresh.clone(),
-                display_refresh: false,
-				selection: ListState::default().with_selected(Some(0)),
-                playback: foreground::models::PlaybackState {
-                    start: true, 
-                    selection: ListState::default().with_selected(Some(0))
-                },
-                filtered_list : Vec::new().into_iter().enumerate().collect::<Vec<(usize,String)>>(),
-                edit_len : 0,
-		        buffer : [0u8;128],
-		        cursor : false,
-                ascii_buf : String::new(),
-                ascii_buf_with_cursor : String::new()
-            }
-        }
-    }
-}
 
 impl IntoComponent<Model1, View1, Controller1> for Output1 {
     fn unwrap_controller(self) -> Controller1 {

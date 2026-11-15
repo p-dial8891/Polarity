@@ -7,13 +7,15 @@ mod input;
 mod output;
 mod menu;
 mod search;
+mod data;
 
 use ratatui::{Frame};
 use output::Terminal as DefaultTerminal;
 use input::Input;
-use std::rc::Rc;
+use std::sync::Arc;
 use ratatui::layout::{Constraint, Layout, Rect};
 use ratatui::widgets::{Paragraph, ListState};
+use data::ComponentStore;
 
 #[derive(Clone)]
 enum ComponentData<M, V, C> {
@@ -99,7 +101,7 @@ trait Render<S> {
 
 trait SwapStore {
 
-    fn swap_selection(&mut self, other : &mut ListState);
+    fn swap_selection(&mut self, other : &mut Arc<ComponentStore>);
 
 }
 
@@ -191,7 +193,7 @@ trait Executor2ForLayout1<S, T1, T2, M1, M2, V1, V2, C1, C2>
 
     fn set_controllers(&mut self, controllers : (T1, T2));
 
-    fn get_local_store(&mut self) -> &mut ListState;
+    fn get_local_store(&mut self) -> &mut Arc<ComponentStore>;
 
     async fn init(&mut self);
 

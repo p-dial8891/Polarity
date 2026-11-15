@@ -42,50 +42,15 @@ use crate::tui::playback::content::{
 	}
 };
 
-use crate::tui::home::foreground::models::ComponentState;
 /*
 pub struct Playback {
     pub v: State,
 }
 */
-pub type State = ComponentState;
+pub type State = crate::tui::data::State;
 pub type Output1 = tui::ComponentData<Model1, View1, Controller1>;
 pub type Output2 = tui::ComponentData<Model2, View2, Controller2>;
-/*
-impl<'c> Components<'c> for Playback {
-    type Item = Playback;
-    type Output = Output1;
 
-    fn new() -> Playback {
-        Playback {
-            v: ComponentState { 
-				start: true, 
-				selection: ListState::default().with_selected(Some(0))
-            }
-        }
-    }
-
-    async fn run(
-        &mut self,
-        o: Self::Output,
-        terminal: &mut DefaultTerminal,
-        gpio_pins: &mut Input,
-    ) -> Self::Output {
-        o.unwrap_controller()
-            .compute(&mut self.v, terminal, gpio_pins).await
-            .unwrap_model()
-            .compute(&mut self.v, terminal, gpio_pins).await
-            .unwrap_view()
-            .compute(&mut self.v, terminal, gpio_pins).await
-    }
-
-    async fn start(&mut self) -> Self::Output {
-        Self::Output::Controller ( 
-		    Controller1::new().await
-		)
-    }
-}
-*/
 impl IntoComponent<Model1, View1, Controller1> for Output1 {
     fn unwrap_controller(self) -> Controller1 {
         match self {

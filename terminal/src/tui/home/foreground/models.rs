@@ -42,41 +42,6 @@ pub struct Model2 {
 	pub cmd: ModelCommand
 }
 
-pub struct PlaybackState {
-    pub start : bool,
-	pub selection : ListState
-}
-
-pub struct ComponentState {
-    pub start: bool,
-	pub task: Option<task::JoinHandle<()>>,
-	pub rx: Receiver<Option<task::JoinHandle<()>>>,
-	pub rx_refresh: Receiver<()>,	
-    pub playlist: VecDeque<usize>,
-	pub polaris_data : Vec<(String,String)>,
-	pub list: Vec<String>,
-	pub toggle: bool,
-	pub tx : Sender<Option<task::JoinHandle<()>>>,
-	pub tx_refresh: Sender<()>,
-	pub display_refresh: bool,
-	pub selection: ListState,
-	pub playback: PlaybackState,
-	pub filtered_list : Vec<(usize, String)>,
-	pub edit_len: i16,
-	pub buffer: [u8;128],
-	pub cursor: bool,
-	pub ascii_buf: String,
-	pub ascii_buf_with_cursor: String
-}
-
-impl SwapStore for ComponentState {
-
-	fn swap_selection(&mut self, other : &mut ListState) {
-		mem::swap(&mut self.selection, other);
-	}
-
-}
-
 async fn getNextTrack(list: &Vec<(String,String)>, s: &VecDeque<usize>) -> String {
     //let mut list_polaris = polaris::getIterator(h).await;
     let index = s.get(0).unwrap();

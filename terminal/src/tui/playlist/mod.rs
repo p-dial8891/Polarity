@@ -15,11 +15,11 @@ use crate::tui::{
 };
 use crate::tui::output::Terminal as DefaultTerminal;
 use crate::tui::input::Input;
-use std::rc::Rc;
+use crate::tui::data::ComponentStore;
+use std::sync::Arc;
 use std::sync::mpsc::{channel};
 use ratatui::widgets::{ListState};
 use std::collections::VecDeque;
-use crate::tui::home::foreground::models::ComponentState;
 
 use crate::tui::playlist::{
 	controllers::{
@@ -33,7 +33,7 @@ use crate::tui::playlist::{
 	}
 };
 
-pub type State = ComponentState;
+pub type State = crate::tui::data::State;
 pub type Output1 = tui::ComponentData<Model1, View1, Controller1>;
 pub type Output2 = tui::ComponentData<Model2, View2, Controller2>;
 
@@ -120,7 +120,7 @@ pub enum ViewCommand {
 
 pub struct Executor {
 	pub controllers: (Option<Output1>, Option<Output2>),
-    pub selection : ListState
+    pub local_store : Arc<ComponentStore>
 }
 
 impl Executor2ForLayout1 <
@@ -152,8 +152,8 @@ impl Executor2ForLayout1 <
         self.controllers.1 = Some(controllers.1);
     }
 
-    fn get_local_store(&mut self) -> &mut ListState {
-        &mut self.selection
+    fn get_local_store(&mut self) -> &mut Arc<ComponentStore> {
+        &mut self.local_store
     }
 
     async fn init(&mut self) {

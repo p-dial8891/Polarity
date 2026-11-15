@@ -40,11 +40,6 @@ pub struct Model2 {
 	pub cmd: ModelCommand
 }
 
-pub struct PlaybackState {
-    pub start : bool,
-	pub selection : ListState
-}
-
 async fn getNextTrack(list: &Vec<(String,String)>, s: &VecDeque<usize>) -> String {
     //let mut list_polaris = polaris::getIterator(h).await;
     let index = s.get(0).unwrap();
