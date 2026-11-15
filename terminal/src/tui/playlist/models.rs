@@ -23,7 +23,7 @@ use crate::tui::output::Terminal as DefaultTerminal;
 use crate::tui::input::Input;
 use crate::tui::playlist::{State, Output1, Output2};
 use crate::polaris::{self, polarisHandle};
-use std::rc::Rc;
+use std::sync::Arc;
 use std::sync::mpsc::{Sender, Receiver};
 use ratatui::widgets::{ListState};
 use std::collections::VecDeque;
@@ -41,7 +41,7 @@ pub struct Model2 {
 }
 
 pub struct PlaylistState {
-	selection : ListState
+	pub selection : ListState
 }
 
 pub type Data = PlaylistState;
@@ -64,6 +64,8 @@ impl Compute for Model1 {
 	) -> Self::Output {
 		
 		let mut state_data = s;
+		let mut store_ptr = &mut state_data.local_store;
+		let mut playlist_store = Arc::get_mut(store_ptr).unwrap().unwrap_playlist();
 		
 		match self.cmd {
 			
@@ -76,7 +78,7 @@ impl Compute for Model1 {
 		    },
 
 			SelectNext => {
-				let i = match state_data.selection.selected() {
+				let i = match playlist_store.selection.selected() {
 					Some(i) => {
 						if i >= state_data.list.len() - 1 {
 							0
@@ -86,7 +88,7 @@ impl Compute for Model1 {
 					}
 					None => 0,
 				};
-				state_data.selection.select(Some(i));
+				playlist_store.selection.select(Some(i));
                 eprintln!("<Model> : next track selected.");
 			    return Self::Output::View(View1 {
 			            cmd : Draw
@@ -95,7 +97,7 @@ impl Compute for Model1 {
 			},
 
 			PageDown => {
-				let i = match state_data.selection.selected() {
+				let i = match playlist_store.selection.selected() {
 					Some(i) => {
 						let j = i + ( (t.size().unwrap().height / 2 ) as usize) - 1;
 						if j >= ( state_data.list.len() - 1 ) {
@@ -106,7 +108,7 @@ impl Compute for Model1 {
 					}
 					None => 0,
 				};
-				state_data.selection.select(Some(i));
+				playlist_store.selection.select(Some(i));
                 eprintln!("<Model> : next track selected.");
 			    return Self::Output::View(View1 {
 			            cmd : Draw
@@ -115,7 +117,7 @@ impl Compute for Model1 {
 			},
 
 			PageUp => {
-				let i = match state_data.selection.selected() {
+				let i = match playlist_store.selection.selected() {
 					Some(i) => {
 						if i < ( ( ( t.size().unwrap().height / 2 ) - 1 ) as usize ) {
 							state_data.list.len() - 1
@@ -126,7 +128,7 @@ impl Compute for Model1 {
 					}
 					None => 0,
 				};
-				state_data.selection.select(Some(i));
+				playlist_store.selection.select(Some(i));
                 eprintln!("<Model> : previous track selected.");
 			    return Self::Output::View(View1 {
 			            cmd : Draw
@@ -135,7 +137,7 @@ impl Compute for Model1 {
 			},
 
 			SelectPrevious => {
-				let i = match state_data.selection.selected() {
+				let i = match playlist_store.selection.selected() {
 					Some(i) => {
 						if i == 0 {
 							state_data.list.len() - 1
@@ -145,7 +147,7 @@ impl Compute for Model1 {
 					}
 					None => 0,
 				};
-				state_data.selection.select(Some(i));
+				playlist_store.selection.select(Some(i));
                 eprintln!("<Model> : previous track selected.");
 			    return Self::Output::View(View1 {
 			            cmd : Draw
@@ -155,7 +157,7 @@ impl Compute for Model1 {
 
             AddTrack => {
 				state_data.playlist.push_back(
-					state_data.selection.selected().unwrap());
+					playlist_store.selection.selected().unwrap());
 
                 eprintln!("<Model> : New track added to playlist.");
 			    return Self::Output::View(View1 {
@@ -166,7 +168,7 @@ impl Compute for Model1 {
 
             RemoveTrack => {
 				if let Some(i) = state_data.playlist.iter().position(
-				    |x| { *x == state_data.selection.selected().unwrap() } 
+				    |x| { *x == playlist_store.selection.selected().unwrap() } 
 				) {
 				    state_data.playlist.remove(i);
 				}

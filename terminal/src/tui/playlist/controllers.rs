@@ -13,6 +13,7 @@ use ratatui::widgets::{List, ListItem, ListState, Paragraph};
 
 use crate::options;
 use std::collections::VecDeque;
+use std::sync::Arc;
 
 use service::{PlayerClient};
 use std::{time::Duration, time::Instant};
@@ -125,8 +126,9 @@ impl Render<State> for Controller1 {
 
     fn renderer(state : &mut State) -> 
 	    impl FnOnce(&mut Frame, Rect) -> () {
-
-        |f,r| { render_list( f, r, &mut state.selection, 
+		let mut store_ptr = &mut state.local_store;
+		let mut playlist_store = Arc::get_mut(store_ptr).unwrap().unwrap_playlist();
+        |f,r| { render_list( f, r, &mut playlist_store.selection, 
 		                        &state.list, &state.playlist ); }
 		
     }
@@ -140,9 +142,10 @@ impl Render<State> for Controller2 {
 
     fn renderer(state : &mut State) -> 
 	    impl FnOnce(&mut Frame, Rect) -> () {
-
+		let mut store_ptr = &mut state.local_store;
+		let mut playlist_store = Arc::get_mut(store_ptr).unwrap().unwrap_playlist();
         |f,r| { render_bottom( f, r, state.toggle, 
-			&state.playlist, &mut state.selection ); }
+			&state.playlist, &mut playlist_store.selection ); }
 		
     }
 
