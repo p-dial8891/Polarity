@@ -40,11 +40,11 @@ pub struct Model2 {
 	pub cmd: ModelCommand
 }
 
-pub struct PlaylistState {
+pub struct PlaylistStore {
 	pub selection : ListState
 }
 
-pub type Data = PlaylistState;
+pub type Data = PlaylistStore;
 
 async fn getNextTrack(list: &Vec<(String,String)>, s: &VecDeque<usize>) -> String {
     //let mut list_polaris = polaris::getIterator(h).await;
@@ -250,8 +250,8 @@ impl Compute for Model2 {
     }
 }
 
-impl PlaylistState {
-	pub fn new() -> Self { PlaylistState {
+impl PlaylistStore {
+	pub fn new() -> Self { PlaylistStore {
 		selection : ListState::default().with_selected(Some(0))
 	} }
 }

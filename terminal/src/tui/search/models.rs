@@ -22,7 +22,7 @@ use crate::tui::output::Terminal as DefaultTerminal;
 use crate::tui::input::Input;
 use crate::tui::search::{State, Output1, Output2};
 use crate::polaris::{self, polarisHandle};
-use std::rc::Rc;
+use std::sync::Arc;
 use std::sync::mpsc::{Sender, Receiver};
 use ratatui::widgets::{ListState};
 use std::collections::VecDeque;
@@ -34,11 +34,22 @@ pub struct Model1 {
 	pub cmd: ModelCommand
 }
 
-
 #[derive(Clone)]
 pub struct Model2 {
 	pub cmd: ModelCommand
 }
+
+pub struct SearchStore {
+	pub filtered_list : Vec<(usize, String)>,
+	pub edit_len: i16,
+	pub buffer: [u8;128],
+	pub cursor: bool,
+	pub ascii_buf: String,
+	pub ascii_buf_with_cursor: String,
+	pub selection: ListState
+}
+
+pub type Data = SearchStore;
 
 async fn getNextTrack(list: &Vec<(String,String)>, s: &VecDeque<usize>) -> String {
     //let mut list_polaris = polaris::getIterator(h).await;
@@ -58,7 +69,9 @@ impl Compute for Model1 {
 	) -> Self::Output {
 		
 		let mut state_data = s;
-		
+		let mut store_ptr = &mut state_data.local_store;
+		let mut search_store = Arc::get_mut(store_ptr).unwrap().unwrap_search();
+
 		match self.cmd {
 			
 			Init => { 
@@ -80,7 +93,7 @@ impl Compute for Model1 {
 		    },
 
 			SelectNext => {
-				let i = match state_data.selection.selected() {
+				let i = match search_store.selection.selected() {
 					Some(i) => {
 						if i >= state_data.list.len() - 1 {
 							0
@@ -90,7 +103,7 @@ impl Compute for Model1 {
 					}
 					None => 0,
 				};
-				state_data.selection.select(Some(i));
+				search_store.selection.select(Some(i));
                 eprintln!("<Model> : next track selected.");
 			    return Self::Output::View(View1 {
                         data : self.data,
@@ -100,7 +113,7 @@ impl Compute for Model1 {
 			},
 
 			SelectPrevious => {
-				let i = match state_data.selection.selected() {
+				let i = match search_store.selection.selected() {
 					Some(i) => {
 						if i == 0 {
 							state_data.list.len() - 1
@@ -110,7 +123,7 @@ impl Compute for Model1 {
 					}
 					None => 0,
 				};
-				state_data.selection.select(Some(i));
+				search_store.selection.select(Some(i));
                 eprintln!("<Model> : previous track selected.");
 			    return Self::Output::View(View1 {
                         data : self.data,
@@ -121,8 +134,8 @@ impl Compute for Model1 {
 
             AddTrack => {
 				state_data.playlist.push_back(
-					state_data.filtered_list.get(
-						state_data.selection.selected().unwrap()
+					search_store.filtered_list.get(
+						search_store.selection.selected().unwrap()
 					).unwrap().0 // index
 				);
 
@@ -136,8 +149,8 @@ impl Compute for Model1 {
 
             RemoveTrack => {
 				if let Some(i) = state_data.playlist.iter().position(
-				    |x| { *x == (state_data.filtered_list.get(
-							state_data.selection.selected().unwrap()
+				    |x| { *x == (search_store.filtered_list.get(
+							search_store.selection.selected().unwrap()
 						).unwrap().0) } 
 				) {
 				    state_data.playlist.remove(i);
@@ -161,11 +174,10 @@ impl Compute for Model1 {
 			},
 
 			SearchUpdate => {
-				// let numbered_list = state_data.list.iter().map(|x| x.as_str()).enumerate();
 				eprintln!("<Model> : Filtering list.");
-				state_data.filtered_list = state_data.list.clone()
+				search_store.filtered_list = state_data.list.clone()
 					.into_iter().enumerate()
-					.filter(|(i,x)| { x.to_lowercase().contains(&state_data.ascii_buf.to_lowercase()) })
+					.filter(|(i,x)| { x.to_lowercase().contains(&search_store.ascii_buf.to_lowercase()) })
 					.collect::<Vec<(usize,String)>>();
 
 				return Self::Output::View(View1 {
@@ -174,6 +186,7 @@ impl Compute for Model1 {
 					} 
 				);
 			}
+
 			_ => {	
                 //eprintln!("<Model> : Noop.");			
 			    return Self::Output::View(View1 {
@@ -200,7 +213,6 @@ impl Compute for Model2 {
 		let mut state_data = s;
 		
 		match self.cmd {
-			
             TogglePlay => {
                 state_data.toggle = !state_data.toggle;
 
@@ -225,9 +237,7 @@ impl Compute for Model2 {
 					} 
 				);
 			},
-
 			_ => {	
-			
                 //eprintln!("<Model> : Noop.");			
 			    return Self::Output::View(View2 {
 			        cmd : ViewNoop 
@@ -236,4 +246,18 @@ impl Compute for Model2 {
 			}
 		}
     }
+}
+
+impl SearchStore {
+	pub fn new() -> Self {
+		SearchStore {
+			filtered_list : Vec::new().into_iter().enumerate().collect::<Vec<(usize,String)>>(),
+			edit_len : 0,
+			buffer : [0u8;128],
+			cursor : false,
+			ascii_buf : String::new(),
+			ascii_buf_with_cursor : String::new(),
+			selection : ListState::default().with_selected(Some(0))
+		}
+	}
 }

@@ -16,6 +16,7 @@ use std::collections::VecDeque;
 
 use service::{PlayerClient};
 use std::{time::Duration, time::Instant};
+use std::sync::Arc;
 use tarpc::{client, context, tokio_serde::formats::Json};
 use tokio::io::AsyncReadExt;
 use tokio::{task, net::TcpListener, time::sleep};
@@ -120,13 +121,14 @@ async fn listenerTask(listener : TcpListener) {
 }
 
 impl Render<State> for Controller1 {
-
     fn renderer(state : &mut State) -> 
 	    impl FnOnce(&mut Frame, Rect) -> () {
-
-        |f,r| { render_list( f, r, &mut state.selection, 
-		    &state.filtered_list, &state.playlist ); }
-		
+		let mut store_ptr = &mut state.local_store;
+		let mut search_store = Arc::get_mut(store_ptr).unwrap().unwrap_search();
+        |f,r| { 
+			render_list( f, r, &mut search_store.selection, 
+		    &search_store.filtered_list, &state.playlist ); 
+		}
     }
 
 	fn redraw(&self) -> bool {
@@ -135,13 +137,14 @@ impl Render<State> for Controller1 {
 }
 
 impl Render<State> for Controller2 {
-
     fn renderer(state : &mut State) -> 
 	    impl FnOnce(&mut Frame, Rect) -> () {
-
-        |f,r| { render_bottom( f, r, state.toggle, 
-			&state.playlist, &mut state.selection, &state.ascii_buf_with_cursor ); }
-		
+		let mut store_ptr = &mut state.local_store;
+		let mut search_store = Arc::get_mut(store_ptr).unwrap().unwrap_search();
+        |f,r| { 
+			render_bottom( f, r, state.toggle, &state.playlist, 
+			&mut search_store.selection, &search_store.ascii_buf_with_cursor ); 
+		}
     }
 
 	fn redraw(&self) -> bool {
@@ -174,32 +177,34 @@ impl Compute for Controller1 {
     ) -> Self::Output {
 
 		let mut state_data = s;
+		let mut store_ptr = &mut state_data.local_store;
+		let mut search_store = Arc::get_mut(store_ptr).unwrap().unwrap_search();
 
 		select!{
 			_ = async {
-				state_data.edit_len +=	input
-					.read_edit(&mut state_data.buffer[
-						<i16 as TryInto<usize>>::try_into(state_data.edit_len).unwrap()..])
+				search_store.edit_len +=	input
+					.read_edit(&mut search_store.buffer[
+						<i16 as TryInto<usize>>::try_into(search_store.edit_len).unwrap()..])
 					.await
 					.unwrap();
-				state_data.edit_len = if state_data.edit_len < 0 { 
+				search_store.edit_len = if search_store.edit_len < 0 { 
 					0 
 				} else { 
-					state_data.edit_len 
+					search_store.edit_len 
 				};
-				state_data.edit_len = if state_data.edit_len > 128 { 
+				search_store.edit_len = if search_store.edit_len > 128 { 
 					128 
 				} else { 
-					state_data.edit_len 
+					search_store.edit_len 
 				};
 			}.fuse() => {
-				state_data.ascii_buf = 
-					state_data.buffer[..<i16 as TryInto<usize>>::try_into(state_data.edit_len).unwrap()]
+				search_store.ascii_buf = 
+					search_store.buffer[..<i16 as TryInto<usize>>::try_into(search_store.edit_len).unwrap()]
 					.iter().map(|c| { *c as char })
 					.collect::<String>();
-				state_data.ascii_buf_with_cursor.clear();
-				state_data.ascii_buf_with_cursor.extend([&state_data.ascii_buf, "_"]);
-				state_data.cursor = false;	
+				search_store.ascii_buf_with_cursor.clear();
+				search_store.ascii_buf_with_cursor.extend([&search_store.ascii_buf, "_"]);
+				search_store.cursor = false;	
 				if input.read(UP_KEY) == false {
 					eprintln!("<Controller> : Up key pressed.");
 					return Self::Output::Model(Model1 { data : self.data,
@@ -226,17 +231,17 @@ impl Compute for Controller1 {
 			_ = async {
 				tokio::time::sleep(Duration::from_millis(500)).await;
 			}.fuse() => {
-				state_data.ascii_buf = 
-					state_data.buffer[..<i16 as TryInto<usize>>::try_into(state_data.edit_len).unwrap()]
+				search_store.ascii_buf = 
+					search_store.buffer[..<i16 as TryInto<usize>>::try_into(search_store.edit_len).unwrap()]
 					.iter().map(|c| { *c as char })
 					.collect::<String>();
-				state_data.ascii_buf_with_cursor.clear();													
-				if state_data.cursor == true {
-					state_data.ascii_buf_with_cursor.extend([&state_data.ascii_buf, "_"]);
+				search_store.ascii_buf_with_cursor.clear();													
+				if search_store.cursor == true {
+					search_store.ascii_buf_with_cursor.extend([&search_store.ascii_buf, "_"]);
 				} else {
-					state_data.ascii_buf_with_cursor.extend([&state_data.ascii_buf, ""]);
+					search_store.ascii_buf_with_cursor.extend([&search_store.ascii_buf, ""]);
 				}
-				state_data.cursor = !state_data.cursor;
+				search_store.cursor = !search_store.cursor;
 				return Self::Output::Model(Model1 { data : self.data,
 			        cmd : ModelCommand::Refresh	});				
 			}
@@ -305,28 +310,20 @@ impl Compute for Controller2 {
 }
 
 impl Controller1 {
-	
 	pub async fn new() -> Self {
-		
 		Controller1 {
 			cmd : ControllerCommand::Init,
 		    data : polaris::getBody().await.unwrap(),
 			redraw : true,
 		}
-		
 	}
-	
 }
 
 impl Controller2 {
-	
-	pub async fn new() -> Self {
-		
+	pub async fn new() -> Self {	
 		Controller2 {
 			cmd : ControllerCommand::Init,
 			redraw : true,
 		}
-		
 	}
-	
 }

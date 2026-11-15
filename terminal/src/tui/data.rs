@@ -9,10 +9,12 @@ use tokio::task;
 use crate::tui::SwapStore;
 
 use crate::tui::playlist::models::Data as PlaylistData;
+use crate::tui::search::models::Data as SearchData;
 
 pub enum ComponentStore {
     Empty,
-    Playlist(PlaylistData)
+    Playlist(PlaylistData),
+    Search(SearchData)
 }
 
 pub struct PlaybackState {
@@ -39,12 +41,6 @@ pub struct State {
 	pub selection: ListState,
     pub local_store: Arc<ComponentStore>,
 	pub playback: PlaybackState,
-	pub filtered_list : Vec<(usize, String)>,
-	pub edit_len: i16,
-	pub buffer: [u8;128],
-	pub cursor: bool,
-	pub ascii_buf: String,
-	pub ascii_buf_with_cursor: String
 }
 
 impl SwapStore for State {
@@ -77,12 +73,6 @@ impl Data {
                     start: true, 
                     selection: ListState::default().with_selected(Some(0))
                 },
-                filtered_list : Vec::new().into_iter().enumerate().collect::<Vec<(usize,String)>>(),
-                edit_len : 0,
-		        buffer : [0u8;128],
-		        cursor : false,
-                ascii_buf : String::new(),
-                ascii_buf_with_cursor : String::new()
             }
         }
     }
@@ -96,11 +86,22 @@ impl ComponentStore {
         }
     }
 
+    pub fn unwrap_search(&mut self) -> &mut SearchData {
+        match self {
+            ComponentStore::Search(x) => { x },
+            _ => { panic!("Component state Wrong type.") }
+        }
+    }
+    
     pub fn new() -> Self {
         ComponentStore::Empty
     }
 
     pub fn new_playlist() -> Self {
         ComponentStore::Playlist(PlaylistData::new())
+    }
+
+    pub fn new_search() -> Self {
+        ComponentStore::Search(SearchData::new())
     }
 }

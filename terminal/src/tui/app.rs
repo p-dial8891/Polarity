@@ -76,7 +76,8 @@ pub async fn main() {
 	};
 
     let mut e2 = search::Executor { 
-		controllers: (None,None) 
+		controllers: (None,None),
+		local_store: Arc::new(ComponentStore::new_search())
 	};
 
 	let mut e3_display = playlist::Executor { 
@@ -90,7 +91,7 @@ pub async fn main() {
 	};
 
 	let mut e4 = playback::Executor { 
-		controllers: (None,None), 
+		controllers: (None,None),
 	};
 	
     let mut e5 = shutdown::Executor { 
